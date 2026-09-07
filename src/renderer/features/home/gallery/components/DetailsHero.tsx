@@ -1,6 +1,6 @@
 import type { DetailsCoverSource, ItemTracker } from "@common/types/db";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { faArrowLeft, faArrowUpRightFromSquare, faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faArrowUpRightFromSquare, faCopy, faTableColumns } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import { setAppSettings } from "@store/appSettings";
@@ -9,6 +9,7 @@ import Link from "@ui/Link";
 import { anilistFormatLabel, anilistStatusLabel } from "@utils/anilist";
 import { DETAILS_ABOUT_HTML_TAGS, sanitizeHtmlAllowlist } from "@utils/html";
 import { hasTrackerMediaFacts, trackerExternalOpenLabelKey, trackerMediaHref } from "@utils/libraryMetadata";
+import { clampSplitPaneSize } from "@utils/utils";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,15 @@ export const DETAILS_HERO_RESIZE_MIN_PX = 280;
 
 /** Fraction of the details panel height the metadata block may occupy while dragging. */
 export const DETAILS_HERO_HEIGHT_MAX_FRACTION = 0.8;
+
+/** Floor for a dragged horizontal details hero width, in CSS pixels. */
+export const DETAILS_HERO_RESIZE_MIN_WIDTH_PX = 608;
+
+/** Fraction of the details layout width the horizontal hero may occupy while dragging. */
+export const DETAILS_HERO_WIDTH_MAX_FRACTION = 0.72;
+
+/** Stage width preserved while the horizontal details hero is resized. */
+export const DETAILS_STAGE_MIN_WIDTH_PX = 320;
 
 /**
  * Max panel width that uses the stacked details hero (cover above title).
@@ -90,10 +100,34 @@ type DetailsListToolbarProps = {
     actions?: ReactNode;
 };
 
+/** Details-page view control that persists the shared manga/book hero orientation. */
+const DetailsHeroLayoutToggle = () => {
+    const { t } = useTranslation("home");
+    const dispatch = useAppDispatch();
+    const layout = useAppSelector((store) => store.appSettings.galleryDetailsHeroLayout);
+    const horizontal = layout === "horizontal";
+    const label = horizontal ? t("gallery.details.useVerticalLayout") : t("gallery.details.useHorizontalLayout");
+
+    return (
+        <button
+            type="button"
+            className="details-layout-toggle"
+            aria-label={label}
+            aria-pressed={horizontal}
+            data-tooltip={label}
+            onClick={() =>
+                dispatch(setAppSettings({ galleryDetailsHeroLayout: horizontal ? "vertical" : "horizontal" }))
+            }
+        >
+            <FontAwesomeIcon icon={faTableColumns} />
+        </button>
+    );
+};
+
 /**
- * Details list chrome using the same `galleryToolbar` classes as gallery home
- * (tabs, then `.toolbarEnd` with `.actions` left of `.search`). Do not add `hidden` -
- * that class hides the home toolbar.
+ * Details list chrome using the same `galleryToolbar` classes as gallery home.
+ * The persisted details-view toggle leads the action group; selection mode replaces it
+ * with the caller's selection controls. Do not add `hidden` - that class hides the home toolbar.
  */
 export const DetailsListToolbar = ({ tabBar, selection, search, actions }: DetailsListToolbarProps) => (
     <div className="galleryToolbar">
@@ -102,7 +136,10 @@ export const DetailsListToolbar = ({ tabBar, selection, search, actions }: Detai
             <div className="details-selection-slot">{selection}</div>
         ) : (
             <div className="toolbarEnd">
-                {actions ? <div className="actions">{actions}</div> : null}
+                <div className="actions">
+                    <DetailsHeroLayoutToggle />
+                    {actions}
+                </div>
                 {search ? <div className="search">{search}</div> : null}
             </div>
         )}
@@ -224,13 +261,23 @@ export const DetailsCopyPathButton = ({ path }: DetailsCopyPathButtonProps) => {
  * Clamps a dragged details metadata height so the list stays visible.
  * The rem floor on `.details-meta.is-auto` is separate; this only limits the splitter.
  *
- * @param px Candidate height from a drag
+ * @param candidateHeightPx Candidate height from a drag
  * @param panelHeightPx Bounding height of `.manga-details-panel`
  */
-export const clampDetailsHeroHeight = (px: number, panelHeightPx: number): number => {
+export const clampDetailsHeroHeight = (candidateHeightPx: number, panelHeightPx: number): number => {
     const max = Math.max(1, Math.floor(panelHeightPx * DETAILS_HERO_HEIGHT_MAX_FRACTION));
     const floor = Math.min(DETAILS_HERO_RESIZE_MIN_PX, max);
-    return Math.min(Math.max(Math.round(px), floor), max);
+    return Math.min(Math.max(Math.round(candidateHeightPx), floor), max);
+};
+
+type DetailsLayoutProps = {
+    children: ReactNode;
+};
+
+/** Shared split shell that composes the details metadata and list stage in the persisted orientation. */
+export const DetailsLayout = ({ children }: DetailsLayoutProps) => {
+    const layout = useAppSelector((store) => store.appSettings.galleryDetailsHeroLayout);
+    return <div className={`details-layout is-${layout}`}>{children}</div>;
 };
 
 type DetailsMetaBlockProps = {
@@ -238,33 +285,49 @@ type DetailsMetaBlockProps = {
 };
 
 type MetaDragStart = {
-    clientY: number;
-    height: number;
-    panelHeight: number;
+    clientPosition: number;
+    size: number;
+    panelSize: number;
 };
 
 /**
- * Resizable metadata column (hero plus optional missing-path banner) above the
- * details list. Height is {@link AppSettings.galleryDetailsHeroHeight} for both
- * manga and book; `0` means auto (CSS rem min/max on `.is-auto`, overflow scroll).
+ * Orientation-aware metadata pane shared by manga and book details.
+ * Vertical view persists {@link AppSettings.galleryDetailsHeroHeight}; horizontal
+ * view persists {@link AppSettings.galleryDetailsHeroWidth}. Zero selects CSS auto sizing.
  */
 export const DetailsMetaBlock = ({ children }: DetailsMetaBlockProps) => {
     const { t } = useTranslation("home");
     const dispatch = useAppDispatch();
-    const persisted = useAppSelector((store) => store.appSettings.galleryDetailsHeroHeight);
-    const [heightPx, setHeightPx] = useState(persisted);
+    const layout = useAppSelector((store) => store.appSettings.galleryDetailsHeroLayout);
+    const persistedHeightPx = useAppSelector((store) => store.appSettings.galleryDetailsHeroHeight);
+    const persistedWidthPx = useAppSelector((store) => store.appSettings.galleryDetailsHeroWidth);
+    const [heightPx, setHeightPx] = useState(persistedHeightPx);
+    const [widthPx, setWidthPx] = useState(persistedWidthPx);
     const [dragging, setDragging] = useState(false);
     const metaRef = useRef<HTMLDivElement>(null);
-    const dragStartRef = useRef<MetaDragStart>({ clientY: 0, height: 0, panelHeight: 0 });
+    const dragStartRef = useRef<MetaDragStart>({ clientPosition: 0, size: 0, panelSize: 0 });
     const skipPersistOnMountRef = useRef(true);
+    const horizontal = layout === "horizontal";
 
     useLayoutEffect(() => {
-        document.body.style.cursor = dragging ? "ns-resize" : "auto";
+        document.body.style.cursor = dragging ? (horizontal ? "ew-resize" : "ns-resize") : "auto";
         if (!dragging) return;
 
         const handleMove = (e: globalThis.MouseEvent) => {
             const start = dragStartRef.current;
-            setHeightPx(clampDetailsHeroHeight(start.height + (e.clientY - start.clientY), start.panelHeight));
+            if (horizontal) {
+                setWidthPx(
+                    clampSplitPaneSize(
+                        start.size + (e.clientX - start.clientPosition),
+                        start.panelSize,
+                        DETAILS_HERO_RESIZE_MIN_WIDTH_PX,
+                        DETAILS_HERO_WIDTH_MAX_FRACTION,
+                        DETAILS_STAGE_MIN_WIDTH_PX,
+                    ),
+                );
+                return;
+            }
+            setHeightPx(clampDetailsHeroHeight(start.size + (e.clientY - start.clientPosition), start.panelSize));
         };
         const handleUp = () => setDragging(false);
 
@@ -275,7 +338,7 @@ export const DetailsMetaBlock = ({ children }: DetailsMetaBlockProps) => {
             window.removeEventListener("mouseup", handleUp);
             document.body.style.cursor = "auto";
         };
-    }, [dragging]);
+    }, [dragging, horizontal]);
 
     useEffect(() => {
         if (dragging) return;
@@ -283,35 +346,46 @@ export const DetailsMetaBlock = ({ children }: DetailsMetaBlockProps) => {
             skipPersistOnMountRef.current = false;
             return;
         }
-        if (heightPx === persisted) return;
+        if (horizontal) {
+            if (widthPx === persistedWidthPx) return;
+            dispatch(setAppSettings({ galleryDetailsHeroWidth: widthPx }));
+            return;
+        }
+        if (heightPx === persistedHeightPx) return;
         dispatch(setAppSettings({ galleryDetailsHeroHeight: heightPx }));
-    }, [dragging, dispatch, heightPx, persisted]);
+    }, [dispatch, dragging, heightPx, horizontal, persistedHeightPx, persistedWidthPx, widthPx]);
 
     const handleResizerMouseDown = (e: MouseEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
         e.preventDefault();
         const meta = metaRef.current;
         const panel = meta?.parentElement;
+        const metaRect = meta?.getBoundingClientRect();
+        const panelRect = panel?.getBoundingClientRect();
         dragStartRef.current = {
-            clientY: e.clientY,
-            height: meta?.getBoundingClientRect().height ?? 0,
-            panelHeight: panel?.getBoundingClientRect().height ?? 0,
+            clientPosition: horizontal ? e.clientX : e.clientY,
+            size: horizontal ? (metaRect?.width ?? 0) : (metaRect?.height ?? 0),
+            panelSize: horizontal ? (panelRect?.width ?? 0) : (panelRect?.height ?? 0),
         };
         setDragging(true);
     };
 
+    const sizePx = horizontal ? widthPx : heightPx;
+    const sizeStyle =
+        sizePx > 0
+            ? horizontal
+                ? { width: sizePx, flex: `0 0 ${sizePx}px` }
+                : { height: sizePx, flex: `0 0 ${sizePx}px` }
+            : undefined;
+
     return (
         <>
-            <div
-                ref={metaRef}
-                className={`details-meta${heightPx > 0 ? "" : " is-auto"}`}
-                style={heightPx > 0 ? { height: heightPx, flex: `0 0 ${heightPx}px` } : undefined}
-            >
+            <div ref={metaRef} className={`details-meta${sizePx > 0 ? "" : " is-auto"}`} style={sizeStyle}>
                 {children}
             </div>
             <div
                 className={`details-meta-resizer${dragging ? " dragging" : ""}`}
-                title={t("gallery.details.resizeMeta")}
+                title={horizontal ? t("gallery.details.resizeMetaHorizontal") : t("gallery.details.resizeMeta")}
                 onMouseDown={handleResizerMouseDown}
             />
         </>
@@ -370,11 +444,12 @@ type DetailsHeroProps = {
 };
 
 /**
- * Shared gallery-details header: cover with overlay back, title/actions, then metadata.
- * Cover and title stay sticky in `.details-meta` while About and facts scroll.
+ * Shared gallery-details header with semantic identity, local-fact, tag, note, and catalog regions.
+ * Vertical view keeps cover/title sticky; horizontal view places local facts/tags beside the cover
+ * and spans note/catalog metadata below it.
  * About / genres render from resolved metadata (tracker facts then genres above About) and hide when empty.
  * A tracked title can show an external tracker page link above About (no confirm).
- * Catalog tags render through {@link DetailsHeroProps.tags} above the item note.
+ * Catalog tags render through {@link DetailsHeroProps.tags}; placement follows the active details view.
  * Chapter / bookmark / note lists stay in each panel.
  */
 export const DetailsHero = ({
@@ -489,16 +564,16 @@ export const DetailsHero = ({
 
     return (
         <header ref={heroRef} className={`details-hero${showFacts ? "" : " no-facts"}`}>
+            <button
+                type="button"
+                className="details-back"
+                onClick={onBack}
+                aria-label={t("gallery.details.backToGallery")}
+                data-tooltip={t("gallery.details.backToGallery")}
+            >
+                <FontAwesomeIcon icon={faArrowLeft} />
+            </button>
             <div ref={mediaRef} className="details-media">
-                <button
-                    type="button"
-                    className="details-back"
-                    onClick={onBack}
-                    aria-label={t("gallery.details.backToGallery")}
-                    data-tooltip={t("gallery.details.backToGallery")}
-                >
-                    <FontAwesomeIcon icon={faArrowLeft} />
-                </button>
                 <div className="details-cover-wrap" onContextMenu={onCoverContextMenu}>
                     {coverSrc ? (
                         <img src={coverSrc} alt={coverAlt} className="details-cover" draggable={false} />
@@ -510,49 +585,51 @@ export const DetailsHero = ({
                 </div>
             </div>
             <div className="details-main">
-                <div className="details-title-row">
-                    <h2 className="details-title">
-                        <ItemDisplayTitle primary={title} original={originalTitle} />
-                    </h2>
-                    {typeBadge ? <span className="details-type-badge">{typeBadge}</span> : null}
-                </div>
-                {authorText ? <div className="details-author">{authorText}</div> : null}
-                {actions || showCoverSource ? (
-                    <div className="details-hero-actions">
-                        {actions}
-                        {showCoverSource ? (
-                            <button
-                                type="button"
-                                className="details-cover-source-toggle"
-                                aria-pressed={coverSource === "tracker"}
-                                data-tooltip={
-                                    coverSource === "tracker"
-                                        ? t("gallery.details.coverSourceShowLibrary")
-                                        : t("gallery.details.coverSourceShowAnilist")
-                                }
-                                onClick={() =>
-                                    onCoverSourceChange?.(coverSource === "tracker" ? "library" : "tracker")
-                                }
-                            >
-                                {coverSource === "tracker"
-                                    ? t("gallery.details.coverSourceAnilist")
-                                    : t("gallery.details.coverSourceLibrary")}
-                            </button>
-                        ) : null}
+                <div className="details-identity">
+                    <div className="details-title-row">
+                        <h2 className="details-title">
+                            <ItemDisplayTitle primary={title} original={originalTitle} />
+                        </h2>
+                        {typeBadge ? <span className="details-type-badge">{typeBadge}</span> : null}
                     </div>
-                ) : null}
+                    {authorText ? <div className="details-author">{authorText}</div> : null}
+                    {actions || showCoverSource ? (
+                        <div className="details-hero-actions">
+                            {actions}
+                            {showCoverSource ? (
+                                <button
+                                    type="button"
+                                    className="details-cover-source-toggle"
+                                    aria-pressed={coverSource === "tracker"}
+                                    data-tooltip={
+                                        coverSource === "tracker"
+                                            ? t("gallery.details.coverSourceShowLibrary")
+                                            : t("gallery.details.coverSourceShowAnilist")
+                                    }
+                                    onClick={() =>
+                                        onCoverSourceChange?.(coverSource === "tracker" ? "library" : "tracker")
+                                    }
+                                >
+                                    {coverSource === "tracker"
+                                        ? t("gallery.details.coverSourceAnilist")
+                                        : t("gallery.details.coverSourceLibrary")}
+                                </button>
+                            ) : null}
+                        </div>
+                    ) : null}
+                </div>
                 {showFacts ? (
                     <div className="details-facts">
                         {facts || aboutBlock ? (
                             <div className="details-facts-main">
-                                {facts}
-                                {aboutBlock}
+                                {facts ? <div className="details-local-facts">{facts}</div> : null}
+                                {aboutBlock ? <div className="details-catalog-metadata">{aboutBlock}</div> : null}
                             </div>
                         ) : null}
                         {tags || note ? (
                             <div className="details-facts-side">
-                                {tags}
-                                {note}
+                                {tags ? <div className="details-local-tags">{tags}</div> : null}
+                                {note ? <div className="details-note-metadata">{note}</div> : null}
                             </div>
                         ) : null}
                     </div>

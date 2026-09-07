@@ -391,6 +391,10 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
         keywords: ["delete", "selection", "ctrl+a"],
         contentPath: "multiSelect",
     }),
+    usage("usage:gallery-details-layout", "#settings-usage-galleryDetailsLayout", "galleryDetailsLayout.title", {
+        keywords: ["gallery", "details", "layout", "horizontal", "vertical", "sidebar", "resize"],
+        contentPath: "galleryDetailsLayout",
+    }),
     usage("usage:gallery-toolbar", "#settings-usage-galleryToolbar", "galleryToolbar.title", {
         keywords: ["gallery", "tabs", "filter", "shortcut"],
         contentPath: "galleryToolbar",

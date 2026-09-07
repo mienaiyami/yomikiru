@@ -267,6 +267,10 @@ const Usage = (): ReactElement => {
                     <b>{t("gallery.title")}</b>{" "}
                     <Trans i18nKey="gallery.body" ns="usage" components={{ bold: <b /> }} />
                 </li>
+                <li id="settings-usage-galleryDetailsLayout">
+                    <b>{t("galleryDetailsLayout.title")}</b>{" "}
+                    <Trans i18nKey="galleryDetailsLayout.body" ns="usage" />
+                </li>
                 <li id="settings-usage-galleryToolbar">
                     <b>{t("galleryToolbar.title")}</b>{" "}
                     <Trans i18nKey="galleryToolbar.body" ns="usage" components={{ bold: <b /> }} />

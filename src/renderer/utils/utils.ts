@@ -1,6 +1,24 @@
 import { formatUtils } from "./file";
 
 /**
+ * Clamps a draggable split pane while preserving a minimum remainder for its sibling.
+ * If the container cannot satisfy both minima, the pane floor contracts first.
+ */
+export const clampSplitPaneSize = (
+    candidatePx: number,
+    containerPx: number,
+    minPanePx: number,
+    maxPaneFraction: number,
+    minRemainderPx: number,
+): number => {
+    const maxByFraction = Math.floor(containerPx * maxPaneFraction);
+    const maxByRemainder = Math.floor(containerPx - minRemainderPx);
+    const maximumPx = Math.max(1, Math.min(maxByFraction, maxByRemainder));
+    const minimumPx = Math.min(minPanePx, maximumPx);
+    return Math.min(Math.max(Math.round(candidatePx), minimumPx), maximumPx);
+};
+
+/**
  * CSS path from `element` up to (not including) `chapterRoot`, stopping at the first id.
  * Pass `chapterRoot` null for a document-wide path ({@link getCSSPath}).
  * Empty when `element` is `chapterRoot` or not a descendant.

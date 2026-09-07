@@ -3,6 +3,44 @@ import { defaultSettings, settingSchema } from "./settingsSchema";
 import { repairZodInputWithDefaults } from "./zodRepair";
 
 describe("settingSchema library keys", () => {
+    it("fills the gallery details hero layout when missing from settings.json", () => {
+        const repaired = repairZodInputWithDefaults(settingSchema, {}, (path) => {
+            let cur: unknown = defaultSettings;
+            for (const part of path) {
+                if (cur === null || typeof cur !== "object" || !(String(part) in cur)) return undefined;
+                cur = (cur as Record<string, unknown>)[String(part)];
+            }
+            return cur;
+        });
+        expect(repaired.success).toBe(true);
+        if (!repaired.success) return;
+        expect(repaired.data.galleryDetailsHeroLayout).toBe("vertical");
+    });
+
+    it("fills the gallery details hero width when missing from settings.json", () => {
+        const repaired = repairZodInputWithDefaults(settingSchema, {}, (path) => {
+            let cur: unknown = defaultSettings;
+            for (const part of path) {
+                if (cur === null || typeof cur !== "object" || !(String(part) in cur)) return undefined;
+                cur = (cur as Record<string, unknown>)[String(part)];
+            }
+            return cur;
+        });
+        expect(repaired.success).toBe(true);
+        if (!repaired.success) return;
+        expect(repaired.data.galleryDetailsHeroWidth).toBe(0);
+    });
+
+    it("preserves a valid horizontal details hero layout and width", () => {
+        const parsed = settingSchema.parse({
+            ...defaultSettings,
+            galleryDetailsHeroLayout: "horizontal",
+            galleryDetailsHeroWidth: 640,
+        });
+        expect(parsed.galleryDetailsHeroLayout).toBe("horizontal");
+        expect(parsed.galleryDetailsHeroWidth).toBe(640);
+    });
+
     it("fills rememberReaderPresetPerItem when missing from settings.json", () => {
         const repaired = repairZodInputWithDefaults(settingSchema, {}, (path) => {
             let cur: unknown = defaultSettings;

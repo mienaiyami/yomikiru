@@ -77,6 +77,16 @@ describe("BookDetailsPanel", () => {
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 
+    it("switches the shared details shell to horizontal view from the list toolbar", () => {
+        stubBookOnDisk();
+        const { container } = renderBookPanel();
+
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.details.useHorizontalLayout }));
+
+        expect(container.querySelector(".details-layout")).toHaveClass("is-horizontal");
+        expect(screen.getByTitle(home.gallery.details.resizeMetaHorizontal)).toBeInTheDocument();
+    });
+
     it("continues at the stored chapter and position", () => {
         stubBookOnDisk();
         const item = makeBookItem();

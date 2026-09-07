@@ -15,6 +15,144 @@
     /* Auto-sized `.details-meta.is-auto` min/max; keep in sync with DETAILS_HERO_HEIGHT_MIN_REM. */
     --details-meta-min-h: 40rem;
 
+    .details-layout {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+
+        &.is-vertical {
+            flex-direction: column;
+
+            /* Flatten the horizontal-only grouping so the title keeps its original sticky range. */
+            .details-identity {
+                display: contents;
+            }
+        }
+
+        &.is-horizontal {
+            flex-direction: row;
+
+            .details-meta {
+                width: auto;
+                height: 100%;
+                min-height: 0;
+                max-height: none;
+                min-width: min(38rem, calc(100% - 20rem));
+                max-width: calc(100% - 20rem);
+
+                &.is-auto {
+                    width: clamp(38rem, 50%, 52rem);
+                    height: 100%;
+                    min-height: 0;
+                    max-height: none;
+                    flex: 0 0 clamp(38rem, 50%, 52rem);
+                }
+            }
+
+            .details-meta-resizer {
+                width: 8px;
+                height: auto;
+                cursor: ew-resize;
+
+                &::after {
+                    width: 3px;
+                    height: 2.25rem;
+                }
+            }
+
+            .details-hero {
+                grid-template-columns: auto minmax(0, 1fr);
+                grid-template-rows: auto auto auto auto auto auto auto;
+                grid-template-areas:
+                    "cover title"
+                    "cover author"
+                    "cover actions"
+                    "cover local-facts"
+                    "cover local-tags"
+                    "note note"
+                    "catalog catalog";
+                align-content: start;
+                min-height: 0;
+            }
+
+            .details-main,
+            .details-identity,
+            .details-facts,
+            .details-facts-main,
+            .details-facts-side {
+                display: contents;
+            }
+
+            .details-title-row {
+                grid-area: title;
+                align-self: start;
+            }
+
+            .details-author {
+                grid-area: author;
+            }
+
+            .details-hero-actions {
+                grid-area: actions;
+            }
+
+            .details-local-facts {
+                grid-area: local-facts;
+            }
+
+            .details-local-tags {
+                grid-area: local-tags;
+            }
+
+            .details-local-facts,
+            .details-hero:not(:has(.details-local-facts)) .details-local-tags {
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--divider-color);
+            }
+
+            .details-note-metadata {
+                grid-area: note;
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--divider-color);
+            }
+
+            .details-catalog-metadata {
+                grid-area: catalog;
+                padding-top: 0.75rem;
+            }
+
+            .details-hero:not(:has(.details-note-metadata)) .details-catalog-metadata {
+                border-top: 1px solid var(--divider-color);
+            }
+
+            .details-media {
+                position: relative;
+                top: auto;
+                width: clamp(15rem, 42cqw, 18rem);
+                height: auto;
+            }
+
+            .details-meta .details-cover-wrap {
+                width: 100%;
+                height: auto;
+                max-height: none;
+            }
+
+            .details-title-row {
+                position: sticky;
+            }
+
+            .details-local-facts,
+            .details-local-tags,
+            .details-catalog-metadata,
+            .details-note-metadata {
+                min-width: 0;
+            }
+        }
+    }
+
     .details-meta {
         /* size queries so the cover can track the visible box (`cqh`), not scroll height */
         container-type: size;
@@ -237,14 +375,19 @@
     }
 
     /*
-     * Overlay back control. `#app button` sets padding / overflow that clips the
-     * tooltip; match gallery toolbar action buttons (`--button-width`, tooltip below).
+     * Overlay back control. It is a grid peer of the cover so horizontal view can
+     * keep this control sticky while the cover itself scrolls. `#app button` sets
+     * padding / overflow that clips the tooltip; match gallery toolbar action buttons
+     * (`--button-width`, tooltip below).
      */
     .details-back {
-        position: absolute;
+        grid-area: cover;
+        position: sticky;
         top: 8px;
-        left: 8px;
-        z-index: 2;
+        z-index: 4;
+        align-self: start;
+        justify-self: start;
+        margin: 8px;
         width: var(--button-width);
         height: var(--button-width);
         padding: 0;
@@ -276,6 +419,10 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+    }
+
+    .details-identity {
+        display: contents;
     }
 
     .details-title-row {
@@ -415,6 +562,8 @@
         align-items: flex-start;
     }
 
+    .details-local-facts,
+    .details-catalog-metadata,
     .details-facts-main {
         display: flex;
         flex-direction: column;
@@ -430,6 +579,8 @@
         }
     }
 
+    .details-local-tags,
+    .details-note-metadata,
     .details-facts-side {
         display: flex;
         flex-direction: column;
@@ -585,6 +736,7 @@
 
     .details-stage {
         flex: 1;
+        min-width: 0;
         min-height: 0;
         display: flex;
         flex-direction: column;
@@ -595,6 +747,10 @@
     .details-selection-slot {
         flex: 1;
         min-width: 0;
+    }
+
+    .details-layout-toggle[aria-pressed="true"] {
+        background-color: var(--btn-color-focus);
     }
 
     .chapters-list {

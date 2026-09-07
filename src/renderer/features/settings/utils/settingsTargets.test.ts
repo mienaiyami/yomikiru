@@ -100,6 +100,10 @@ describe("settingsTargets", () => {
             selector: "#settings-usage-galleryToolbar",
             contentPath: "galleryToolbar",
         });
+        expect(getSettingsTarget("usage:gallery-details-layout")).toMatchObject({
+            selector: "#settings-usage-galleryDetailsLayout",
+            contentPath: "galleryDetailsLayout",
+        });
         expect(getSettingsTarget("usage:library-scan")?.selector).toBe("#settings-usage-library-scan");
         expect(getSettingsTarget("setting:library-folders")?.selector).toBe("#settings-library-folders");
         expect(getSettingsTarget("setting:library-folders-list")?.selector).toBe(

@@ -3,6 +3,7 @@ import { stubFs } from "@test/mocks/preload";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
     appRootElement,
+    clampSplitPaneSize,
     debounce,
     findCover,
     getCSSPath,
@@ -11,6 +12,20 @@ import {
     scrollChildInContainer,
     sleep,
 } from "./utils";
+
+describe("clampSplitPaneSize", () => {
+    it("keeps a dragged details rail above its usable minimum", () => {
+        expect(clampSplitPaneSize(120, 1000, 480, 0.72, 320)).toBe(480);
+    });
+
+    it("caps the details rail before it consumes the list stage", () => {
+        expect(clampSplitPaneSize(900, 1000, 480, 0.72, 320)).toBe(680);
+    });
+
+    it("contracts the rail floor when a narrow container cannot satisfy both minima", () => {
+        expect(clampSplitPaneSize(120, 600, 480, 0.72, 320)).toBe(280);
+    });
+});
 
 describe("getCSSPath", () => {
     afterEach(() => {

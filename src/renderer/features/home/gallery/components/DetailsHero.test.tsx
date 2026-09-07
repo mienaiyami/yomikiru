@@ -1,13 +1,17 @@
 import anilistEn from "@common/i18n/locales/en/anilist.json";
 import home from "@common/i18n/locales/en/home.json";
-import { renderWithI18n } from "@test/renderWithProviders";
+import { renderWithI18n, renderWithProviders } from "@test/renderWithProviders";
 import { fireEvent, screen } from "@testing-library/react";
+import { defaultSettings } from "@utils/settingsSchema";
 import { describe, expect, it, vi } from "vitest";
 import {
     clampDetailsHeroHeight,
     DETAILS_HERO_HEIGHT_MAX_FRACTION,
     DETAILS_HERO_RESIZE_MIN_PX,
     DetailsHero,
+    DetailsLayout,
+    DetailsListToolbar,
+    DetailsMetaBlock,
 } from "./DetailsHero";
 
 /** Splitter clamp only; the rem auto floor lives in CSS on `.details-meta.is-auto`. */
@@ -31,8 +35,91 @@ describe("clampDetailsHeroHeight", () => {
     });
 });
 
+describe("DetailsListToolbar", () => {
+    it("switches the persisted details hero from vertical to horizontal view", () => {
+        const { store } = renderWithProviders(<DetailsListToolbar tabBar={<span>Tabs</span>} />, {
+            preloadedState: {
+                appSettings: { ...defaultSettings, galleryDetailsHeroLayout: "vertical" },
+            },
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: "Use horizontal details view" }));
+
+        expect(store.getState().appSettings.galleryDetailsHeroLayout).toBe("horizontal");
+        expect(screen.getByRole("button", { name: "Use vertical details view" })).toHaveAttribute(
+            "aria-pressed",
+            "true",
+        );
+    });
+});
+
+describe("DetailsLayout", () => {
+    it("uses the horizontal split and width resizer when that view is persisted", () => {
+        const { container } = renderWithProviders(
+            <DetailsLayout>
+                <DetailsMetaBlock>
+                    <span>Hero</span>
+                </DetailsMetaBlock>
+                <div className="details-stage">Stage</div>
+            </DetailsLayout>,
+            {
+                preloadedState: {
+                    appSettings: {
+                        ...defaultSettings,
+                        galleryDetailsHeroLayout: "horizontal",
+                        galleryDetailsHeroWidth: 960,
+                    },
+                },
+            },
+        );
+
+        expect(container.querySelector(".details-layout")).toHaveClass("is-horizontal");
+        expect(container.querySelector(".details-meta")).toHaveStyle({ width: "960px" });
+        expect(screen.getByTitle("Resize details sidebar")).toBeInTheDocument();
+    });
+
+    it("persists the horizontal hero floor after a shorter drag", () => {
+        const { container, store } = renderWithProviders(
+            <DetailsLayout>
+                <DetailsMetaBlock>
+                    <span>Hero</span>
+                </DetailsMetaBlock>
+                <div className="details-stage">Stage</div>
+            </DetailsLayout>,
+            {
+                preloadedState: {
+                    appSettings: {
+                        ...defaultSettings,
+                        galleryDetailsHeroLayout: "horizontal",
+                        galleryDetailsHeroWidth: 640,
+                    },
+                },
+            },
+        );
+        const layout = container.querySelector(".details-layout");
+        const meta = container.querySelector(".details-meta");
+        expect(layout).toBeInstanceOf(HTMLElement);
+        expect(meta).toBeInstanceOf(HTMLElement);
+        vi.spyOn(layout as HTMLElement, "getBoundingClientRect").mockReturnValue({
+            width: 1200,
+            height: 800,
+        } as DOMRect);
+        vi.spyOn(meta as HTMLElement, "getBoundingClientRect").mockReturnValue({
+            width: 640,
+            height: 800,
+        } as DOMRect);
+
+        fireEvent.mouseDown(screen.getByTitle("Resize details sidebar"), { button: 0, clientX: 640 });
+        fireEvent.mouseMove(window, { clientX: 500 });
+        fireEvent.mouseUp(window);
+
+        expect(meta).toHaveStyle({ width: "608px" });
+        expect(store.getState().appSettings.galleryDetailsHeroWidth).toBe(608);
+    });
+});
+
 describe("DetailsHero", () => {
-    it("renders About HTML and places tags above the item note", () => {
+    it("separates local summary fields from the note and tracker-derived data", () => {
         const { container } = renderWithI18n(
             <DetailsHero
                 title="Title"
@@ -42,6 +129,9 @@ describe("DetailsHero", () => {
                 onCoverContextMenu={vi.fn()}
                 description={"<b>Bold</b> line<br>next"}
                 genres={["Drama", "Action"]}
+                trackerMedia={{ status: "RELEASING" }}
+                actions={<span data-testid="hero-anilist-control">Track</span>}
+                facts={<span data-testid="hero-progress">progress</span>}
                 tags={<span data-testid="hero-tags">tags</span>}
                 note={<span data-testid="hero-note">note</span>}
             />,
@@ -49,14 +139,21 @@ describe("DetailsHero", () => {
         const about = container.querySelector(".details-synopsis-body");
         expect(about?.innerHTML).toContain("<b>Bold</b>");
         expect(about?.innerHTML).toContain("<br>");
-        const main = container.querySelector(".details-facts-main")?.innerHTML ?? "";
-        expect(main.indexOf("Drama")).toBeLessThan(main.indexOf("details-synopsis"));
-        const side = container.querySelector(".details-facts-side");
+        const localFacts = container.querySelector(".details-local-facts");
+        const localTags = container.querySelector(".details-local-tags");
+        const catalogMetadata = container.querySelector(".details-catalog-metadata");
+        const noteMetadata = container.querySelector(".details-note-metadata");
+        const actions = container.querySelector(".details-hero-actions");
+        const progress = screen.getByTestId("hero-progress");
         const tags = screen.getByTestId("hero-tags");
         const note = screen.getByTestId("hero-note");
-        expect(side?.contains(tags)).toBe(true);
-        expect(side?.contains(note)).toBe(true);
-        expect(side?.innerHTML.indexOf("hero-tags") ?? -1).toBeLessThan(side?.innerHTML.indexOf("hero-note") ?? 0);
+        const anilistControl = screen.getByTestId("hero-anilist-control");
+        expect(localFacts?.contains(progress)).toBe(true);
+        expect(localTags?.contains(tags)).toBe(true);
+        expect(noteMetadata?.contains(note)).toBe(true);
+        expect(catalogMetadata?.textContent).toContain("Drama");
+        expect(catalogMetadata?.textContent).toContain(anilistEn.status.RELEASING);
+        expect(actions?.contains(anilistControl)).toBe(true);
     });
 
     it("shows the original library title muted after an edited primary title", () => {

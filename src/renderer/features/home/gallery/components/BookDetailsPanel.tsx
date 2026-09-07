@@ -42,6 +42,7 @@ import {
     DetailsFactField,
     DetailsHero,
     DetailsItemNote,
+    DetailsLayout,
     DetailsListToolbar,
     DetailsMetaBlock,
     DetailsTabBar,
@@ -567,238 +568,242 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                     onRemoved={onClose}
                 />
             ) : null}
-            <DetailsMetaBlock>
-                <DetailsHero
-                    title={resolved?.title || book.title}
-                    originalTitle={resolved?.originalTitle}
-                    author={resolved?.author ?? book.author}
-                    typeBadge={t("shared.epub")}
-                    coverSrc={coverArtSrc}
-                    coverAlt={resolved?.title || book.title}
-                    trackerCoverAvailable={trackerCoverAvailable}
-                    coverSource={parseDetailsCoverSource(book.extra, coverHint)}
-                    onCoverSourceChange={(source) => {
-                        void dispatch(setLibraryItemDetailsCoverSource({ link: bookLink, source }));
-                    }}
-                    onBack={onClose}
-                    onCoverContextMenu={handleCoverContextMenu}
-                    description={resolved?.description}
-                    genres={resolved?.genres}
-                    tracker={tracker ?? null}
-                    trackerMedia={
-                        resolved
-                            ? {
-                                  status: resolved.mediaStatus,
-                                  score: resolved.mediaScore,
-                                  totalChapters: resolved.totalChapters,
-                                  format: resolved.mediaFormat,
-                              }
-                            : null
-                    }
-                    tags={<ItemTagsRow itemLink={bookLink} />}
-                    actions={
-                        pathMissing ? null : (
-                            <>
-                                <button
-                                    type="button"
-                                    className="continue-reading"
-                                    ref={continueRef}
-                                    onClick={handleContinueReading}
-                                >
-                                    {book.progress ? t("shared.continueReading") : t("shared.startReading")}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="details-icon-btn"
-                                    onClick={() =>
-                                        void dispatch(
-                                            setLibraryItemFavourite({
-                                                link: bookLink,
-                                                favourite: !isFavourite,
-                                            }),
-                                        )
-                                    }
-                                    aria-label={
-                                        isFavourite
-                                            ? t("gallery.details.removeFavourite")
-                                            : t("gallery.details.addFavourite")
-                                    }
-                                    data-tooltip={
-                                        isFavourite
-                                            ? t("gallery.details.removeFavourite")
-                                            : t("gallery.details.addFavourite")
-                                    }
-                                >
-                                    <FontAwesomeIcon icon={isFavourite ? faStar : faStarRegular} />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="details-icon-btn"
-                                    onClick={() => setMetadataEditorOpen(true)}
-                                    aria-label={t("gallery.details.editMetadata")}
-                                    data-tooltip={t("gallery.details.editMetadata")}
-                                >
-                                    <FontAwesomeIcon icon={faPen} />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="details-icon-btn"
-                                    onClick={() => void handleSelectCover()}
-                                    aria-label={t("shared.selectCover")}
-                                    data-tooltip={t("shared.selectCover")}
-                                >
-                                    <FontAwesomeIcon icon={faImage} />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="details-icon-btn"
-                                    onClick={() => void handleResetCover()}
-                                    aria-label={t("shared.resetCover")}
-                                    data-tooltip={t("shared.resetCover")}
-                                >
-                                    <FontAwesomeIcon icon={faSyncAlt} />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="details-icon-btn"
-                                    onClick={() => window.electron.showItemInFolder(bookLink)}
-                                    aria-label={tCommon("contextMenu.showInExplorer")}
-                                    data-tooltip={tCommon("contextMenu.showInExplorer")}
-                                >
-                                    <FontAwesomeIcon icon={faFolderOpen} />
-                                </button>
-                                <DetailsCopyPathButton path={bookLink} />
-                                <AnilistBar
-                                    variant="compact"
-                                    localLibraryLink={bookLink}
-                                    libraryTitle={resolved?.title ?? book.title}
-                                />
-                            </>
-                        )
-                    }
-                    facts={
-                        book.progress ? (
-                            <>
-                                <DetailsFactField label={t("gallery.details.currentChapter")}>
-                                    {book.progress.chapterName}
-                                </DetailsFactField>
-                                <div className="details-pair-row">
-                                    <DetailsFactField label={t("gallery.details.lastRead")}>
-                                        {dateUtils.format(book.progress.lastReadAt, {
-                                            format: dateUtils.presets.dateTime,
-                                        })}
-                                    </DetailsFactField>
-                                </div>
-                            </>
-                        ) : undefined
-                    }
-                    note={
-                        <DetailsItemNote
-                            value={itemNote}
-                            onChange={setItemNote}
-                            onCommit={() => {
-                                void dispatch(setLibraryItemNote({ link: bookLink, note: itemNote }));
-                            }}
-                        />
-                    }
-                />
-            </DetailsMetaBlock>
-
-            <div className="details-stage">
-                {activeTab === "bookmarks" ? (
-                    <ListNavigator.Provider
-                        items={bookmarksArray}
-                        filterFn={filterBookmark}
-                        renderItem={renderBookmarkItem}
-                        onContextMenu={handleContextMenu}
-                        onSelect={handleSelect}
-                        onFilteredItemsChange={(items) =>
-                            bookmarkSelection.setVisibleOrder(items.map((b) => b.id))
+            <DetailsLayout>
+                <DetailsMetaBlock>
+                    <DetailsHero
+                        title={resolved?.title || book.title}
+                        originalTitle={resolved?.originalTitle}
+                        author={resolved?.author ?? book.author}
+                        typeBadge={t("shared.epub")}
+                        coverSrc={coverArtSrc}
+                        coverAlt={resolved?.title || book.title}
+                        trackerCoverAvailable={trackerCoverAvailable}
+                        coverSource={parseDetailsCoverSource(book.extra, coverHint)}
+                        onCoverSourceChange={(source) => {
+                            void dispatch(setLibraryItemDetailsCoverSource({ link: bookLink, source }));
+                        }}
+                        onBack={onClose}
+                        onCoverContextMenu={handleCoverContextMenu}
+                        description={resolved?.description}
+                        genres={resolved?.genres}
+                        tracker={tracker ?? null}
+                        trackerMedia={
+                            resolved
+                                ? {
+                                      status: resolved.mediaStatus,
+                                      score: resolved.mediaScore,
+                                      totalChapters: resolved.totalChapters,
+                                      format: resolved.mediaFormat,
+                                  }
+                                : null
                         }
-                        emptyMessage={t("gallery.details.noBookmarks")}
-                    >
-                        <DetailsListToolbar
-                            tabBar={tabBar}
-                            selection={
-                                bookmarkSelection.isSelectionMode ? (
-                                    <ListSelectionToolbar
-                                        count={bookmarkSelection.count}
-                                        onSelectAll={bookmarkSelection.selectAll}
-                                        onInvertSelection={bookmarkSelection.invertSelection}
-                                        onCancel={bookmarkSelection.clearSelection}
-                                        extraMenuItems={[
-                                            {
-                                                label: t("gallery.details.deleteBookmarksMenu", {
-                                                    count: bookmarkSelection.count,
+                        tags={<ItemTagsRow itemLink={bookLink} />}
+                        actions={
+                            pathMissing ? null : (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="continue-reading"
+                                        ref={continueRef}
+                                        onClick={handleContinueReading}
+                                    >
+                                        {book.progress ? t("shared.continueReading") : t("shared.startReading")}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="details-icon-btn"
+                                        onClick={() =>
+                                            void dispatch(
+                                                setLibraryItemFavourite({
+                                                    link: bookLink,
+                                                    favourite: !isFavourite,
                                                 }),
-                                                action: handleBulkDeleteBookmarks,
-                                            },
-                                        ]}
+                                            )
+                                        }
+                                        aria-label={
+                                            isFavourite
+                                                ? t("gallery.details.removeFavourite")
+                                                : t("gallery.details.addFavourite")
+                                        }
+                                        data-tooltip={
+                                            isFavourite
+                                                ? t("gallery.details.removeFavourite")
+                                                : t("gallery.details.addFavourite")
+                                        }
+                                    >
+                                        <FontAwesomeIcon icon={isFavourite ? faStar : faStarRegular} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="details-icon-btn"
+                                        onClick={() => setMetadataEditorOpen(true)}
+                                        aria-label={t("gallery.details.editMetadata")}
+                                        data-tooltip={t("gallery.details.editMetadata")}
+                                    >
+                                        <FontAwesomeIcon icon={faPen} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="details-icon-btn"
+                                        onClick={() => void handleSelectCover()}
+                                        aria-label={t("shared.selectCover")}
+                                        data-tooltip={t("shared.selectCover")}
+                                    >
+                                        <FontAwesomeIcon icon={faImage} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="details-icon-btn"
+                                        onClick={() => void handleResetCover()}
+                                        aria-label={t("shared.resetCover")}
+                                        data-tooltip={t("shared.resetCover")}
+                                    >
+                                        <FontAwesomeIcon icon={faSyncAlt} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="details-icon-btn"
+                                        onClick={() => window.electron.showItemInFolder(bookLink)}
+                                        aria-label={tCommon("contextMenu.showInExplorer")}
+                                        data-tooltip={tCommon("contextMenu.showInExplorer")}
+                                    >
+                                        <FontAwesomeIcon icon={faFolderOpen} />
+                                    </button>
+                                    <DetailsCopyPathButton path={bookLink} />
+                                    <AnilistBar
+                                        variant="compact"
+                                        localLibraryLink={bookLink}
+                                        libraryTitle={resolved?.title ?? book.title}
                                     />
-                                ) : undefined
+                                </>
+                            )
+                        }
+                        facts={
+                            book.progress ? (
+                                <>
+                                    <DetailsFactField label={t("gallery.details.currentChapter")}>
+                                        {book.progress.chapterName}
+                                    </DetailsFactField>
+                                    <div className="details-pair-row">
+                                        <DetailsFactField label={t("gallery.details.lastRead")}>
+                                            {dateUtils.format(book.progress.lastReadAt, {
+                                                format: dateUtils.presets.dateTime,
+                                            })}
+                                        </DetailsFactField>
+                                    </div>
+                                </>
+                            ) : undefined
+                        }
+                        note={
+                            <DetailsItemNote
+                                value={itemNote}
+                                onChange={setItemNote}
+                                onCommit={() => {
+                                    void dispatch(setLibraryItemNote({ link: bookLink, note: itemNote }));
+                                }}
+                            />
+                        }
+                    />
+                </DetailsMetaBlock>
+
+                <div className="details-stage">
+                    {activeTab === "bookmarks" ? (
+                        <ListNavigator.Provider
+                            items={bookmarksArray}
+                            filterFn={filterBookmark}
+                            renderItem={renderBookmarkItem}
+                            onContextMenu={handleContextMenu}
+                            onSelect={handleSelect}
+                            onFilteredItemsChange={(items) =>
+                                bookmarkSelection.setVisibleOrder(items.map((b) => b.id))
                             }
-                            search={
-                                <ListNavigator.SearchInput
-                                    placeholder={t("gallery.details.searchBookmarks")}
-                                    autoFocus={false}
-                                    pageSearch={{
-                                        id: "gallery-book-bookmarks",
-                                        priority: PAGE_SEARCH_PRIORITY.details,
-                                    }}
-                                />
-                            }
-                        />
-                        <div className="chapters-list" ref={detailsListScrollRef}>
-                            <ListNavigator.List scrollContainerRef={detailsListScrollRef} />
-                        </div>
-                    </ListNavigator.Provider>
-                ) : (
-                    <ListNavigator.Provider
-                        items={notesArray}
-                        filterFn={filterNote}
-                        renderItem={renderNoteItem}
-                        onContextMenu={handleContextMenu}
-                        onSelect={handleSelect}
-                        onFilteredItemsChange={(items) => noteSelection.setVisibleOrder(items.map((n) => n.id))}
-                        emptyMessage={t("gallery.details.noNotes")}
-                    >
-                        <DetailsListToolbar
-                            tabBar={tabBar}
-                            selection={
-                                noteSelection.isSelectionMode ? (
-                                    <ListSelectionToolbar
-                                        count={noteSelection.count}
-                                        onSelectAll={noteSelection.selectAll}
-                                        onInvertSelection={noteSelection.invertSelection}
-                                        onCancel={noteSelection.clearSelection}
-                                        extraMenuItems={[
-                                            {
-                                                label: t("gallery.details.deleteNotesMenu", {
-                                                    count: noteSelection.count,
-                                                }),
-                                                action: handleBulkDeleteNotes,
-                                            },
-                                        ]}
+                            emptyMessage={t("gallery.details.noBookmarks")}
+                        >
+                            <DetailsListToolbar
+                                tabBar={tabBar}
+                                selection={
+                                    bookmarkSelection.isSelectionMode ? (
+                                        <ListSelectionToolbar
+                                            count={bookmarkSelection.count}
+                                            onSelectAll={bookmarkSelection.selectAll}
+                                            onInvertSelection={bookmarkSelection.invertSelection}
+                                            onCancel={bookmarkSelection.clearSelection}
+                                            extraMenuItems={[
+                                                {
+                                                    label: t("gallery.details.deleteBookmarksMenu", {
+                                                        count: bookmarkSelection.count,
+                                                    }),
+                                                    action: handleBulkDeleteBookmarks,
+                                                },
+                                            ]}
+                                        />
+                                    ) : undefined
+                                }
+                                search={
+                                    <ListNavigator.SearchInput
+                                        placeholder={t("gallery.details.searchBookmarks")}
+                                        autoFocus={false}
+                                        pageSearch={{
+                                            id: "gallery-book-bookmarks",
+                                            priority: PAGE_SEARCH_PRIORITY.details,
+                                        }}
                                     />
-                                ) : undefined
+                                }
+                            />
+                            <div className="chapters-list" ref={detailsListScrollRef}>
+                                <ListNavigator.List scrollContainerRef={detailsListScrollRef} />
+                            </div>
+                        </ListNavigator.Provider>
+                    ) : (
+                        <ListNavigator.Provider
+                            items={notesArray}
+                            filterFn={filterNote}
+                            renderItem={renderNoteItem}
+                            onContextMenu={handleContextMenu}
+                            onSelect={handleSelect}
+                            onFilteredItemsChange={(items) =>
+                                noteSelection.setVisibleOrder(items.map((n) => n.id))
                             }
-                            search={
-                                <ListNavigator.SearchInput
-                                    placeholder={t("gallery.details.searchNotes")}
-                                    autoFocus={false}
-                                    pageSearch={{
-                                        id: "gallery-book-notes",
-                                        priority: PAGE_SEARCH_PRIORITY.details,
-                                    }}
-                                />
-                            }
-                        />
-                        <div className="chapters-list" ref={detailsListScrollRef}>
-                            <ListNavigator.List scrollContainerRef={detailsListScrollRef} />
-                        </div>
-                    </ListNavigator.Provider>
-                )}
-            </div>
+                            emptyMessage={t("gallery.details.noNotes")}
+                        >
+                            <DetailsListToolbar
+                                tabBar={tabBar}
+                                selection={
+                                    noteSelection.isSelectionMode ? (
+                                        <ListSelectionToolbar
+                                            count={noteSelection.count}
+                                            onSelectAll={noteSelection.selectAll}
+                                            onInvertSelection={noteSelection.invertSelection}
+                                            onCancel={noteSelection.clearSelection}
+                                            extraMenuItems={[
+                                                {
+                                                    label: t("gallery.details.deleteNotesMenu", {
+                                                        count: noteSelection.count,
+                                                    }),
+                                                    action: handleBulkDeleteNotes,
+                                                },
+                                            ]}
+                                        />
+                                    ) : undefined
+                                }
+                                search={
+                                    <ListNavigator.SearchInput
+                                        placeholder={t("gallery.details.searchNotes")}
+                                        autoFocus={false}
+                                        pageSearch={{
+                                            id: "gallery-book-notes",
+                                            priority: PAGE_SEARCH_PRIORITY.details,
+                                        }}
+                                    />
+                                }
+                            />
+                            <div className="chapters-list" ref={detailsListScrollRef}>
+                                <ListNavigator.List scrollContainerRef={detailsListScrollRef} />
+                            </div>
+                        </ListNavigator.Provider>
+                    )}
+                </div>
+            </DetailsLayout>
             {metadataEditorOpen ? (
                 <ItemMetadataEditor
                     itemLink={bookLink}

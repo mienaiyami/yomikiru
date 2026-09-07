@@ -18,6 +18,8 @@ const log = createRendererLogger("settingsSchema");
 const sortTypeEnum = z.union([z.literal("normal"), z.literal("inverse")]);
 const sortByEnum = z.union([z.literal("name"), z.literal("date")]);
 const viewModeEnum = z.union([z.literal("classic"), z.literal("gallery")]);
+/** Gallery details hero compositions persisted by {@link settingSchema}. */
+const detailsHeroLayoutEnum = z.union([z.literal("vertical"), z.literal("horizontal")]);
 
 const settingSchema = z
     .object({
@@ -76,6 +78,10 @@ const settingSchema = z
         ]),
         /** Card width in em. */
         galleryItemWidth: z.number().min(10).max(30),
+        /** Details hero composition shared by manga and book gallery pages. */
+        galleryDetailsHeroLayout: detailsHeroLayoutEnum.default("vertical"),
+        /** Pixel width of the gallery details hero in horizontal view; zero selects automatic sizing. */
+        galleryDetailsHeroWidth: z.number().min(0).default(0),
         /**
          * Pixel height of the gallery details metadata block (hero).
          * Shared for manga and book. `0` is auto (section uses the rem min and scrolls if taller).
@@ -167,6 +173,8 @@ const settingSchema = z
         galleryTagFilterIds: [],
         galleryDisplayMode: "compact",
         galleryItemWidth: 16,
+        galleryDetailsHeroLayout: "vertical",
+        galleryDetailsHeroWidth: 0,
         galleryDetailsHeroHeight: 0,
         openDirectlyFromManga: false,
         showTabs: {

@@ -162,6 +162,17 @@ describe("MangaDetailsPanel", () => {
         await waitForEmptyChapterList();
     });
 
+    it("switches the shared details shell to horizontal view from the list toolbar", async () => {
+        stubMangaOnDisk();
+        const { container } = renderMangaPanel();
+
+        fireEvent.click(screen.getByRole("button", { name: home.gallery.details.useHorizontalLayout }));
+
+        expect(container.querySelector(".details-layout")).toHaveClass("is-horizontal");
+        expect(screen.getByTitle(home.gallery.details.resizeMetaHorizontal)).toBeInTheDocument();
+        await waitForEmptyChapterList();
+    });
+
     it("does not rebuild an existing library cover when details opens", async () => {
         const cover = window.path.join(window.electron.app.getPath("userData"), "custom-cover.jpg");
         stubFs({
