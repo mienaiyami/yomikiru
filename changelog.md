@@ -13,24 +13,24 @@
 > Issue is only present to users using "Setup" version.
 > For more information, see [Announcement #451](https://github.com/mienaiyami/yomikiru/discussions/451) -->
 
-# unreleased
+# 2.25.0-beta
+
+### 2.25.0-beta.7
+
+Gallery and reader follow-ups since beta.6: details layout options, tag/tracking filters, cycle shortcuts, per-title reader presets, experimental EPUB continuous chapters, and library path alias hardening.
 
 - feat: Gallery details can switch between the existing resizable header and a resizable metadata sidebar. The selected view, header height, and sidebar width are remembered across manga and books; horizontal view keeps local progress and tags beside a portrait cover while notes and tracker metadata flow below.
-
 - feat: Gallery section tabs and type filters can now be cycled with rebindable shortcut pairs, and the same first-bar pair switches manga or book details tabs. The shortcuts wrap, work while the related search field is focused, and are added with defaults without changing existing bindings.
-
 - feat: EPUB **Continuous chapters (experimental)** is an independent book reader preset option. The current renderer keeps chapters in one virtualized scroll with a light break between them, avoiding a full reader rebuild at chapter boundaries; progress percent is through the whole book (from file sizes), shows two decimal places, and gets a wider TopBar input while enabled. Per-title preset memory can retain title-specific behavior. Reopening restores the saved chapter and paragraph; chapter jumps, percentage seeking, and layout restoration share cancellable navigation. Scroll-position capture is viewport-bounded and throttled. Find stays in the current chapter (whole-book search later). AniList auto-progress is off while enabled. The old Settings **EPUB: Load By Chapter** toggle is gone (it did not actually load the whole book). The native scrollbar can still look wrong because most chapters are not measured.
-
 - feat: Optional **Remember preset per title** (Settings -> Reader presets, on by default). Each title can keep its own reader layout (so manga and manhwa can differ). Opening a title restores the last preset used there; in-reader changes stay on that title. Select in Reader presets remains the default for titles that do not have one yet.
-
 - feat: Gallery tag filter is a three-state control per tag (off, include, exclude) in one list. Include still means any of those tags; exclude hides titles that have any of the excluded tags (untagged titles stay visible when you only exclude). The closed control shows the tag name when only one is included or excluded, otherwise `+n -m`, plus the same colour-mark grid (circles for include, triangles for exclude). Saved as signed ids in `galleryTagFilterIds` so older include-only lists keep working.
 - feat: When AniList is connected, the gallery toolbar now has a remembered three-state tracking filter for all titles, tracked titles, and untracked titles. It stays inactive while signed out so a hidden filter never narrows the gallery.
 - fix: Gallery search now stays active while switching between Continue, Library, Bookmarks, and Favourites.
 - fix: The custom tag colour picker now sits beside the tag name when creating or renaming a tag, separate from the fixed-colour preset row.
 - fix: Unpinned reader side list no longer covers the left edge of pages when zen mode is off. The reading area is inset by the closed-list peek (the resize strip); zen mode and a pinned list are unchanged. (#551)
 - fix: A library folder (or file) and a symlink/junction to the same place stay one catalogue row. Scan, watch, Settings folder add, and first-time reader add store the resolved path. Duplicate rows from the same disk object merge when that path is added or on the next library scan (progress and tags follow the relocate merge rules). Show in File Explorer uses the resolved location. Pointing a symlink at a different place does not keep progress on the alias.
-
-# 2.25.0-beta
+- docs: Privacy policy page, linked from README and About.
+- **dev**: Library scan unit tests stub DB change pings without loading the full IPC database module.
 
 ### 2.25.0-beta.6
 
