@@ -180,7 +180,7 @@
         "preset": "Preset",
         "continuousChapters": "Continuous chapters (experimental)",
         "continuousChaptersEnable": "Continue across chapter boundaries",
-        "continuousChaptersDesc": "Experimental. Keeps chapters in one reader session so crossing a boundary does not fully reload the reader. In the book reader, chapters form one continuous scroll. This option is stored in the current reader preset. Find stays in the current chapter. AniList auto-progress is off while enabled.",
+        "continuousChaptersDesc": "Experimental. Chapters stay in one continuous scroll for the current book reader preset.",
         "size": "Size",
         "fitOptions": "Fit Options",
         "readingMode": "Reading Mode",

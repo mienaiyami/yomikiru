@@ -7,6 +7,7 @@ import { dialogUtils } from "@utils/dialog";
 import { createRendererLogger } from "@utils/logger";
 import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/language");
 
@@ -152,7 +153,16 @@ const LanguageSettings = (): ReactElement => {
     return (
         <div className="settingItem2" id="settings-language">
             <h3>{t("language.title")}</h3>
-            <div className="desc">{t("language.description")}</div>
+            <div className="desc">
+                {t("language.description")}{" "}
+                <a
+                    onClick={() => {
+                        navigateToSetting("usage:language", dispatch);
+                    }}
+                >
+                    {t("language.usageLink")}
+                </a>
+            </div>
             <div className="main col" style={{ gap: "0.5rem" }}>
                 <InputSelect
                     labeled
@@ -162,9 +172,9 @@ const LanguageSettings = (): ReactElement => {
                     onChange={(value) => {
                         void onSelectSource(value);
                     }}
-                    options={sources.map((s) => ({
-                        label: sourceOptionLabel(s),
-                        value: s.id,
+                    options={sources.map((source) => ({
+                        label: sourceOptionLabel(source),
+                        value: source.id,
                     }))}
                 />
                 <div className="row" style={{ gap: "0.5rem", flexWrap: "wrap" }}>

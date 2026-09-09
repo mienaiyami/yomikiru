@@ -13,6 +13,11 @@
 > Issue is only present to users using "Setup" version.
 > For more information, see [Announcement #451](https://github.com/mienaiyami/yomikiru/discussions/451) -->
 
+# unreleased
+
+- feat: Language settings explain that you can make your own translation pack, with a detailed link to Usage steps (export the default zip, extract it, edit `pack.json` and the other JSON files in a text editor, zip again, install, then select the pack).
+- feat: Book reader **Continuous chapters** settings show a short hint plus **More Info** that jumps to the existing Usage section instead of a long in-panel description.
+
 # 2.25.0-beta
 
 ### 2.25.0-beta.7

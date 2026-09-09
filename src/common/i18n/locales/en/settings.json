@@ -1,10 +1,11 @@
 {
     "language": {
         "title": "Language",
-        "description": "Choose the app language. Install community translation packs or export a pack to share.",
+        "description": "Choose the app language, install a community translation pack, or make your own: export the English pack as a zip, edit the text files, zip them again, then install. You do not need programming skills - only a text editor.",
+        "usageLink": "Full beginner steps: export the default pack, extract the zip, edit pack.json and the .json text files, zip them back, and install your language",
         "sourceLabel": "Language source",
         "installPack": "Install pack",
-        "exportPack": "Export",
+        "exportPack": "Export pack",
         "removePack": "Remove pack",
         "installSuccess": "Translation pack installed.",
         "installFailed": "Could not install translation pack.",

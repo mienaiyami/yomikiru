@@ -179,7 +179,78 @@ const Usage = (): ReactElement => {
                     <SettingsLink targetId="setting:language">
                         <b>{t("language.title")}</b>
                     </SettingsLink>{" "}
-                    <Trans i18nKey="language.body" ns="usage" components={{ bold: <b />, code: <code /> }} />
+                    <Trans
+                        i18nKey="language.body"
+                        ns="usage"
+                        components={{
+                            bold: <b />,
+                            code: <code />,
+                            link: <SettingsLink targetId="setting:language" />,
+                        }}
+                    />
+                    <ul>
+                        <li>
+                            <b>{t("language.customPack.title")}</b> {t("language.customPack.intro")}
+                            <ul>
+                                <li>
+                                    <Trans
+                                        i18nKey="language.customPack.stepExport"
+                                        ns="usage"
+                                        components={{ bold: <b />, code: <code /> }}
+                                    />
+                                </li>
+                                <li>
+                                    <Trans
+                                        i18nKey="language.customPack.stepExtract"
+                                        ns="usage"
+                                        components={{ bold: <b />, code: <code /> }}
+                                    />
+                                </li>
+                                <li>
+                                    <Trans
+                                        i18nKey="language.customPack.stepPackJson"
+                                        ns="usage"
+                                        components={{ bold: <b />, code: <code /> }}
+                                    />
+                                </li>
+                                <li>
+                                    <Trans
+                                        i18nKey="language.customPack.stepEditStrings"
+                                        ns="usage"
+                                        components={{ bold: <b />, code: <code /> }}
+                                    />
+                                </li>
+                                <li>
+                                    <Trans
+                                        i18nKey="language.customPack.stepZip"
+                                        ns="usage"
+                                        components={{ bold: <b />, code: <code /> }}
+                                    />
+                                </li>
+                                <li>
+                                    <Trans
+                                        i18nKey="language.customPack.stepInstall"
+                                        ns="usage"
+                                        components={{ bold: <b />, code: <code /> }}
+                                    />
+                                </li>
+                                <li>
+                                    <Trans
+                                        i18nKey="language.customPack.stepSelect"
+                                        ns="usage"
+                                        components={{ bold: <b />, code: <code /> }}
+                                    />
+                                </li>
+                                <li>
+                                    <Trans
+                                        i18nKey="language.customPack.community"
+                                        ns="usage"
+                                        components={{ bold: <b /> }}
+                                    />
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
                 </li>
                 <li id="settings-usage-dbBackup">
                     <SettingsLink targetId="setting:db-backup">

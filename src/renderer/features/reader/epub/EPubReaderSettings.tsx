@@ -1,5 +1,6 @@
 import { BookReaderPresetSection } from "@features/reader/components/ReaderPresetSection";
 import { BookReaderSettingSection } from "@features/reader/components/ReaderSettingSection";
+import { navigateToSetting } from "@features/settings/utils/navigateToSetting";
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -44,6 +45,7 @@ const EPUBReaderSettings = memo(
         fontSizeMinusRef: React.RefObject<HTMLButtonElement>;
     }) => {
         const { t } = useTranslation("reader");
+        const { t: tSettings } = useTranslation("settings");
         const appSettings = useAppSelector((store) => store.appSettings);
         const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
         const bookInReader = useAppSelector(getReaderBook);
@@ -147,7 +149,17 @@ const EPUBReaderSettings = memo(
                             }}
                             paraAfter={t("settings.continuousChaptersEnable")}
                         />
-                        <p className="settingHint">{t("settings.continuousChaptersDesc")}</p>
+                        <p className="settingHint">
+                            {t("settings.continuousChaptersDesc")}{" "}
+                            <a
+                                className="real-anchor"
+                                onClick={() => {
+                                    navigateToSetting("usage:epub-continuous-scroll", dispatch);
+                                }}
+                            >
+                                {tSettings("shared.moreInfo")}
+                            </a>
+                        </p>
                     </BookReaderSettingSection>
                     <BookReaderSettingSection title={t("settings.size")} collapsedKey="size">
                         <InputNumber
