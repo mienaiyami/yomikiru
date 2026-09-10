@@ -47,6 +47,7 @@ export type GalleryTypeFilterBarProps = {
 /**
  * Segmented control for `galleryTypeFilter`.
  * Renders after {@link GalleryTabBar} and shares its pill styling.
+ * `data-tooltip` uses the title key; CSS shows it only while `.galleryTabLabel` is hidden.
  */
 const GalleryTypeFilterBar: React.FC<GalleryTypeFilterBarProps> = ({ activeFilter, onFilterChange }) => {
     const { t } = useTranslation("home");

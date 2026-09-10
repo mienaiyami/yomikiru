@@ -68,6 +68,7 @@ type DetailsTabBarProps<T extends string> = {
 
 /**
  * Details list switcher using the same `galleryTabBar` / `galleryTab` classes as gallery home.
+ * `data-tooltip` mirrors {@link DetailsTab.label}; CSS shows it only while the label is hidden.
  */
 export const DetailsTabBar = <T extends string>({
     tabs,
@@ -81,6 +82,7 @@ export const DetailsTabBar = <T extends string>({
                 key={tab.id}
                 type="button"
                 className={`galleryTab ${activeId === tab.id ? "active" : ""}`}
+                data-tooltip={tab.label}
                 aria-pressed={activeId === tab.id}
                 aria-label={tab.label}
                 onClick={() => onChange(tab.id)}

@@ -89,12 +89,28 @@
                     line-height: 1;
                 }
             }
+
+            /*
+             * Compact: icon-only tabs (label hidden). Keep the max-width and the
+             * complementary min-width tooltip gate in sync so hover tips only appear
+             * while `.galleryTabLabel` is not shown.
+             */
             @media (max-width: 1550px) {
                 .galleryTab {
                     width: 2.3em;
                     .galleryTabLabel {
                         display: none;
                     }
+                }
+            }
+
+            @media (min-width: 1551px) {
+                .galleryTab[data-tooltip]:not(#dummy#dummy)::before {
+                    content: none;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: none;
+                    transition: none;
                 }
             }
         }

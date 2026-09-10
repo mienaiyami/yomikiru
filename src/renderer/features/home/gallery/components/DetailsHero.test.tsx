@@ -1,5 +1,6 @@
 import anilistEn from "@common/i18n/locales/en/anilist.json";
 import home from "@common/i18n/locales/en/home.json";
+import { faBookmark, faBookOpen } from "@fortawesome/free-solid-svg-icons";
 import { renderWithI18n, renderWithProviders } from "@test/renderWithProviders";
 import { fireEvent, screen } from "@testing-library/react";
 import { defaultSettings } from "@utils/settingsSchema";
@@ -12,6 +13,7 @@ import {
     DetailsLayout,
     DetailsListToolbar,
     DetailsMetaBlock,
+    DetailsTabBar,
 } from "./DetailsHero";
 
 /** Splitter clamp only; the rem auto floor lives in CSS on `.details-meta.is-auto`. */
@@ -32,6 +34,26 @@ describe("clampDetailsHeroHeight", () => {
 
     it("passes through a value already inside the range", () => {
         expect(clampDetailsHeroHeight(400, 1000)).toBe(400);
+    });
+});
+
+describe("DetailsTabBar", () => {
+    it("sets data-tooltip to each tab label for compact icon-only chrome", () => {
+        const onChange = vi.fn();
+        renderWithI18n(
+            <DetailsTabBar
+                tabs={[
+                    { id: "chapters", label: "Chapters", icon: faBookOpen },
+                    { id: "bookmarks", label: "Bookmarks", icon: faBookmark },
+                ]}
+                activeId="chapters"
+                onChange={onChange}
+                ariaLabel="Details tabs"
+            />,
+        );
+
+        expect(screen.getByRole("button", { name: "Chapters" })).toHaveAttribute("data-tooltip", "Chapters");
+        expect(screen.getByRole("button", { name: "Bookmarks" })).toHaveAttribute("data-tooltip", "Bookmarks");
     });
 });
 

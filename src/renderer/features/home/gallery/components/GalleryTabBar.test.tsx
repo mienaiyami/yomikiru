@@ -45,4 +45,24 @@ describe("GalleryTabBar", () => {
         fireEvent.click(getByRole("button", { name: home.gallery.tabs.favourites.title }));
         expect(onTabChange).toHaveBeenCalledWith("favourites");
     });
+
+    it("sets data-tooltip to each section title for compact icon-only chrome", () => {
+        const { getByRole } = renderBar();
+        expect(getByRole("button", { name: home.gallery.tabs.continue.title })).toHaveAttribute(
+            "data-tooltip",
+            home.gallery.tabs.continue.title,
+        );
+        expect(getByRole("button", { name: home.gallery.tabs.library.title })).toHaveAttribute(
+            "data-tooltip",
+            home.gallery.tabs.library.title,
+        );
+        expect(getByRole("button", { name: home.gallery.tabs.bookmarks.title })).toHaveAttribute(
+            "data-tooltip",
+            home.gallery.tabs.bookmarks.title,
+        );
+        expect(getByRole("button", { name: home.gallery.tabs.favourites.title })).toHaveAttribute(
+            "data-tooltip",
+            home.gallery.tabs.favourites.title,
+        );
+    });
 });

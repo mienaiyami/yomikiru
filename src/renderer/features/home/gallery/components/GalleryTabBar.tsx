@@ -60,25 +60,30 @@ export type GalleryTabBarProps = {
 
 /**
  * Horizontal section switcher for the gallery home toolbar ({@link GalleryTabId}).
+ * `data-tooltip` uses the title key; CSS shows it only while `.galleryTabLabel` is hidden.
  */
 const GalleryTabBar: React.FC<GalleryTabBarProps> = ({ activeTab, onTabChange }) => {
     const { t } = useTranslation("home");
 
     return (
         <nav className="galleryTabBar" aria-label={t("gallery.tabs.ariaLabel")}>
-            {TABS.map((tab) => (
-                <button
-                    key={tab.id}
-                    type="button"
-                    className={`galleryTab ${activeTab === tab.id ? "active" : ""}`}
-                    onClick={() => onTabChange(tab.id)}
-                    aria-pressed={activeTab === tab.id}
-                    aria-label={t(tab.titleKey)}
-                >
-                    <FontAwesomeIcon icon={tab.icon} className="galleryTabIcon" />
-                    <span className="galleryTabLabel">{t(tab.labelKey)}</span>
-                </button>
-            ))}
+            {TABS.map((tab) => {
+                const title = t(tab.titleKey);
+                return (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        className={`galleryTab ${activeTab === tab.id ? "active" : ""}`}
+                        data-tooltip={title}
+                        onClick={() => onTabChange(tab.id)}
+                        aria-pressed={activeTab === tab.id}
+                        aria-label={title}
+                    >
+                        <FontAwesomeIcon icon={tab.icon} className="galleryTabIcon" />
+                        <span className="galleryTabLabel">{t(tab.labelKey)}</span>
+                    </button>
+                );
+            })}
         </nav>
     );
 };
