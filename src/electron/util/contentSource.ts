@@ -13,6 +13,9 @@ import { createMainLogger } from "@electron/util/logger";
 const log = createMainLogger("contentSource");
 const io = mainLibraryIo;
 
+/** Overlapping extracts of the same destination share one wipe (process-wide). */
+const extractsInFlight = new Map<string, Promise<void>>();
+
 /**
  * Flattens a packed-manga archive by replacing relative path separators with underscores.
  * This keeps every page discoverable from the reader's extracted root, for example:
@@ -49,10 +52,25 @@ const flattenExtractedManga = async (destination: string, source: string): Promi
 /**
  * Extracts a reader-supported archive, flattens packed manga, and records its source path.
  * EPUB directory structure is preserved for container/OPF references.
+ * Overlapping callers for the same destination share one wipe and unzip.
  *
  * @throws {Error} When the source is missing or the platform extractor fails
  */
 export const extractContentArchive = async (source: string, destination: string): Promise<void> => {
+    const destKey = path.resolve(destination);
+    const pending = extractsInFlight.get(destKey);
+    if (pending) return pending;
+    const work = writeExtractedArchive(source, destination);
+    extractsInFlight.set(destKey, work);
+    try {
+        await work;
+    } finally {
+        if (extractsInFlight.get(destKey) === work) extractsInFlight.delete(destKey);
+    }
+};
+
+/** Wipes, extracts, optionally flattens packed manga, and writes the SOURCE marker. */
+const writeExtractedArchive = async (source: string, destination: string): Promise<void> => {
     const ext = path.extname(source).toLowerCase();
     await archiveService.extractAll(source, destination);
     if (ext !== ".epub") await flattenExtractedManga(destination, source);

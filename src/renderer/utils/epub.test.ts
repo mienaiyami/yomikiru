@@ -9,6 +9,7 @@ import {
     inChapterFractionFromSpineRow,
     parseEpubChapter,
     queryEpubPosition,
+    querySelectorSafe,
     readEpubChapter,
     scrollYOfElement,
     settleEpubScroll,
@@ -28,6 +29,54 @@ describe("extractEpub", () => {
         expect(showError).toHaveBeenCalledWith(
             expect.objectContaining({ detail: expect.stringContaining("archive is corrupt") }),
         );
+    });
+
+    it("leaves destination cleanup to unzip instead of deleting the folder first", async () => {
+        const rm = vi.fn();
+        stubFs({ existsSync: () => true, rm });
+        onInvoke("fs:unzip", async () => ({ ok: true, source: "book.epub", destination: "extracted-book" }));
+        await expect(extractEpub("book.epub", "extracted-book", false)).resolves.toBe(true);
+        expect(rm).not.toHaveBeenCalled();
+    });
+
+    it("re-extracts when SOURCE matches but container.xml is missing", async () => {
+        let unzipped = false;
+        onInvoke("fs:unzip", async () => {
+            unzipped = true;
+            return { ok: true, source: "book.epub", destination: "extracted-book" };
+        });
+        stubFs({
+            existsSync: (filePath) => {
+                if (filePath.endsWith("SOURCE")) return true;
+                if (filePath.endsWith("container.xml")) return unzipped;
+                return false;
+            },
+            readFileSync: () => "book.epub",
+        });
+        await expect(extractEpub("book.epub", "extracted-book", true)).resolves.toBe(true);
+        expect(unzipped).toBe(true);
+    });
+
+    it("treats unzip as a failure when container.xml is still missing", async () => {
+        const showError = vi.fn(async () => ({ response: 0, checkboxChecked: false }));
+        onInvoke("fs:unzip", async () => ({ ok: true, source: "book.epub", destination: "extracted-book" }));
+        onInvoke("dialog:error", showError);
+        stubFs({ existsSync: () => false });
+        await expect(extractEpub("book.epub", "extracted-book", false)).resolves.toBe(false);
+        expect(showError).toHaveBeenCalledWith(
+            expect.objectContaining({ detail: expect.stringContaining("container.xml") }),
+        );
+    });
+
+    it("reuses a retained extract only when SOURCE and container.xml are both present", async () => {
+        const unzipCalls = vi.fn(async () => ({ ok: true, source: "book.epub", destination: "extracted-book" }));
+        onInvoke("fs:unzip", unzipCalls);
+        stubFs({
+            existsSync: (filePath) => filePath.endsWith("SOURCE") || filePath.endsWith("container.xml"),
+            readFileSync: () => "book.epub",
+        });
+        await expect(extractEpub("book.epub", "extracted-book", true)).resolves.toBe(true);
+        expect(unzipCalls).not.toHaveBeenCalled();
     });
 });
 
@@ -149,6 +198,18 @@ describe("queryEpubPosition", () => {
         expect(queryEpubPosition(chapter, "div#epub-a")).toBe(chapter);
         expect(queryEpubPosition(chapter, "div#epub-b > p.hit")).toBeNull();
         expect(queryEpubPosition(chapter, "invalid[")).toBeNull();
+    });
+
+    it("does not throw when a stored locator contains an unescaped apostrophe", () => {
+        document.body.innerHTML = `<div id="epub-a2a3Chapter_1104_Devil's_Advocate_44"></div>`;
+        const chapterRoot = document.getElementById("epub-a2a3Chapter_1104_Devil's_Advocate_44");
+        expect(chapterRoot).toBeTruthy();
+        expect(
+            queryEpubPosition(chapterRoot!, "manifest > item[id='a2a3Chapter_1104_Devil's_Advocate_44']"),
+        ).toBeNull();
+        expect(
+            querySelectorSafe(document, "manifest > item[id='a2a3Chapter_1104_Devil's_Advocate_44']"),
+        ).toBeNull();
     });
 });
 

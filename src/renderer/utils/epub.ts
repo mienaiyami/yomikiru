@@ -17,6 +17,9 @@ const log = createRendererLogger("utils/epub");
 /** Marker used to verify that a reusable extraction belongs to the requested EPUB. */
 const EPUB_SOURCE_MARKER = "SOURCE";
 
+/** EPUB package document that must exist at the extract root before the folder can be reused. */
+const EPUB_CONTAINER_SEGMENTS = ["META-INF", "container.xml"] as const;
+
 /** Project issue page linked from the recoverable chapter-read error shown inside the reader. */
 const EPUB_ISSUES_URL = "https://github.com/mienaiyami/yomikiru/issues";
 
@@ -62,7 +65,32 @@ const showEpubExtractError = async (error: unknown): Promise<void> => {
 };
 
 /**
+ * Temp directory for one EPUB basename under the app temp path.
+ * Retained extracts reuse this folder when the SOURCE marker and package container match.
+ */
+export const epubExtractPath = (epubPath: string): string =>
+    window.path.join(window.electron.app.getPath("temp"), `yomikiru-temp-EPub-${window.path.basename(epubPath)}`);
+
+/** Absolute path of the EPUB container document under an extract root. */
+const epubContainerPath = (extractPath: string): string =>
+    window.path.join(extractPath, ...EPUB_CONTAINER_SEGMENTS);
+
+/**
+ * True when a retained extract belongs to `epubPath` and still has a package container.
+ * A previous failed wipe can leave SOURCE without the package container.
+ */
+const canReuseEpubExtract = (extractPath: string, epubPath: string): boolean => {
+    const sourceMarker = window.path.join(extractPath, EPUB_SOURCE_MARKER);
+    return (
+        window.fs.existsSync(sourceMarker) &&
+        window.fs.readFileSync(sourceMarker, "utf-8") === epubPath &&
+        window.fs.existsSync(epubContainerPath(extractPath))
+    );
+};
+
+/**
  * Extracts an EPUB into `extractPath`, reusing a matching retained extraction when allowed.
+ * Destination wipe lives in the main-process unzip so this path does not `rmdir` a folder 7-Zip is filling.
  * Non-retained directories are registered for window-close cleanup.
  */
 export const extractEpub = async (
@@ -72,22 +100,17 @@ export const extractEpub = async (
 ): Promise<boolean> => {
     log.log(`EPUB extract: "${epubPath}" -> "${extractPath}"`);
     try {
-        const sourceMarker = window.path.join(extractPath, EPUB_SOURCE_MARKER);
-        if (
-            keepExtractedFiles &&
-            window.fs.existsSync(sourceMarker) &&
-            window.fs.readFileSync(sourceMarker, "utf-8") === epubPath
-        ) {
+        if (keepExtractedFiles && canReuseEpubExtract(extractPath, epubPath)) {
             log.log(`EPUB extract: reusing existing folder for "${epubPath}"`);
             return true;
         }
 
         if (!keepExtractedFiles) window.app.deleteDirOnClose = extractPath;
-        if (window.fs.existsSync(extractPath)) {
-            await window.fs.rm(extractPath, { recursive: true });
-        }
         const result = await unzip(epubPath, extractPath);
         if (!result.ok) throw new Error(result.message);
+        if (!window.fs.existsSync(epubContainerPath(extractPath))) {
+            throw new Error("EPUB extraction missing container.xml");
+        }
         return true;
     } catch (error) {
         log.error("EPUB extract failed", { epubPath, extractPath }, error);
@@ -117,10 +140,7 @@ const parseEpubPackage = async (extractPath: string): Promise<EpubPackage> => {
  * @throws {Error} When extraction or package parsing fails
  */
 export const readEpubFile = async (epubPath: string, keepExtractedFiles: boolean): Promise<EpubPackage> => {
-    const extractPath = window.path.join(
-        window.electron.app.getPath("temp"),
-        `yomikiru-temp-EPub-${window.path.basename(epubPath)}`,
-    );
+    const extractPath = epubExtractPath(epubPath);
     if (!(await extractEpub(epubPath, extractPath, keepExtractedFiles))) {
         throw new Error("EPUB extraction failed");
     }
@@ -383,6 +403,22 @@ export const inChapterFractionFromSpineRow = (reader: HTMLElement, spineRow: HTM
 };
 
 /**
+ * querySelector that returns null for empty or syntactically invalid selectors.
+ * Stored EPUB locators and OPF ids can contain quotes that break CSS parsing.
+ *
+ * @param root Document or subtree to search
+ */
+export const querySelectorSafe = (root: ParentNode, selector: string): Element | null => {
+    if (!selector) return null;
+    try {
+        return root.querySelector(selector);
+    } catch {
+        /* invalid selector from an older locator */
+        return null;
+    }
+};
+
+/**
  * Finds a stored CSS locator inside one chapter root.
  * Tries a path scoped to the chapter first, then a document-wide path that still sits in this root.
  */
@@ -390,17 +426,13 @@ export const queryEpubPosition = (chapterRoot: HTMLElement, position: string): E
     if (!position) return null;
     try {
         if (chapterRoot.matches(position)) return chapterRoot;
-        const scoped = chapterRoot.querySelector(position);
-        if (scoped) return scoped;
     } catch {
         /* invalid selector from an older locator */
     }
-    try {
-        const global = document.querySelector(position);
-        if (global && chapterRoot.contains(global)) return global;
-    } catch {
-        /* invalid selector from an older locator */
-    }
+    const scoped = querySelectorSafe(chapterRoot, position);
+    if (scoped) return scoped;
+    const global = querySelectorSafe(document, position);
+    if (global && chapterRoot.contains(global)) return global;
     return null;
 };
 

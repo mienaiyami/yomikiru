@@ -3,7 +3,7 @@ import fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { path7z } from "7zip-bin-full";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createArchiveService } from "./archive";
 
 const fixtureRoots: string[] = [];
@@ -83,5 +83,28 @@ describe("ArchiveService", () => {
 
         expect(entry).toMatchObject({ path: "001.jpg", isDirectory: false });
         expect(await readStream(await archive.openEntry(archivePath, entry!))).toEqual(Buffer.from("cb7-page"));
+    });
+
+    it("retries wiping the destination when recursive remove reports ENOTEMPTY", async () => {
+        const root = await createFixtureRoot();
+        const sourceDir = path.join(root, "source");
+        const archivePath = path.join(root, "comic.cbz");
+        const destination = path.join(root, "extract");
+        await fsp.mkdir(sourceDir);
+        await fsp.writeFile(path.join(sourceDir, "001.jpg"), "page");
+        const archive = createArchiveService();
+        await archive.createZip(sourceDir, archivePath);
+
+        const rmSpy = vi.spyOn(fsp, "rm");
+        try {
+            rmSpy.mockRejectedValueOnce(
+                Object.assign(new Error("ENOTEMPTY: directory not empty, rmdir"), { code: "ENOTEMPTY" }),
+            );
+            await archive.extractAll(archivePath, destination);
+            expect(rmSpy).toHaveBeenCalled();
+            await expect(fsp.readFile(path.join(destination, "001.jpg"))).resolves.toEqual(Buffer.from("page"));
+        } finally {
+            rmSpy.mockRestore();
+        }
     });
 });

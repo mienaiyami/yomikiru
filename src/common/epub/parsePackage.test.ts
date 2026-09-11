@@ -132,4 +132,28 @@ describe("parseExtractedEpubDir", () => {
             chapterId: "chapter",
         });
     });
+
+    it("resolves spine idrefs whose manifest ids contain apostrophes", async () => {
+        const root = path.join("epub-apostrophe-id");
+        const container = path.join(root, "META-INF", "container.xml");
+        const opf = path.join(root, "OEBPS", "content.opf");
+        const chapter = path.join(root, "OEBPS", "Text", "chapter.xhtml");
+        const chapterId = "a2a3Chapter_1104_Devil's_Advocate_44";
+        const files: Record<string, string> = {
+            [root]: "",
+            [container]: `<container><rootfile full-path="OEBPS/content.opf"/></container>`,
+            [opf]: `<?xml version="1.0"?>
+                <package xmlns:dc="http://purl.org/dc/elements/1.1/">
+                  <metadata><dc:title>Quoted</dc:title></metadata>
+                  <manifest>
+                    <item id="${chapterId}" href="Text/chapter.xhtml" media-type="application/xhtml+xml"/>
+                  </manifest>
+                  <spine><itemref idref="${chapterId}"/></spine>
+                </package>`,
+            [chapter]: "<html/>",
+        };
+        const pkg = await parseExtractedEpubDir(root, ioForFiles(files));
+        expect(pkg.spine).toEqual([{ id: chapterId, href: chapter }]);
+        expect(pkg.manifest.get(chapterId)?.href).toBe(chapter);
+    });
 });

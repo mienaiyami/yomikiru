@@ -3,12 +3,16 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { PassThrough, type Readable } from "node:stream";
 import { app } from "electron";
+import { withRetry } from "./retry";
 
 /** Resource directory containing the target-specific 7-Zip runtime in packaged builds. */
 const ARCHIVE_BINARY_RESOURCE_DIRECTORY = "7zip";
 
 /** Archives must not make the scanner retain unbounded technical listing output. */
 const MAX_LIST_OUTPUT_BYTES = 16 * 1024 * 1024;
+
+/** Node codes for a recursive remove that can succeed after a short wait. */
+const RETRYABLE_RM_CODES = ["ENOTEMPTY", "EBUSY", "EPERM", "EACCES"] as const;
 
 /** Identifies ASCII control characters that make an archive-internal path unsafe. */
 const hasControlCharacter = (value: string): boolean =>
@@ -138,6 +142,17 @@ const processError = (operation: string, exitCode: number | null, stderr: string
         `${operation} failed${exitCode === null ? "" : ` (${exitCode})`}: ${stderr.trim() || "7-Zip returned no detail"}`,
     );
 
+/** Node `code` or message for a recursive remove that can succeed after a short wait. */
+const isRetryableDirectoryRemoveError = (error: unknown): boolean => {
+    const code =
+        typeof error === "object" && error !== null && "code" in error && typeof error.code === "string"
+            ? error.code
+            : "";
+    if (RETRYABLE_RM_CODES.some((retryCode) => retryCode === code)) return true;
+    const message = error instanceof Error ? error.message : String(error);
+    return RETRYABLE_RM_CODES.some((retryCode) => message.includes(retryCode));
+};
+
 /** Waits for a 7-Zip command that writes no application data to stdout. */
 const waitForProcess = async (child: ArchiveProcess, operation: string): Promise<void> =>
     new Promise((resolve, reject) => {
@@ -222,7 +237,12 @@ export const createArchiveService = (
         await fs.access(archivePath);
         // list first so malformed paths are rejected before 7-Zip writes into the destination
         await listEntries(archivePath, options);
-        await fs.rm(destination, { recursive: true, force: true });
+        await withRetry(() => fs.rm(destination, { recursive: true, force: true }), {
+            maxRetries: 5,
+            retryDelay: 100,
+            backoffMultiplier: 1.5,
+            shouldRetry: (error) => isRetryableDirectoryRemoveError(error),
+        });
         await fs.mkdir(destination, { recursive: true });
         await waitForProcess(
             spawnProcess(["x", "-y", "-bd", `-o${destination}`, "--", archivePath], options),

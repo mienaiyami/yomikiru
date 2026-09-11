@@ -41,10 +41,12 @@ import {
     clearEpubFindHighlights,
     type EpubReadingPlace,
     epubChapterRootId,
+    epubExtractPath,
     highlightNthFindMatch,
     inChapterFractionFromSpineRow,
     originSpineIndexFromClick,
     queryEpubPosition,
+    querySelectorSafe,
     readEpubChapter,
     readEpubFile,
     spineFileWeights,
@@ -393,15 +395,15 @@ const EPubReader: React.FC = () => {
 
     /** Opens the package from a complete live, requested, or stored chapter/locator pair. */
     const loadEPub = async (link: string, generation: number) => {
-        if (window.fs.existsSync(window.app.deleteDirOnClose))
+        link = window.path.normalize(link);
+        const extractPath = epubExtractPath(link);
+        const previousTemp = window.app.deleteDirOnClose;
+        if (previousTemp && previousTemp !== extractPath && window.fs.existsSync(previousTemp))
             await window.fs
-                .rm(window.app.deleteDirOnClose, {
-                    recursive: true,
-                })
+                .rm(previousTemp, { recursive: true, force: true })
                 .catch((err) => log.error("temp extract dir delete failed", err));
         if (generation !== loadGenerationRef.current) return;
 
-        link = window.path.normalize(link);
         await readEpubFile(link, appSettings.keepExtractedFiles)
             .then(async (ed) => {
                 if (generation !== loadGenerationRef.current) return;
@@ -451,8 +453,11 @@ const EPubReader: React.FC = () => {
                 didInitialSpineScrollRef.current = false;
                 setSpineChapter(currentChapterIndex, "");
                 // finish weights before mounting so late IO cannot reset measurements during restoration
-                if (isContinuousScroll)
-                    setSpineWeights(await spineFileWeights(ed.spine.map((spineItem) => spineItem.href)));
+                if (isContinuousScroll) {
+                    const weights = await spineFileWeights(ed.spine.map((spineItem) => spineItem.href));
+                    if (generation !== loadGenerationRef.current) return;
+                    setSpineWeights(weights);
+                }
                 if (generation !== loadGenerationRef.current) return;
                 setEpubData(ed);
                 dispatch(setReaderLoading(null));
@@ -732,7 +737,7 @@ const EPubReader: React.FC = () => {
         if (!((zenMode && !window.electron.currentWindow.isMaximized()) || (!zenMode && !wasMaximized))) return;
         const timeoutId = window.setTimeout(() => {
             if (bookInReader?.progress?.position)
-                document.querySelector(bookInReader.progress.position)?.scrollIntoView({
+                querySelectorSafe(document, bookInReader.progress.position)?.scrollIntoView({
                     behavior: "auto",
                     block: "start",
                 });
@@ -746,7 +751,7 @@ const EPubReader: React.FC = () => {
             else {
                 const position = bookInReader?.progress?.position;
                 if (position)
-                    document.querySelector(position)?.scrollIntoView({
+                    querySelectorSafe(document, position)?.scrollIntoView({
                         behavior: "auto",
                         block: "start",
                     });
@@ -1001,7 +1006,7 @@ const EPubReader: React.FC = () => {
         if (isContinuousScroll) return;
         const position = bookInReader?.progress?.position;
         if (position)
-            document.querySelector(position)?.scrollIntoView({
+            querySelectorSafe(document, position)?.scrollIntoView({
                 behavior: "auto",
                 block: "start",
             });

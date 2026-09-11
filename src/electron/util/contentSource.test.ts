@@ -4,16 +4,25 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { listEntries, openEntry } = vi.hoisted(() => ({ listEntries: vi.fn(), openEntry: vi.fn() }));
+const { listEntries, openEntry, extractAll } = vi.hoisted(() => ({
+    listEntries: vi.fn(),
+    openEntry: vi.fn(),
+    extractAll: vi.fn(),
+}));
 
 vi.mock("@electron/util/archive", () => ({
-    archiveService: { listEntries, openEntry, extractAll: vi.fn() },
+    archiveService: { listEntries, openEntry, extractAll },
 }));
 vi.mock("@electron/util/logger", () => ({
     createMainLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
-import { withEpubArchivePackage, withResolvedFirstImage, withResolvedMangaLibraryCover } from "./contentSource";
+import {
+    extractContentArchive,
+    withEpubArchivePackage,
+    withResolvedFirstImage,
+    withResolvedMangaLibraryCover,
+} from "./contentSource";
 
 const roots: string[] = [];
 
@@ -37,6 +46,7 @@ describe("content archive sources", () => {
     afterEach(async () => {
         listEntries.mockReset();
         openEntry.mockReset();
+        extractAll.mockReset();
         await Promise.all(roots.splice(0).map((root) => fsp.rm(root, { recursive: true, force: true })));
     });
 
@@ -122,5 +132,28 @@ describe("content archive sources", () => {
         const result = await withEpubArchivePackage(archivePath, async () => "unexpected");
 
         expect(result).toBeUndefined();
+    });
+
+    it("lets overlapping extracts of the same destination share one wipe and write SOURCE once", async () => {
+        const dest = path.join(os.tmpdir(), `yomikiru-extract-coalesce-${Date.now()}`);
+        roots.push(dest);
+        await fsp.mkdir(dest, { recursive: true });
+        let started = 0;
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        extractAll.mockImplementation(async () => {
+            started += 1;
+            await gate;
+        });
+        const source = await createArchivePath("book.epub");
+        const first = extractContentArchive(source, dest);
+        const second = extractContentArchive(source, dest);
+        await vi.waitFor(() => expect(started).toBe(1));
+        release();
+        await Promise.all([first, second]);
+        expect(extractAll).toHaveBeenCalledTimes(1);
+        expect(await fsp.readFile(path.join(dest, "SOURCE"), "utf-8")).toBe(source);
     });
 });
