@@ -157,7 +157,6 @@
         "shuffleLabelOff": "Off",
         "openRandomChapter": "Open Random Chapter",
         "showInBookToc": "Show in-book TOC",
-        "tooManyChapters": "Too many chapters, click \"Content\" to hide list to improve performance of application.",
         "noNcx": "No NCX found in epub, use \"Show in-book TOC\" to for Table of Contents.",
         "noToc": "No TOC found in epub",
         "noBookmarks": "No Bookmarks",

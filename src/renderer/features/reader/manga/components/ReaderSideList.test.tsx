@@ -7,7 +7,7 @@ import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { CHAPTER_NAV_NONE } from "@utils/mangaChapters";
 import { defaultSettings } from "@utils/settingsSchema";
 import { createRef, useState } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import ReaderSideList from "./ReaderSideList";
 
 const { openInReader, setContextMenuData, closeReader } = vi.hoisted(() => ({
@@ -24,6 +24,46 @@ vi.mock("@renderer/App", () => ({
         closeReader,
     }),
 }));
+
+/**
+ * happy-dom leaves client/offset sizes at 0 for percentage-height side-list panes;
+ * TanStack then mounts no virtual rows. Give `.location-cont` a usable height.
+ */
+beforeAll(() => {
+    const sizeFor = (el: HTMLElement): number => {
+        const inline = el.style?.height;
+        if (inline) {
+            const px = Number.parseFloat(inline);
+            if (!Number.isNaN(px)) return px;
+        }
+        if (el.classList?.contains("location-cont")) return 400;
+        return 0;
+    };
+    Object.defineProperty(HTMLElement.prototype, "clientHeight", {
+        configurable: true,
+        get(this: HTMLElement) {
+            return sizeFor(this);
+        },
+    });
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+        configurable: true,
+        get(this: HTMLElement) {
+            return sizeFor(this);
+        },
+    });
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+        configurable: true,
+        get() {
+            return 280;
+        },
+    });
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+        configurable: true,
+        get() {
+            return 280;
+        },
+    });
+});
 
 const SERIES = SAMPLE_MANGA_LINK;
 const CH01 = path.join(SERIES, "ch01");

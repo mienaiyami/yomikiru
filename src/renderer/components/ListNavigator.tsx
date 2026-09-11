@@ -3,7 +3,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { type PageSearchTargetOptions, usePageSearchFocus } from "@renderer/hooks/usePageSearchFocus";
 import { useAppSelector } from "@store/hooks";
 import { getShortcutsMapped } from "@store/shortcuts";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import {
+    observeElementRect as defaultObserveElementRect,
+    type Rect,
+    useVirtualizer,
+    type Virtualizer,
+} from "@tanstack/react-virtual";
 import { keyFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
 import { scrollChildInContainer } from "@utils/utils";
@@ -22,6 +27,106 @@ import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
 
 const log = createRendererLogger("components/ListNavigator");
+
+/**
+ * Prefer the element's layout offset size when a ResizeObserver reading is 0.
+ *
+ * TanStack's default observer can overwrite a good first `offsetHeight` with a
+ * 0 `borderBoxSize` after classic/gallery remount. `virtualizer.measure()` only
+ * clears item sizes and does not refresh scrollRect, so `getVirtualItems()`
+ * stays empty (blank History / Bookmarks).
+ *
+ * @param element - TanStack scroll node (`getScrollElement()`)
+ * @param rect - Observer callback size (RO `borderBoxSize` or `offset*` getRect)
+ */
+export const resolveObservedScrollRect = (element: Element | Window | null, rect: Rect): Rect => {
+    if (
+        element instanceof HTMLElement &&
+        ((rect.height === 0 && element.offsetHeight > 0) || (rect.width === 0 && element.offsetWidth > 0))
+    ) {
+        return { width: element.offsetWidth, height: element.offsetHeight };
+    }
+    return rect;
+};
+
+/**
+ * TanStack scrollport observer that applies {@link resolveObservedScrollRect}.
+ */
+const observeScrollElementRect = <T extends Element>(
+    instance: Virtualizer<T, Element>,
+    cb: (rect: Rect) => void,
+): (() => void) | undefined => {
+    return defaultObserveElementRect(instance, (rect) => {
+        cb(resolveObservedScrollRect(instance.scrollElement, rect));
+    });
+};
+
+/**
+ * Stable identity for a list data item so TanStack Virtual can keep measured
+ * sizes when filter/search reshuffles indices. Prefers `link` / `id` on objects;
+ * strings and numbers are used as-is; otherwise falls back to the item index.
+ * Row chrome heights live next to the row components that own that chrome (not here).
+ */
+export const resolveListItemKey = (item: unknown, fallbackIndex: number): string | number => {
+    if (typeof item === "string" || typeof item === "number") return item;
+    if (item && typeof item === "object") {
+        const record = item as Record<string, unknown>;
+        if (typeof record.link === "string" || typeof record.link === "number") return record.link;
+        if (typeof record.id === "string" || typeof record.id === "number") return record.id;
+    }
+    return fallbackIndex;
+};
+
+/**
+ * TanStack Virtual row key for a 1-column or multi-column strip. Joining cell
+ * keys means a filter that changes which items sit in a row invalidates that
+ * row's cached size (index-only keys leave stale heights and visible gaps).
+ *
+ * @param filteredItems - Currently visible items after search/filter
+ * @param rowIndex - Virtualizer row index (not the flat item index when cols > 1)
+ * @param columnCount - Items per virtual row
+ * @param getItemKey - Per-item identity; defaults to {@link resolveListItemKey}
+ */
+export const buildVirtualRowKey = <T,>(
+    filteredItems: readonly T[],
+    rowIndex: number,
+    columnCount: number,
+    getItemKey: (item: T, itemIndex: number) => string | number = resolveListItemKey,
+): string | number => {
+    const startIndex = rowIndex * columnCount;
+    if (columnCount <= 1) {
+        const item = filteredItems[startIndex];
+        return item === undefined ? rowIndex : getItemKey(item, startIndex);
+    }
+    const parts: string[] = [];
+    for (let c = 0; c < columnCount; c += 1) {
+        const itemIndex = startIndex + c;
+        if (itemIndex >= filteredItems.length) break;
+        parts.push(String(getItemKey(filteredItems[itemIndex], itemIndex)));
+    }
+    return parts.length > 0 ? parts.join("\0") : rowIndex;
+};
+
+/**
+ * Round DOM measurements so fractional DPI does not accumulate into hairline
+ * gaps between absolutely positioned rows. Prefer `offsetHeight`/`offsetWidth`
+ * (integer layout size, what TanStack used historically) over
+ * `getBoundingClientRect` floats; fall back to the rect only for non-HTML nodes.
+ */
+export const measureVirtualElementSize = (
+    element: Element,
+    entry: ResizeObserverEntry | undefined,
+    horizontal: boolean,
+): number => {
+    if (entry?.borderBoxSize?.[0]) {
+        const box = entry.borderBoxSize[0];
+        return Math.round(horizontal ? box.inlineSize : box.blockSize);
+    }
+    if (element instanceof HTMLElement) {
+        return horizontal ? element.offsetWidth : element.offsetHeight;
+    }
+    return Math.round(element.getBoundingClientRect()[horizontal ? "width" : "height"]);
+};
 
 /**
  * Row for listSelect / contextMenu. Classic list rows set `data-focused` on the
@@ -53,6 +158,12 @@ type ListNavigatorContextType<T> = {
     onContextMenu?: (element: HTMLElement) => void;
     onSelect?: (element: HTMLElement) => void;
     emptyMessage: string;
+    /**
+     * Stable identity for each data item. When omitted, {@link resolveListItemKey}
+     * is used (`link` / `id` / primitive). Required for correct measured heights
+     * after search/filter reshuffles indices.
+     */
+    getItemKey?: (item: T) => string | number;
 };
 
 const ListNavigatorContext = createContext<ListNavigatorContextType<any> | null>(null);
@@ -89,6 +200,12 @@ export type ListNavigatorProps<T> = {
      * unpinned filter is cleared the same way as an items-identity change.
      */
     resetFilterKey?: unknown;
+    /**
+     * Stable identity for each data item (library link, bookmark id, etc.).
+     * When omitted, {@link resolveListItemKey} is used. Pass this when items
+     * lack `link`/`id` or need a custom id space.
+     */
+    getItemKey?: (item: T) => string | number;
     children: React.ReactNode;
 };
 
@@ -104,6 +221,7 @@ function ListNavigatorProviderComponent<T>({
     onFilteredItemsChange,
     persistFilterOnItemsChange,
     resetFilterKey,
+    getItemKey,
     children,
 }: ListNavigatorProps<T>) {
     const { t } = useTranslation("common");
@@ -294,6 +412,7 @@ function ListNavigatorProviderComponent<T>({
             onContextMenu,
             onSelect,
             emptyMessage: resolvedEmptyMessage,
+            getItemKey,
         }),
         [
             items,
@@ -306,6 +425,7 @@ function ListNavigatorProviderComponent<T>({
             onContextMenu,
             onSelect,
             resolvedEmptyMessage,
+            getItemKey,
         ],
     );
 
@@ -527,8 +647,9 @@ export type VirtualListProps = {
     /** Ref to the element that has overflow-y: auto/scroll */
     scrollContainerRef: React.RefObject<HTMLElement | null>;
     /**
-     * Estimated row height in px. Used by useVirtualizer as the initial size;
-     * row elements are measured to refine height.
+     * Row height in px. For the default fixed-size path this is the exact size
+     * used for layout (no DOM measure). When {@link dynamicItemSize} is on, it
+     * is only the initial estimate before measure.
      */
     estimatedItemSize: number;
     /** Items per row for grid layouts; 1 for single-column list. @default 1 */
@@ -541,16 +662,56 @@ export type VirtualListProps = {
     gapPx?: number;
     /**
      * Vertical gap between virtual rows, passed to TanStack as `gap` (scroll-axis spacing).
-     * Use `0` for layouts that stack without inter-row gap (e.g. gallery list mode).
-     * @default 16
+     * Gallery cover grid passes the same gap as CSS `gap` on `.galleryList`; stacked lists use `0`.
+     * @default 0
      */
     rowGapPx?: number;
+    /**
+     * When true (default), VirtualList wraps each virtual row in its own `<li>`
+     * (gallery grid/list tiles). When false, `renderItem` must return the row
+     * `<li>` (e.g. {@link ListItem}); VirtualList positions that node.
+     */
+    hostRowElement?: boolean;
+    /**
+     * When false (default), every row uses {@link estimatedItemSize} and skips
+     * ResizeObserver measure - correct for uniform classic / gallery / side lists.
+     * When true, rows are measured after mount (variable-height content only).
+     */
+    dynamicItemSize?: boolean;
+    /**
+     * Filtered-items index to mount and scroll into view (locate / auto-focus current).
+     * Ignored when negative or undefined.
+     */
+    ensureVisibleIndex?: number;
+    /** Alignment for {@link ensureVisibleIndex}. @default "auto" */
+    ensureVisibleAlign?: "auto" | "start" | "center" | "end";
+    /**
+     * Bumps to re-run scroll when {@link ensureVisibleIndex} is unchanged
+     * (e.g. locate button clicked again).
+     */
+    ensureVisibleNonce?: number;
+    /**
+     * Extra scroll-axis space before the first row (TanStack `paddingStart`).
+     * Prefer this over CSS padding-top on the scroll parent so total size and
+     * scroll-into-view stay aligned.
+     */
+    paddingStartPx?: number;
+    /** Extra scroll-axis space after the last row (TanStack `paddingEnd`). */
+    paddingEndPx?: number;
+    /**
+     * Inset used when scrolling a row into view (TanStack `scrollPaddingStart`).
+     * Match the scroll parent's visual top inset when that inset is not in
+     * {@link paddingStartPx}.
+     */
+    scrollPaddingStartPx?: number;
+    /** Inset for scroll-into-view at the bottom edge (`scrollPaddingEnd`). */
+    scrollPaddingEndPx?: number;
 };
 
 /**
  * Optional virtualized list: same context as {@link List}, but only visible items mount.
  *
- * **Why virtual “rows” instead of TanStack `lanes`:** In v3, `lanes` implements a
+ * **Why virtual "rows" instead of TanStack `lanes`:** In v3, `lanes` implements a
  * masonry-style column fill (shortest column gets the next item), i.e. column-major order.
  * A CSS Grid gallery is row-major (fill the row, then the next). For uniform grids, one
  * virtual item per logical row matches that layout and keeps `gap` predictable: `rowGapPx`
@@ -564,48 +725,142 @@ const VirtualListComponent = ({
     columnCount: columnCountProp = 1,
     overscan = 5,
     gapPx = 16,
-    rowGapPx = 16,
+    rowGapPx = 0,
+    hostRowElement = true,
+    dynamicItemSize = false,
+    ensureVisibleIndex,
+    ensureVisibleAlign = "auto",
+    ensureVisibleNonce,
+    paddingStartPx = 0,
+    paddingEndPx = 0,
+    scrollPaddingStartPx = 0,
+    scrollPaddingEndPx = 0,
 }: VirtualListProps) => {
-    const { filteredItems, focused, listRef, renderItem, emptyMessage } = useListNavigator();
+    const { filteredItems, focused, listRef, renderItem, emptyMessage, getItemKey } = useListNavigator();
 
     const cols = Math.max(1, columnCountProp);
     const rowCount = Math.ceil(filteredItems.length / cols);
 
+    const resolveItemKey = useCallback(
+        (item: (typeof filteredItems)[number], itemIndex: number) =>
+            getItemKey ? getItemKey(item) : resolveListItemKey(item, itemIndex),
+        [getItemKey],
+    );
+
+    /*
+     * Identity keys (not row index): after search/filter the same index holds a
+     * different item. Index-only keys leave stale size cache entries and visible
+     * gaps; identity keys keep React remounts and cache aligned with data.
+     */
+    const getVirtualRowKey = useCallback(
+        (rowIndex: number) => buildVirtualRowKey(filteredItems, rowIndex, cols, resolveItemKey),
+        [cols, filteredItems, resolveItemKey],
+    );
+
     const virtualizer = useVirtualizer({
         count: rowCount,
+        /*
+         * Read the parent scroll node from the ref each time (TanStack's documented
+         * pattern). Do not mirror it into React state: that forces an extra render
+         * on mount and left getVirtualItems() empty until the layout effect ran.
+         */
         getScrollElement: () => scrollContainerRef.current,
         estimateSize: (_index: number) => estimatedItemSize,
+        getItemKey: getVirtualRowKey,
         gap: rowGapPx,
         overscan,
-        useAnimationFrameWithResizeObserver: true,
+        paddingStart: paddingStartPx,
+        paddingEnd: paddingEndPx,
+        scrollPaddingStart: scrollPaddingStartPx,
+        scrollPaddingEnd: scrollPaddingEndPx,
+        observeElementRect: observeScrollElementRect,
+        /*
+         * Fixed-size path omits measureElement on purpose: these product lists are
+         * uniform row height. Measuring adds ResizeObserver work per row and was
+         * the source of phantom gaps when cached sizes disagreed with estimates.
+         * Callers that truly vary height pass dynamicItemSize.
+         */
+        ...(dynamicItemSize
+            ? {
+                  measureElement: (
+                      element: Element,
+                      entry: ResizeObserverEntry | undefined,
+                      instance: { options: { horizontal?: boolean } },
+                  ) => measureVirtualElementSize(element, entry, Boolean(instance.options.horizontal)),
+                  useAnimationFrameWithResizeObserver: true,
+              }
+            : {}),
     });
 
+    /*
+     * The parent scroll ref is often still null in the first layout pass (child
+     * VirtualList vs parent scroller). TanStack then never observes and
+     * getVirtualItems() stays empty. Re-bind on the next frame once the node
+     * exists. {@link resolveObservedScrollRect} still rejects 0-size RO readings.
+     */
+    useLayoutEffect(() => {
+        const bindScrollElement = () => {
+            if (!scrollContainerRef.current) return;
+            virtualizer._willUpdate();
+        };
+        bindScrollElement();
+        const rafId = requestAnimationFrame(bindScrollElement);
+        return () => {
+            cancelAnimationFrame(rafId);
+        };
+    }, [scrollContainerRef, virtualizer]);
+
     useEffect(() => {
+        if (!dynamicItemSize) return;
         const id = requestAnimationFrame(() => {
             virtualizer.measure();
         });
         return () => {
             cancelAnimationFrame(id);
         };
-    }, [cols, estimatedItemSize, filteredItems.length, rowGapPx, virtualizer]);
+    }, [
+        cols,
+        dynamicItemSize,
+        estimatedItemSize,
+        filteredItems,
+        getVirtualRowKey,
+        paddingEndPx,
+        paddingStartPx,
+        rowGapPx,
+        scrollPaddingEndPx,
+        scrollPaddingStartPx,
+        virtualizer,
+    ]);
 
-    useEffect(() => {
+    /* layout: listSelect/contextMenu must see [data-focused] after wrap-around */
+    useLayoutEffect(() => {
         if (focused < 0 || filteredItems.length === 0) return;
         const rowIndex = Math.floor(focused / cols);
         /* instant: held listUp/listDown must not queue smooth animations */
         virtualizer.scrollToIndex(rowIndex, { align: "auto", behavior: "instant" });
     }, [cols, focused, filteredItems.length, virtualizer]);
 
+    useLayoutEffect(() => {
+        if (ensureVisibleIndex === undefined || ensureVisibleIndex < 0) return;
+        if (ensureVisibleIndex >= filteredItems.length) return;
+        const rowIndex = Math.floor(ensureVisibleIndex / cols);
+        virtualizer.scrollToIndex(rowIndex, { align: ensureVisibleAlign, behavior: "instant" });
+    }, [cols, ensureVisibleAlign, ensureVisibleIndex, ensureVisibleNonce, filteredItems.length, virtualizer]);
+
     if (filteredItems.length === 0) {
         return <p className="empty-message">{emptyMessage}</p>;
     }
 
     const vItems = virtualizer.getVirtualItems();
+    const olClassName = `${className} is-virtual`.trim();
+    /* fixed rows use virtualRow.size; dynamic rows size from content then measure */
+    const rowHeight = (virtualRow: { size: number }): React.CSSProperties =>
+        dynamicItemSize ? { height: "auto" } : { height: virtualRow.size };
 
     return (
         <ol
             ref={listRef}
-            className={className}
+            className={olClassName}
             style={{
                 display: "block",
                 position: "relative",
@@ -618,34 +873,72 @@ const VirtualListComponent = ({
         >
             {vItems.map((virtualRow) => {
                 const startIndex = virtualRow.index * cols;
+                if (!hostRowElement) {
+                    const item = filteredItems[startIndex];
+                    const rendered = renderItem(item, startIndex, focused === startIndex);
+                    if (!React.isValidElement(rendered)) {
+                        log.error("VirtualList hostRowElement=false requires renderItem to return an element");
+                        return null;
+                    }
+                    const existingStyle =
+                        rendered.props &&
+                        typeof rendered.props === "object" &&
+                        "style" in rendered.props &&
+                        rendered.props.style &&
+                        typeof rendered.props.style === "object"
+                            ? (rendered.props.style as React.CSSProperties)
+                            : {};
+                    /* DOM hosts (native <li>) must not receive ListItem-only props */
+                    const isCompositeRow = typeof rendered.type !== "string";
+                    return React.cloneElement(
+                        rendered as React.ReactElement<{
+                            style?: React.CSSProperties;
+                            "data-index"?: number;
+                            scrollManagedByParent?: boolean;
+                            ref?: React.Ref<HTMLLIElement>;
+                        }>,
+                        {
+                            key: String(virtualRow.key),
+                            "data-index": virtualRow.index,
+                            ...(isCompositeRow ? { scrollManagedByParent: true } : {}),
+                            ...(dynamicItemSize ? { ref: virtualizer.measureElement } : {}),
+                            style: {
+                                ...existingStyle,
+                                position: "absolute",
+                                top: virtualRow.start,
+                                left: 0,
+                                width: "100%",
+                                ...rowHeight(virtualRow),
+                            },
+                        },
+                    );
+                }
+
                 const cells: React.ReactNode[] = [];
                 for (let c = 0; c < cols; c += 1) {
                     const index = startIndex + c;
                     if (index >= filteredItems.length) break;
                     const item = filteredItems[index];
                     cells.push(
-                        <React.Fragment key={index}>{renderItem(item, index, focused === index)}</React.Fragment>,
+                        <React.Fragment key={String(resolveItemKey(item, index))}>
+                            {renderItem(item, index, focused === index)}
+                        </React.Fragment>,
                     );
                 }
                 return (
                     <li
                         key={String(virtualRow.key)}
                         data-index={virtualRow.index}
-                        ref={virtualizer.measureElement}
+                        ref={dynamicItemSize ? virtualizer.measureElement : undefined}
                         style={{
                             position: "absolute",
-                            top: 0,
+                            top: virtualRow.start,
                             left: 0,
-                            right: 0,
+                            width: "100%",
                             display: "grid",
                             gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
                             gap: `${gapPx}px`,
-                            transform: `translateY(${virtualRow.start}px)`,
-                            /**
-                             * Do not set `minHeight` to `virtualRow.size`: that value is only an
-                             * estimate. Forcing it makes rows taller than their content (visible gap
-                             * under tiles when grid items use `align-items: start`).
-                             */
+                            ...rowHeight(virtualRow),
                             alignItems: "start",
                         }}
                     >

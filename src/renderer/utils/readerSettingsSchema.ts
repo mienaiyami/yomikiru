@@ -310,7 +310,6 @@ export const bookReaderSettingsSchema = z.object({
     textSelect: z.boolean(),
     /**
      * Auto-scroll the side-list to keep the current chapter visible.
-     * NOTE: can cause a performance issue with very large TOCs.
      */
     focusChapterInList: z.boolean(),
     /** Start with the chapter side-list hidden. */

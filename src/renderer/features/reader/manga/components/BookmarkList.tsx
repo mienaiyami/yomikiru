@@ -1,13 +1,13 @@
 import type { MangaBookmark } from "@common/types/db";
 import { useAppContext } from "@renderer/App";
-import ListItem from "@renderer/components/ListItem";
+import ListItem, { LIST_ITEM_ROW_PX } from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { useAppSelector } from "@store/hooks";
 import dateUtils from "@utils/date";
 import { dialogUtils } from "@utils/dialog";
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("manga/BookmarkList");
@@ -39,6 +39,7 @@ const BookmarkList: React.FC = () => {
         () => [...bookmarks].sort((b, a) => a.createdAt.getTime() - b.createdAt.getTime()),
         [bookmarks],
     );
+    const scrollRef = useRef<HTMLDivElement>(null);
     const handleBookmarkClick = useCallback(
         (e: React.MouseEvent<HTMLAnchorElement>) => {
             e.preventDefault();
@@ -123,13 +124,18 @@ const BookmarkList: React.FC = () => {
     };
 
     return (
-        <div className="location-cont">
+        <div className="location-cont" ref={scrollRef}>
             <ListNavigator.Provider
                 items={bookmarksArray}
                 renderItem={renderBookmarkItem}
                 emptyMessage={t("sideList.noBookmarks")}
             >
-                <ListNavigator.List />
+                <ListNavigator.VirtualList
+                    scrollContainerRef={scrollRef}
+                    estimatedItemSize={LIST_ITEM_ROW_PX}
+                    hostRowElement={false}
+                    rowGapPx={0}
+                />
             </ListNavigator.Provider>
         </div>
     );

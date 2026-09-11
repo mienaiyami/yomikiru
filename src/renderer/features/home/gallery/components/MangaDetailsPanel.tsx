@@ -58,7 +58,6 @@ import {
 import { createRendererLogger } from "@utils/logger";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import { listMangaChapterChildren, type MangaChapterChild, resolveMangaStartPath } from "@utils/mangaChapters";
-import { scrollChildInContainer } from "@utils/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
@@ -82,6 +81,18 @@ const log = createRendererLogger("gallery/MangaDetailsPanel");
 
 /** Ordered inner-tab ids shared by manga details chrome and shortcut cycling. */
 const MANGA_DETAILS_TAB_IDS = ["content", "bookmarks"] as const;
+
+/**
+ * Vertical inset for the chapters VirtualList (matches former `.chapters-list` padding).
+ * Kept on the virtualizer so the last row can scroll fully into view.
+ */
+const CHAPTERS_LIST_PADDING_Y_PX = 16;
+
+/**
+ * Estimated `.chapter-item` row height before measure (padding + label line).
+ * Larger than classic / reader side-list row estimates.
+ */
+const CHAPTERS_LIST_ROW_ESTIMATE_PX = 52;
 
 type MangaDetailsTabId = (typeof MANGA_DETAILS_TAB_IDS)[number];
 
@@ -160,6 +171,8 @@ const MangaDetailsPanel = ({
     const { setContextMenuData, openInReader } = useAppContext();
     const continueRef = useRef<HTMLButtonElement>(null);
     const chaptersListRef = useRef<HTMLDivElement>(null);
+    const [visibleChapters, setVisibleChapters] = useState<MangaChapterChild[]>([]);
+    const [locateNonce, setLocateNonce] = useState(0);
 
     useEffect(() => {
         continueRef.current?.focus();
@@ -677,17 +690,17 @@ const MangaDetailsPanel = ({
 
     /**
      * Scrolls the Content list to the in-progress chapter (reader sidelist locate).
-     * Uses {@link scrollChildInContainer} so the hero / meta block does not jump.
+     * Uses VirtualList ensureVisible so the hero / meta block does not jump.
      */
     const handleLocateCurrentChapter = () => {
-        const list = chaptersListRef.current;
-        if (!currentChapterLink || !list) return;
-        list.querySelectorAll("[data-url]").forEach((elem) => {
-            if (elem.getAttribute("data-url") === currentChapterLink && elem instanceof HTMLElement) {
-                scrollChildInContainer(list, elem, "center");
-            }
-        });
+        if (!currentChapterLink) return;
+        setLocateNonce((n) => n + 1);
     };
+
+    const currentChapterListIndex = useMemo(
+        () => visibleChapters.findIndex((chapter) => chapter.link === currentChapterLink),
+        [currentChapterLink, visibleChapters],
+    );
 
     const tabBar = (
         <DetailsTabBar
@@ -871,9 +884,10 @@ const MangaDetailsPanel = ({
                             renderItem={renderChapterItem}
                             onContextMenu={handleContextMenu}
                             onSelect={handleSelect}
-                            onFilteredItemsChange={(items) =>
-                                chapterSelection.setVisibleOrder(items.map((c) => c.name))
-                            }
+                            onFilteredItemsChange={(items) => {
+                                setVisibleChapters(items);
+                                chapterSelection.setVisibleOrder(items.map((c) => c.name));
+                            }}
                             emptyMessage={t("gallery.details.noChapters")}
                         >
                             <DetailsListToolbar
@@ -949,7 +963,17 @@ const MangaDetailsPanel = ({
                                 }
                             />
                             <div className="chapters-list" ref={chaptersListRef}>
-                                <ListNavigator.List scrollContainerRef={chaptersListRef} />
+                                <ListNavigator.VirtualList
+                                    scrollContainerRef={chaptersListRef}
+                                    estimatedItemSize={CHAPTERS_LIST_ROW_ESTIMATE_PX}
+                                    hostRowElement={false}
+                                    rowGapPx={0}
+                                    paddingStartPx={CHAPTERS_LIST_PADDING_Y_PX}
+                                    paddingEndPx={CHAPTERS_LIST_PADDING_Y_PX}
+                                    ensureVisibleIndex={locateNonce > 0 ? currentChapterListIndex : undefined}
+                                    ensureVisibleAlign="center"
+                                    ensureVisibleNonce={locateNonce}
+                                />
                             </div>
                         </ListNavigator.Provider>
                     ) : (

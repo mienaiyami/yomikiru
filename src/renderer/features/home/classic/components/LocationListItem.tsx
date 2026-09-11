@@ -3,89 +3,113 @@ import ListItem from "@renderer/components/ListItem";
 import { useAppSelector } from "@store/hooks";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
-import type { ReactElement } from "react";
+import { type CSSProperties, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 
-const LocationListItem = ({
-    name,
-    link,
-    inHistory,
-    setCurrentLink,
-    onContextMenu,
-    focused,
-}: {
+type LocationListItemProps = {
     name: string;
     link: string;
     setCurrentLink: React.Dispatch<React.SetStateAction<string>>;
     inHistory: boolean;
     onContextMenu: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, link: string, inHistory: boolean) => void;
     focused: boolean;
-}): ReactElement => {
-    const { t } = useTranslation("home");
-    const { openInReader } = useAppContext();
-    const appSettings = useAppSelector((store) => store.appSettings);
-    const defaultLocationPath = getDefaultLocationPath(
-        useAppSelector((store) => store.mainSettings.library.folders),
-    );
-
-    const onClickHandle = () => {
-        if (!window.fs.existsSync(link)) {
-            dialogUtils.customError({ message: t("classic.location.pathMissing") });
-            return;
-        }
-        if (formatUtils.files.test(name)) {
-            openInReader(link);
-            return;
-        }
-        if (
-            appSettings.openDirectlyFromManga &&
-            window.path.normalize(window.path.resolve(`${link}../../../`) + window.path.sep) ===
-                window.path.normalize(defaultLocationPath + window.path.sep)
-        ) {
-            openInReader(link).then((isValid) => {
-                if (isValid) {
-                    setCurrentLink(window.path.dirname(link));
-                }
-            });
-        }
-        setCurrentLink(link);
-    };
-
-    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-        if (appSettings.openOnDblClick) {
-            const elem = e.currentTarget;
-            if (!elem.getAttribute("data-dblClick")) {
-                elem.setAttribute("data-dblClick", "true");
-                setTimeout(() => {
-                    if (elem.getAttribute("data-dblClick") === "true") {
-                        elem.removeAttribute("data-dblClick");
-                        onClickHandle();
-                    }
-                }, 250);
-            } else {
-                elem.removeAttribute("data-dblClick");
-                openInReader(link);
-            }
-        } else onClickHandle();
-    };
-
-    const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
-        onContextMenu(e, link, inHistory);
-    };
-
-    return (
-        <ListItem
-            focused={focused}
-            classNameLi={inHistory ? "alreadyRead" : ""}
-            onClick={handleClick}
-            onContextMenu={handleContextMenu}
-            title={name}
-        >
-            <span className="text">{formatUtils.files.getName(name)}</span>
-            {formatUtils.files.test(name) && <code className="nonFolder">{formatUtils.files.getExt(name)}</code>}
-        </ListItem>
-    );
+    /** Virtualizer absolute layout (injected by {@link ListNavigator.VirtualList}). */
+    style?: CSSProperties;
+    "data-index"?: number;
+    scrollManagedByParent?: boolean;
 };
+
+/**
+ * Classic Location tab row. Forwards the row ref for 1-column virtualization.
+ */
+const LocationListItem = forwardRef<HTMLLIElement, LocationListItemProps>(
+    (
+        {
+            name,
+            link,
+            inHistory,
+            setCurrentLink,
+            onContextMenu,
+            focused,
+            style,
+            "data-index": dataIndex,
+            scrollManagedByParent,
+        },
+        forwardedRef,
+    ) => {
+        const { t } = useTranslation("home");
+        const { openInReader } = useAppContext();
+        const appSettings = useAppSelector((store) => store.appSettings);
+        const defaultLocationPath = getDefaultLocationPath(
+            useAppSelector((store) => store.mainSettings.library.folders),
+        );
+
+        const onClickHandle = () => {
+            if (!window.fs.existsSync(link)) {
+                dialogUtils.customError({ message: t("classic.location.pathMissing") });
+                return;
+            }
+            if (formatUtils.files.test(name)) {
+                openInReader(link);
+                return;
+            }
+            if (
+                appSettings.openDirectlyFromManga &&
+                window.path.normalize(window.path.resolve(`${link}../../../`) + window.path.sep) ===
+                    window.path.normalize(defaultLocationPath + window.path.sep)
+            ) {
+                openInReader(link).then((isValid) => {
+                    if (isValid) {
+                        setCurrentLink(window.path.dirname(link));
+                    }
+                });
+            }
+            setCurrentLink(link);
+        };
+
+        const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+            if (appSettings.openOnDblClick) {
+                const elem = e.currentTarget;
+                if (!elem.getAttribute("data-dblClick")) {
+                    elem.setAttribute("data-dblClick", "true");
+                    setTimeout(() => {
+                        if (elem.getAttribute("data-dblClick") === "true") {
+                            elem.removeAttribute("data-dblClick");
+                            onClickHandle();
+                        }
+                    }, 250);
+                } else {
+                    elem.removeAttribute("data-dblClick");
+                    openInReader(link);
+                }
+            } else onClickHandle();
+        };
+
+        const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
+            onContextMenu(e, link, inHistory);
+        };
+
+        return (
+            <ListItem
+                ref={forwardedRef}
+                focused={focused}
+                scrollManagedByParent={scrollManagedByParent}
+                classNameLi={inHistory ? "alreadyRead" : ""}
+                onClick={handleClick}
+                onContextMenu={handleContextMenu}
+                title={name}
+                style={style}
+                data-index={dataIndex}
+            >
+                <span className="text">{formatUtils.files.getName(name)}</span>
+                {formatUtils.files.test(name) && (
+                    <code className="nonFolder">{formatUtils.files.getExt(name)}</code>
+                )}
+            </ListItem>
+        );
+    },
+);
+LocationListItem.displayName = "LocationListItem";
 
 export default LocationListItem;

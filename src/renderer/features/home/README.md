@@ -205,8 +205,8 @@ A reusable compound component providing:
 
 - **Provider** — holds filter state, focused index, and list keyboard handling.
 - **SearchInput** — uncontrolled text input wrapped in `.search-input-wrapper`, with a focusable clear (`x`) button overlaid on its right edge while the field has text. `defaultValue` seeds the field (and the clear button). Clear also runs a custom `onChange` so remote-search parents see the empty query. Focuses on mount unless `autoFocus` is false (gallery details lists pass false so Continue/Start can take initial focus). `autoFocusDelayMs` waits that long first so overlay search can win over `visibility:hidden` / FocusLock. Its styles live *outside* `@layer main` in `styles/index.scss`, because consumer component stylesheets are unlayered and would otherwise always win.
-- **VirtualList** — renders items via `@tanstack/react-virtual`. Supports `columnCount > 1` for the gallery grid.
-- **List** — non-virtualised ordered list (classic tabs; gallery details; AniList Add Tracking). Optional `scrollContainerRef` scrolls the focused row inside that overflow box so ancestor panels do not jump.
+- **VirtualList** - renders items via `@tanstack/react-virtual`. Supports `columnCount > 1` for the gallery grid, and `hostRowElement={false}` for one-column `ListItem` rows (classic Location/History/Bookmarks, reader side lists).
+- **List** - non-virtualised ordered list (gallery details bookmarks/notes). Optional `scrollContainerRef` scrolls the focused row inside that overflow box so ancestor panels do not jump.
 - **Input** — the search input field.
 
 Key capabilities:

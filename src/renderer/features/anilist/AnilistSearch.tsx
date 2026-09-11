@@ -10,7 +10,7 @@ import {
     anilistStatusLabel,
     searchAnilistMedia,
 } from "@utils/anilist";
-import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type CSSProperties, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { useTranslation } from "react-i18next";
 
@@ -18,6 +18,8 @@ import { useTranslation } from "react-i18next";
 const SEARCH_DEBOUNCE_MS = 1000;
 /** Matches the overlay `data-state="open"` delay so search focus lands when the panel is visible. */
 const OVERLAY_OPEN_MS = 100;
+/** Fixed height (px) for AniList cover + multi-line title result rows. */
+const ANILIST_RESULT_ROW_ESTIMATE_PX = 88;
 
 const AnilistSearch = () => {
     const { t } = useTranslation("anilist");
@@ -132,7 +134,12 @@ const AnilistSearch = () => {
                             />
                         </div>
                         <div className="results" ref={resultsScrollRef}>
-                            <ListNavigator.List scrollContainerRef={resultsScrollRef} />
+                            <ListNavigator.VirtualList
+                                scrollContainerRef={resultsScrollRef}
+                                estimatedItemSize={ANILIST_RESULT_ROW_ESTIMATE_PX}
+                                hostRowElement={false}
+                                rowGapPx={0}
+                            />
                         </div>
                     </ListNavigator.Provider>
                 </div>
@@ -145,50 +152,56 @@ type ResultListItemProps = {
     item: Anilist.SearchMediaItem;
     isSelected: boolean;
     onClick: () => void;
+    /** Virtualizer absolute layout (injected by {@link ListNavigator.VirtualList}). */
+    style?: CSSProperties;
+    "data-index"?: number;
 };
 
-const ResultListItem = ({ item, isSelected, onClick }: ResultListItemProps) => {
-    const { t } = useTranslation("anilist");
-    const { title, coverImage, startDate, status, format } = item;
-    const displayTitle = title.english || title.romaji || title.native || "~";
-    const startDateStr = `${startDate.year ?? "?"}-${startDate.month ?? "?"}-${startDate.day ?? "?"}`;
-    const formatStr = anilistFormatLabel(format);
-    const statusStr = anilistStatusLabel(status);
-    const overlayCover = anilistOverlayCoverSrc(coverImage);
+const ResultListItem = forwardRef<HTMLLIElement, ResultListItemProps>(
+    ({ item, isSelected, onClick, style, "data-index": dataIndex }, forwardedRef) => {
+        const { t } = useTranslation("anilist");
+        const { title, coverImage, startDate, status, format } = item;
+        const displayTitle = title.english || title.romaji || title.native || "~";
+        const startDateStr = `${startDate.year ?? "?"}-${startDate.month ?? "?"}-${startDate.day ?? "?"}`;
+        const formatStr = anilistFormatLabel(format);
+        const statusStr = anilistStatusLabel(status);
+        const overlayCover = anilistOverlayCoverSrc(coverImage);
 
-    /* Same shape as ListItem: highlight on the <li>, click on an inner <a>
-     * with no href so it is not a Tab stop. ListNavigator keeps caret in SearchInput;
-     * listSelect clicks that <a>. A <button> would enter FocusLock's Tab cycle. */
-    return (
-        <li data-focused={isSelected}>
-            <a className="row" onClick={onClick}>
-                <div
-                    className="cover"
-                    style={
-                        overlayCover
-                            ? { backgroundImage: `url("${overlayCover.replaceAll('"', "%22")}")` }
-                            : undefined
-                    }
-                />
-                <div className="col">
-                    <span title={displayTitle}>{displayTitle}</span>
-                    <span title={title.romaji ?? "~"}>{title.romaji ?? "~"}</span>
-                    <span title={title.native ?? "~"}>{title.native ?? "~"}</span>
-                    <div className="row meta">
-                        <span className="row">
-                            <span className="badge">{formatStr}</span>
-                        </span>
-                        <span className="row">
-                            <span className="badge">{t("search.started", { date: startDateStr })}</span>
-                        </span>
-                        <span className="row">
-                            <span className="badge">{statusStr}</span>
-                        </span>
+        /* Same shape as ListItem: highlight on the <li>, click on an inner <a>
+         * with no href so it is not a Tab stop. ListNavigator keeps caret in SearchInput;
+         * listSelect clicks that <a>. A <button> would enter FocusLock's Tab cycle. */
+        return (
+            <li ref={forwardedRef} data-focused={isSelected} data-index={dataIndex} style={style}>
+                <a className="row" onClick={onClick}>
+                    <div
+                        className="cover"
+                        style={
+                            overlayCover
+                                ? { backgroundImage: `url("${overlayCover.replaceAll('"', "%22")}")` }
+                                : undefined
+                        }
+                    />
+                    <div className="col">
+                        <span title={displayTitle}>{displayTitle}</span>
+                        <span title={title.romaji ?? "~"}>{title.romaji ?? "~"}</span>
+                        <span title={title.native ?? "~"}>{title.native ?? "~"}</span>
+                        <div className="row meta">
+                            <span className="row">
+                                <span className="badge">{formatStr}</span>
+                            </span>
+                            <span className="row">
+                                <span className="badge">{t("search.started", { date: startDateStr })}</span>
+                            </span>
+                            <span className="row">
+                                <span className="badge">{statusStr}</span>
+                            </span>
+                        </div>
                     </div>
-                </div>
-            </a>
-        </li>
-    );
-};
+                </a>
+            </li>
+        );
+    },
+);
+ResultListItem.displayName = "ResultListItem";
 
 export default AnilistSearch;

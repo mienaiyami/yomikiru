@@ -14,6 +14,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
 import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
+import { LIST_ITEM_ROW_PX } from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
@@ -132,10 +133,14 @@ const ReaderSideList = memo(
         );
         const appSettings = useAppSelector((store) => store.appSettings);
         const hideSideList = useAppSelector((store) => selectLiveMangaReaderSettings(store).hideSideList);
+        const focusChapterInList = useAppSelector(
+            (store) => selectLiveMangaReaderSettings(store).focusChapterInList,
+        );
         const anilistToken = useAppSelector((store) => store.anilist.token);
         const dispatch = useAppDispatch();
 
         const sideListRef = useRef<HTMLDivElement>(null);
+        const contentScrollRef = useRef<HTMLDivElement>(null);
         const [chapterData, setChapterData] = useState<ChapterData[]>([]);
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setPreventListClose] = useState(false);
@@ -151,6 +156,7 @@ const ReaderSideList = memo(
         const [isSearchFixed, setSearchFixed] = useState(false);
         const [filteredItemsFromList, setFilteredItemsFromList] = useState<ChapterData[]>([]);
         const [filterActive, setFilterActive] = useState(false);
+        const [locateNonce, setLocateNonce] = useState(0);
         const recentChaptersRef = useRef<string[]>([]);
         const chapterNavInFlightRef = useRef(false);
 
@@ -493,12 +499,7 @@ const ReaderSideList = memo(
         };
 
         const handleLocateClick = () => {
-            if (sideListRef.current) {
-                sideListRef.current.querySelectorAll("[data-url]").forEach((elem) => {
-                    if (elem.getAttribute("data-url") === currentChapterPath)
-                        elem.scrollIntoView({ block: "nearest" });
-                });
-            }
+            setLocateNonce((n) => n + 1);
         };
 
         const handleRandomChapterClick = () => {
@@ -532,10 +533,6 @@ const ReaderSideList = memo(
             setFilterActive(active);
         }, []);
 
-        const handleChapterItemClick = (link: string) => {
-            openInReader(link);
-        };
-
         useLayoutEffect(() => {
             document.body.style.cursor = "auto";
             if (draggingResizer) {
@@ -549,6 +546,19 @@ const ReaderSideList = memo(
             };
         }, [draggingResizer, handleResizerDrag, handleResizerMouseUp]);
 
+        /*
+         * Context-menu "mark all read" needs the filtered name list, but each row
+         * must not re-render when that array identity changes — keep it on a ref.
+         */
+        const chapterNamesForMenuRef = useRef<readonly string[]>([]);
+        chapterNamesForMenuRef.current = filteredItemsFromList.map((chapter) => chapter.name);
+        const getChapterNamesForMenu = useCallback(() => chapterNamesForMenuRef.current, []);
+
+        const currentChapterListIndex = useMemo(
+            () => filteredItemsFromList.findIndex((chapter) => chapter.link === currentChapterPath),
+            [currentChapterPath, filteredItemsFromList],
+        );
+
         const renderChapterItem = (chapter: ChapterData, _index: number, isSelected: boolean) => {
             return (
                 <ReaderSideListItem
@@ -559,7 +569,7 @@ const ReaderSideList = memo(
                     pages={chapter.pages}
                     current={currentChapterPath === chapter.link}
                     link={chapter.link}
-                    onClick={handleChapterItemClick.bind(null, chapter.link)}
+                    getChapterNames={getChapterNamesForMenu}
                 />
             );
         };
@@ -598,6 +608,7 @@ const ReaderSideList = memo(
                 <ListNavigator.Provider
                     items={locationsToUse}
                     filterFn={filterChapter}
+                    getItemKey={(chapter) => chapter.link}
                     renderItem={renderChapterItem}
                     onContextMenu={handleContextMenu}
                     onSelect={handleSelect}
@@ -750,11 +761,22 @@ const ReaderSideList = memo(
                     {displayList === "content" && (
                         <div
                             className="location-cont"
+                            ref={contentScrollRef}
                             style={{
                                 display: hideSideList ? "none" : "initial",
                             }}
                         >
-                            <ListNavigator.List />
+                            <ListNavigator.VirtualList
+                                scrollContainerRef={contentScrollRef}
+                                estimatedItemSize={LIST_ITEM_ROW_PX}
+                                hostRowElement={false}
+                                rowGapPx={0}
+                                ensureVisibleIndex={
+                                    focusChapterInList || locateNonce > 0 ? currentChapterListIndex : undefined
+                                }
+                                ensureVisibleAlign="auto"
+                                ensureVisibleNonce={locateNonce}
+                            />
                         </div>
                     )}
                     {displayList === "bookmarks" && (

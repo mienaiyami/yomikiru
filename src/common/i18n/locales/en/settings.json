@@ -92,7 +92,7 @@
         "dynamicImageLoadingDesc1": "Removes Initial loading screen and load Images as you scroll. Doesn't work with \"Canvas Based Rendering\"",
         "dynamicImageLoadingDesc2": "Drawbacks : Inconsistent scroll size, no double-span images support, stuttering while scrolling.",
         "autoFocusChapter": "Auto-Focus current chapter in side-list ",
-        "autoFocusChapterDesc": "Automatically focus/scroll to current chapter entry in side-list when changing chapter. Can cause huge performance loss in case of epub with large number (> 500) of chapters.",
+        "autoFocusChapterDesc": "Automatically scroll the side-list so the current chapter stays in view when you change chapters.",
         "epubAutoFocusChapter": "EPUB: Auto-Focus current chapter in side-list ",
         "epubDisableTextSelect": "EPUB: Disable Text Select / Enable double-click zen mode",
         "epubDisableTextSelectDesc": "Removes ability to select text in epub reader and enabled double-click zen mode."

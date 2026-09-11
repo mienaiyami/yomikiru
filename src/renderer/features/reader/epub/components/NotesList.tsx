@@ -147,6 +147,7 @@ const NotesList: React.FC<{
         () => [...notes].sort((b, a) => a.createdAt.getTime() - b.createdAt.getTime()),
         [notes],
     );
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     const handleNoteClick = useCallback(
         (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -290,13 +291,18 @@ const NotesList: React.FC<{
                     ))}
                 </div>
             </div>
-            <div className="location-cont">
+            <div className="location-cont" ref={scrollRef}>
                 <ListNavigator.Provider
                     items={notesArray}
                     renderItem={renderNoteItem}
                     emptyMessage={t("sideList.noNotes")}
                 >
-                    <ListNavigator.List />
+                    <ListNavigator.VirtualList
+                        scrollContainerRef={scrollRef}
+                        estimatedItemSize={72}
+                        hostRowElement={false}
+                        rowGapPx={0}
+                    />
                 </ListNavigator.Provider>
 
                 {editNoteId && <NoteModal noteId={editNoteId} clear={() => setEditNoteId(null)} />}

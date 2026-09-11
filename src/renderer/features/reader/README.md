@@ -308,7 +308,7 @@ Zen mode hides all chrome except the reading area (side list, title bar, setting
 
 Slides in from the left. Displays:
 
-- **Chapter list** — all siblings in the manga root, filtered by search. Each row shows name, page count, read indicator, and progress bar.
+- **Chapter list** — siblings in the manga root, filtered by search, virtualized through ListNavigator. Each row shows name, page count, read indicator, and progress bar.
 - **Bookmark list** ([`manga/components/BookmarkList.tsx`](manga/components/BookmarkList.tsx)) — all bookmarks for the current manga.
 - AniList bar.
 - Prev/next chapter buttons (rescan the series if the sibling path is gone), random chapter button, shuffle toggle.
@@ -324,7 +324,7 @@ Resizable: drag the edge to adjust `sideListWidth` (persisted in reader settings
 
 Three tabs:
 
-- **Content** ([`epub/components/ContentList.tsx`](epub/components/ContentList.tsx)) — TOC tree. Clicking navigates to that spine item.
+- **Content** ([`epub/components/ContentList.tsx`](epub/components/ContentList.tsx)) — virtualized TOC tree (expanded branches only). Clicking navigates to that spine item; auto-focus and locate scroll the current entry into view.
 - **Bookmarks** ([`epub/components/BookmarkList.tsx`](epub/components/BookmarkList.tsx)) — book bookmarks; clicking navigates to chapter + position.
 - **Notes** ([`epub/components/NotesList.tsx`](epub/components/NotesList.tsx)) — text highlights/annotations; clicking navigates to the note location.
 - Find-in-page input ([`epub/components/FindInPage.tsx`](epub/components/FindInPage.tsx)).

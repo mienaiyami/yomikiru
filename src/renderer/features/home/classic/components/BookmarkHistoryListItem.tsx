@@ -16,16 +16,23 @@ import {
     updateMangaBookmarkChapterFromPath,
 } from "@utils/libraryMissingPath";
 import { resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import { type CSSProperties, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 import { bookmarkLibraryItemsAtProgress } from "../listSelectionActions";
 
-const BookmarkHistoryListItem: React.FC<{
+/**
+ * Fixed row height (px) for virtualized classic History / Bookmarks rows.
+ * Keep in sync with this component's double-line layout (title + meta).
+ */
+export const BOOKMARK_HISTORY_LIST_ROW_PX = 60;
+
+type BookmarkHistoryListItemProps = {
     focused: boolean;
     isHistory: boolean;
     isBookmark: boolean;
     link: string;
-    // id from db
+    /** id from db */
     id: number;
     bookmark?: MangaBookmark | BookBookmark;
     /** When `true`, the item shows a checkbox and clicks toggle selection instead of opening. */
@@ -34,7 +41,16 @@ const BookmarkHistoryListItem: React.FC<{
     isChecked?: boolean;
     /** Toggles selection for this row. Receives click modifiers for Shift+range select. */
     onToggleSelected?: (opts: { shiftKey: boolean }) => void;
-}> = (props) => {
+    /** Virtualizer absolute layout (injected by {@link ListNavigator.VirtualList}). */
+    style?: CSSProperties;
+    "data-index"?: number;
+    scrollManagedByParent?: boolean;
+};
+
+/**
+ * Classic History / Bookmarks row. Forwards the row ref for 1-column virtualization.
+ */
+const BookmarkHistoryListItem = forwardRef<HTMLLIElement, BookmarkHistoryListItemProps>((props, forwardedRef) => {
     const { t } = useTranslation("home");
     const { openInReader, openInNewWindow, setContextMenuData } = useAppContext();
     const dispatch = useAppDispatch();
@@ -43,11 +59,23 @@ const BookmarkHistoryListItem: React.FC<{
     const overlays = useAppSelector((store) => selectItemMetadata(store, props.link));
     const tracker = useAppSelector((store) => selectTracker(store, props.link, "anilist"));
 
-    if (props.isBookmark && !props.bookmark) return <p>{t("classic.listItem.bookmarkNotFound")}</p>;
+    /*
+     * Missing-row placeholders must still be a positioned `<li>`: VirtualList
+     * injects absolute `style` / `data-index` onto this component; a bare `<p>`
+     * would ignore them and sit in document flow under the tall virtual `<ol>`.
+     */
+    const missingRow = (message: string) => (
+        <li ref={forwardedRef} style={props.style} data-index={props["data-index"]}>
+            <p>{message}</p>
+        </li>
+    );
+
+    if (props.isBookmark && !props.bookmark) return missingRow(t("classic.listItem.bookmarkNotFound"));
 
     // todo: this is temp only until properly implemented
-    if (!libraryItem) return <p>{t("classic.listItem.itemNotFound")}</p>;
-    if (libraryItem.type === "manga" && !libraryItem.progress) return <p>{t("classic.listItem.itemNotFound")}</p>;
+    if (!libraryItem) return missingRow(t("classic.listItem.itemNotFound"));
+    if (libraryItem.type === "manga" && !libraryItem.progress)
+        return missingRow(t("classic.listItem.itemNotFound"));
     const link =
         props.bookmark && "page" in props.bookmark
             ? resolveMangaChapterPath(props.bookmark.itemLink, props.bookmark.chapterName)
@@ -56,7 +84,7 @@ const BookmarkHistoryListItem: React.FC<{
               : libraryItem.progress && "chapterName" in libraryItem.progress
                 ? resolveMangaChapterPath(libraryItem.progress.itemLink, libraryItem.progress.chapterName)
                 : "";
-    if (!link) return <p>{t("classic.listItem.linkNotFound")}</p>;
+    if (!link) return missingRow(t("classic.listItem.linkNotFound"));
 
     const resolved = resolveItemMetadata({ item: libraryItem, overlays, tracker });
     const titleLabel = resolved.originalTitle
@@ -249,7 +277,9 @@ const BookmarkHistoryListItem: React.FC<{
 
     return (
         <ListItem
+            ref={forwardedRef}
             focused={props.focused}
+            scrollManagedByParent={props.scrollManagedByParent}
             title={appSettings.showMoreDataOnItemHover ? title : undefined}
             onClick={handleClick}
             onContextMenu={handleContextMenu}
@@ -258,6 +288,8 @@ const BookmarkHistoryListItem: React.FC<{
                 props.isChecked ? "multiSelected" : ""
             }`}
             leadingSlot={checkbox}
+            style={props.style}
+            data-index={props["data-index"]}
         >
             {libraryItem.type === "book" ? (
                 <span className="double">
@@ -302,6 +334,7 @@ const BookmarkHistoryListItem: React.FC<{
             )}
         </ListItem>
     );
-};
+});
+BookmarkHistoryListItem.displayName = "BookmarkHistoryListItem";
 
 export default BookmarkHistoryListItem;

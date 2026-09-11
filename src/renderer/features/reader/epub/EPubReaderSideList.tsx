@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
 import BookmarkButton from "./components/BookmarkButton";
 import BookmarkList from "./components/BookmarkList";
-import ContentList from "./components/ContentList";
+import ContentList, { type ContentListHandle } from "./components/ContentList";
 import FindInPage from "./components/FindInPage";
 import NotesList from "./components/NotesList";
 
@@ -66,12 +66,12 @@ const EPubReaderSideList = memo(
         const bookInReader = useAppSelector(getReaderBook);
         const bookDisplay = useAppSelector((store) => selectResolvedItemMetadata(store, bookInReader?.link));
         const sideListRef = useRef<HTMLDivElement>(null);
+        const contentScrollRef = useRef<HTMLDivElement>(null);
+        const contentListRef = useRef<ContentListHandle>(null);
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setPreventListClose] = useState(false);
         const { t } = useTranslation("reader");
         const [draggingResizer, setDraggingResizer] = useState(false);
-
-        const currentRef = useRef<HTMLAnchorElement | null>(null);
 
         useEffect(() => {
             if (
@@ -89,10 +89,7 @@ const EPubReaderSideList = memo(
         }, [contextMenuData, colorSelectData]);
 
         useEffect(() => {
-            if (!zenMode && currentRef.current)
-                setTimeout(() => {
-                    currentRef.current?.scrollIntoView({ block: "start" });
-                }, 100);
+            if (!zenMode) contentListRef.current?.locateCurrent("start");
         }, [zenMode]);
         useLayoutEffect(() => {
             if (isSideListPinned) {
@@ -274,30 +271,7 @@ const EPubReaderSideList = memo(
                                 className="ctrl-menu-item"
                                 data-tooltip={t("sideList.locateCurrentChapter")}
                                 onClick={() => {
-                                    if (sideListRef.current) {
-                                        const href =
-                                            epubData.manifest.get(currentChapterFake)?.href || currentChapter.href;
-                                        const elem = sideListRef.current.querySelector(
-                                            `a[data-href="${href.replaceAll("\\", "\\\\")}"]`,
-                                        );
-                                        //todo : not a good way, state in List stays unchanged
-                                        if (elem) {
-                                            // sideListRef.current
-                                            //     .querySelectorAll(".current")
-                                            //     .forEach((e) => e.classList.remove("current"));
-                                            elem.parentElement?.classList.add("current");
-                                            const grandParent = elem.parentElement?.parentElement;
-                                            const grandParentPrevSibling = grandParent?.previousElementSibling;
-                                            if (
-                                                grandParent &&
-                                                grandParent.tagName === "OL" &&
-                                                grandParentPrevSibling &&
-                                                grandParentPrevSibling.tagName === "LI"
-                                            )
-                                                grandParentPrevSibling.classList.remove("collapsed");
-                                            elem.scrollIntoView({ block: "center" });
-                                        }
-                                    }
+                                    contentListRef.current?.locateCurrent("center");
                                 }}
                             >
                                 <FontAwesomeIcon icon={faLocationDot} />
@@ -320,16 +294,10 @@ const EPubReaderSideList = memo(
                 {/* //todo remove  appSettings.epubReaderSettings.hideSideList */}
                 {/* {!appSettings.epubReaderSettings.hideSideList && ( */}
                 {displayList === "content" && (
-                    <div
-                        className="location-cont"
-                        // style={{
-                        //     display: appSettings.epubReaderSettings.hideSideList ? "none" : "initial",
-                        // }}
-                    >
-                        {/* //todo virtualize list */}
-                        {epubData.toc.size > 500 && <p>{t("sideList.tooManyChapters")}</p>}
+                    <div className="location-cont" ref={contentScrollRef}>
                         {epubData.ncx.length > 0 && (
                             <ContentList
+                                ref={contentListRef}
                                 currentChapterHref={
                                     epubData.manifest.get(currentChapterFake)?.href || currentChapter.href
                                 }
@@ -337,6 +305,7 @@ const EPubReaderSideList = memo(
                                 epubNCX={epubData.ncx}
                                 epubTOC={epubData.toc}
                                 sideListRef={sideListRef}
+                                scrollContainerRef={contentScrollRef}
                             />
                         )}
                         {epubData.ncx.length === 0 && <p>{t("sideList.noNcx")}</p>}

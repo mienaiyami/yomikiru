@@ -2,6 +2,7 @@ import { getDefaultLocationPath, planLocationsListLoad } from "@common/library/f
 import LocationListItem from "@features/home/classic/components/LocationListItem";
 import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { LIST_ITEM_ROW_PX } from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
@@ -250,6 +251,7 @@ const LocationsTab = (): ReactElement => {
             <ListNavigator.Provider
                 items={sortedLocations}
                 filterFn={filterLocation}
+                getItemKey={(location) => location.link}
                 renderItem={renderLocationItem}
                 onContextMenu={handleContextMenu}
                 handleExtraKeyDown={handleKeyDown}
@@ -358,7 +360,12 @@ const LocationsTab = (): ReactElement => {
                     ) : locations.length === 0 ? (
                         <p>{t("classic.location.folderImageCount", { count: imageCount })}</p>
                     ) : (
-                        <ListNavigator.List />
+                        <ListNavigator.VirtualList
+                            scrollContainerRef={locationContRef}
+                            estimatedItemSize={LIST_ITEM_ROW_PX}
+                            hostRowElement={false}
+                            rowGapPx={0}
+                        />
                     )}
                 </div>
             </ListNavigator.Provider>

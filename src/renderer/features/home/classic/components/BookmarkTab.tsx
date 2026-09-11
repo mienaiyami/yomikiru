@@ -21,7 +21,7 @@ import {
     getBookmarksBySelectionKeys,
     removeBookmarksGrouped,
 } from "../listSelectionActions";
-import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
+import BookmarkHistoryListItem, { BOOKMARK_HISTORY_LIST_ROW_PX } from "./BookmarkHistoryListItem";
 import ListSelectionToolbar from "./ListSelectionToolbar";
 
 const BookmarkTab: React.FC = () => {
@@ -99,10 +99,14 @@ const BookmarkTab: React.FC = () => {
 
     const renderBookmarkItem = (
         bookmark: LibraryItemWithProgress | BookBookmark | MangaBookmark,
-        _index: number,
+        index: number,
         isSelected: boolean,
-    ) =>
-        "chapterName" in bookmark && (
+    ) => {
+        /* VirtualList hostRowElement=false requires a real element (not `false`). */
+        if (!("chapterName" in bookmark)) {
+            return <li key={`bookmark-skip-${index}`} aria-hidden />;
+        }
+        return (
             <BookmarkHistoryListItem
                 isHistory={false}
                 isBookmark={true}
@@ -120,9 +124,11 @@ const BookmarkTab: React.FC = () => {
                 }
             />
         );
+    };
 
     const [pathCopied, setPathCopied] = useState(false);
     const copiedTimerRef = useRef(0);
+    const bookmarksScrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         return () => window.clearTimeout(copiedTimerRef.current);
@@ -187,6 +193,7 @@ const BookmarkTab: React.FC = () => {
             <ListNavigator.Provider
                 items={bookmarksArray as (BookBookmark | MangaBookmark)[]}
                 filterFn={filterBookmark}
+                getItemKey={getBookmarkSelectionKey}
                 renderItem={renderBookmarkItem}
                 emptyMessage={t("classic.bookmarks.empty")}
                 onFilteredItemsChange={(items) => selection.setVisibleOrder(items.map(getBookmarkSelectionKey))}
@@ -297,8 +304,13 @@ const BookmarkTab: React.FC = () => {
                         </div>
                     </div>
                 )}
-                <div className="location-cont">
-                    <ListNavigator.List />
+                <div className="location-cont" ref={bookmarksScrollRef}>
+                    <ListNavigator.VirtualList
+                        scrollContainerRef={bookmarksScrollRef}
+                        estimatedItemSize={BOOKMARK_HISTORY_LIST_ROW_PX}
+                        hostRowElement={false}
+                        rowGapPx={0}
+                    />
                 </div>
             </ListNavigator.Provider>
         </div>

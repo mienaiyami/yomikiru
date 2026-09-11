@@ -57,6 +57,12 @@ import GalleryToolbar, {
 import MangaDetailsPanel from "./components/MangaDetailsPanel";
 
 /**
+ * Matches `.galleryList` CSS `gap` and VirtualList `gapPx` / `rowGapPx` for cover grids.
+ * Keep in sync with `src/renderer/features/home/styles.scss` `.galleryList`.
+ */
+const GALLERY_GRID_GAP_PX = 16;
+
+/**
  * When a PDF manga tile has no cover yet, generate page-1 WebP (D2). No visual of its own.
  */
 const GalleryPdfCoverKickoff = ({ item, hasCover }: { item: LibraryItemWithProgress; hasCover: boolean }) => {
@@ -179,7 +185,11 @@ const GalleryView: React.FC = () => {
         if (appSettings.galleryDisplayMode === "list") return 1;
         if (!containerWidth) return 1;
         const itemWidthPx = appSettings.galleryItemWidth * rootFontSizePx;
-        return Math.max(1, Math.floor(containerWidth / itemWidthPx));
+        /* CSS `repeat(auto-fill, minmax(W, 1fr))` with gap G ≈ floor((width + G) / (W + G)) */
+        return Math.max(
+            1,
+            Math.floor((containerWidth + GALLERY_GRID_GAP_PX) / (itemWidthPx + GALLERY_GRID_GAP_PX)),
+        );
     }, [appSettings.galleryDisplayMode, appSettings.galleryItemWidth, containerWidth, rootFontSizePx]);
 
     const galleryEstimatedRowSize = useMemo(() => {
@@ -188,8 +198,22 @@ const GalleryView: React.FC = () => {
             return 6.6 * rootFontSizePx;
         }
         if (!containerWidth || !galleryColumnCount) return 300;
-        const colWidth = (containerWidth - 32) / galleryColumnCount;
-        return colWidth * 1.5 + 48;
+        const cols = galleryColumnCount;
+        /*
+         * `containerWidth` is libraryGrid content-box (padding already excluded).
+         * Cell width must subtract inter-column gaps or the fixed row height overshoots
+         * and leaves empty strips under every cover row.
+         */
+        const cellWidth = Math.max(0, (containerWidth - GALLERY_GRID_GAP_PX * (cols - 1)) / cols);
+        /* `.coverContainer { aspect-ratio: 2/3 }` -> height = width * 3/2 */
+        const coverHeightPx = cellWidth * 1.5;
+        /* compact overlays the title; cover-only has no title block under the cover */
+        if (appSettings.galleryDisplayMode === "compact" || appSettings.galleryDisplayMode === "cover-only") {
+            return coverHeightPx;
+        }
+        /* title under cover: padding + up to two clamped lines (`.mangaTitle`) */
+        const titleBlockPx = 2.4 * rootFontSizePx;
+        return coverHeightPx + titleBlockPx;
     }, [appSettings.galleryDisplayMode, containerWidth, galleryColumnCount, rootFontSizePx]);
 
     /**
@@ -649,6 +673,7 @@ const GalleryView: React.FC = () => {
                 items={tabItems}
                 filterFn={filterManga}
                 persistFilterOnItemsChange
+                getItemKey={(item) => item.link}
                 renderItem={renderMangaItem}
                 emptyMessage={emptyMessage}
                 onContextMenu={handleListContextMenu}
@@ -678,8 +703,12 @@ const GalleryView: React.FC = () => {
                             scrollContainerRef={libraryGridRef as RefObject<HTMLElement>}
                             estimatedItemSize={galleryEstimatedRowSize}
                             columnCount={galleryColumnCount}
-                            rowGapPx={appSettings.galleryDisplayMode === "list" ? 0 : 16}
-                            overscan={0}
+                            rowGapPx={appSettings.galleryDisplayMode === "list" ? 0 : GALLERY_GRID_GAP_PX}
+                            /*
+                             * overscan > 0: remounting classic/gallery can briefly report a 0 scroll
+                             * rect; zero overscan then mounts nothing until the next scroll/resize.
+                             */
+                            overscan={2}
                         />
                     </div>
 

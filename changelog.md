@@ -15,6 +15,7 @@
 
 # unreleased
 
+- feat: Long lists only keep visible rows in memory, so opening a huge library, a manga with hundreds of chapters, or a long EPUB table of contents stays smooth instead of hitching while the whole list mounts. That covers gallery covers, classic Location / History / Bookmarks, manga and EPUB side lists (Content, Bookmarks, Notes), gallery manga chapter lists, and AniList search results. Auto-focus and locate still jump to the current chapter; the old "too many chapters" hide-Content warning is gone. Also fixes large empty gaps between gallery cover rows after you remove titles or progress. (also fixes #544)
 - feat: Gallery home section tabs (and the matching details list tabs / type filter) show a hover tooltip with the section name when the window is narrow enough that the button label is hidden. (#539)
 - feat: Language settings explain that you can make your own translation pack, with a detailed link to Usage steps (export the default zip, extract it, edit `pack.json` and the other JSON files in a text editor, zip again, install, then select the pack).
 - feat: Book reader **Continuous chapters** settings show a short hint plus **More Info** that jumps to the existing Usage section instead of a long in-panel description.

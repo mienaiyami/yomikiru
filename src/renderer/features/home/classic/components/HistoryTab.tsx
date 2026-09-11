@@ -21,7 +21,7 @@ import {
     getHistoryItemPath,
     progressLinksFromSelection,
 } from "../listSelectionActions";
-import BookmarkHistoryListItem from "./BookmarkHistoryListItem";
+import BookmarkHistoryListItem, { BOOKMARK_HISTORY_LIST_ROW_PX } from "./BookmarkHistoryListItem";
 import ListSelectionToolbar from "./ListSelectionToolbar";
 
 const HistoryTab: React.FC = () => {
@@ -98,8 +98,12 @@ const HistoryTab: React.FC = () => {
         item: LibraryItemWithProgress | BookBookmark | MangaBookmark,
         index: number,
         isSelected: boolean,
-    ) =>
-        "type" in item && (
+    ) => {
+        /* VirtualList hostRowElement=false requires a real element (not `false`). */
+        if (!("type" in item)) {
+            return <li key={`history-skip-${index}`} aria-hidden />;
+        }
+        return (
             <BookmarkHistoryListItem
                 isHistory={true}
                 isBookmark={false}
@@ -114,9 +118,11 @@ const HistoryTab: React.FC = () => {
                 }
             />
         );
+    };
 
     const [pathCopied, setPathCopied] = useState(false);
     const copiedTimerRef = useRef(0);
+    const historyScrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         return () => window.clearTimeout(copiedTimerRef.current);
@@ -194,6 +200,7 @@ const HistoryTab: React.FC = () => {
             <ListNavigator.Provider
                 items={historyItems}
                 filterFn={filterHistoryItem}
+                getItemKey={(item) => item.link}
                 renderItem={renderHistoryItem}
                 emptyMessage={t("classic.history.empty")}
                 onFilteredItemsChange={(items) => selection.setVisibleOrder(items.map((it) => it.link))}
@@ -305,8 +312,13 @@ const HistoryTab: React.FC = () => {
                         </div>
                     </div>
                 )}
-                <div className="location-cont">
-                    <ListNavigator.List />
+                <div className="location-cont" ref={historyScrollRef}>
+                    <ListNavigator.VirtualList
+                        scrollContainerRef={historyScrollRef}
+                        estimatedItemSize={BOOKMARK_HISTORY_LIST_ROW_PX}
+                        hostRowElement={false}
+                        rowGapPx={0}
+                    />
                 </div>
             </ListNavigator.Provider>
         </div>

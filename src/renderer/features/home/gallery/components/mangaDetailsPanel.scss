@@ -756,7 +756,14 @@
     .chapters-list {
         flex: 1;
         overflow-y: auto;
-        padding: 16px;
+        /* horizontal inset only; vertical inset is VirtualList paddingStart/End so the
+         * last row can scroll fully into view and locate align matches the old List */
+        padding: 0 16px;
+
+        /* non-virtual Bookmarks/Notes lists still need the old top/bottom inset */
+        > ol:not(.is-virtual) {
+            padding: 16px 0;
+        }
 
         .empty-message {
             padding: 20px;
