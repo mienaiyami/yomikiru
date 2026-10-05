@@ -20,6 +20,7 @@
 - feat: Gallery home section tabs (and the matching details list tabs / type filter) show a hover tooltip with the section name when the window is narrow enough that the button label is hidden. (#539)
 - feat: Language settings explain that you can make your own translation pack, with a detailed link to Usage steps (export the default zip, extract it, edit `pack.json` and the other JSON files in a text editor, zip again, install, then select the pack).
 - feat: Book reader **Continuous chapters** settings show a short hint plus **More Info** that jumps to the existing Usage section instead of a long in-panel description.
+- fix: AniList search results use the full result-row height again (covers and titles were clipped into the row above). Closing gallery details no longer flashes a cover across the window: the cover grid stays laid out while details are open, and a hidden width of 0 is not treated as a one-column gallery.
 - fix: Opening an EPUB no longer fails with `ENOTEMPTY` when a second open deletes the extract folder while 7-Zip is still writing. The destination wipe retries that Windows race, overlapping unzips of the same folder share one extract, and invalid locators with apostrophes in ids no longer throw from `querySelector`. Incomplete leftover extracts (`SOURCE` present but `container.xml` missing) are extracted again instead of reused.
 
 # 2.25.0-beta

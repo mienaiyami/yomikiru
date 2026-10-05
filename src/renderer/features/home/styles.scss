@@ -373,13 +373,21 @@
     }
 
     .galleryContent {
+        position: relative;
         display: flex;
         flex: 1;
         min-height: 0;
         overflow: hidden;
+        /*
+         * Keep the cover grid laid out while details are open. display:none reports
+         * width 0, the virtual grid falls back to one column, and a cover's
+         * aspect-ratio then paints across the window for a frame when details close.
+         */
         &.with-details {
             .libraryGrid {
-                display: none;
+                visibility: hidden;
+                position: absolute;
+                inset: 0;
             }
         }
         .libraryGrid {

@@ -5,7 +5,7 @@ import { onInvoke } from "@test/mocks/preload";
 import { renderWithProviders } from "@test/renderWithProviders";
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { searchAnilistMedia } from "@utils/anilist";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import AnilistSearch from "./AnilistSearch";
 
 vi.mock("react-focus-lock", () => ({
@@ -77,6 +77,56 @@ const renderSearch = () =>
     });
 
 describe("AnilistSearch", () => {
+    /**
+     * jsdom reports a 0 scrollport, so TanStack mounts no rows. Give the results
+     * scroller a size and ignore ResizeObserver zeros for this file only.
+     */
+    const restoreGeometry: Array<() => void> = [];
+
+    beforeAll(() => {
+        class NoopResizeObserver {
+            observe(): void {
+                // skip: a 0 border box would clear the offsetHeight scrollport
+            }
+            unobserve(): void {
+                // no-op stub
+            }
+            disconnect(): void {
+                // no-op stub
+            }
+        }
+        const previousResizeObserver = Object.getOwnPropertyDescriptor(window, "ResizeObserver");
+        Object.defineProperty(window, "ResizeObserver", {
+            configurable: true,
+            writable: true,
+            value: NoopResizeObserver,
+        });
+        restoreGeometry.push(() => {
+            if (previousResizeObserver) Object.defineProperty(window, "ResizeObserver", previousResizeObserver);
+            else delete window.ResizeObserver;
+        });
+
+        const stubPrototype = (key: "offsetHeight" | "clientHeight", getter: (element: HTMLElement) => number) => {
+            const previous = Object.getOwnPropertyDescriptor(HTMLElement.prototype, key);
+            Object.defineProperty(HTMLElement.prototype, key, {
+                configurable: true,
+                get() {
+                    return getter(this);
+                },
+            });
+            restoreGeometry.push(() => {
+                if (previous) Object.defineProperty(HTMLElement.prototype, key, previous);
+                else delete HTMLElement.prototype[key];
+            });
+        };
+        stubPrototype("offsetHeight", () => 400);
+        stubPrototype("clientHeight", (element) => element.offsetHeight);
+    });
+
+    afterAll(() => {
+        for (const restore of restoreGeometry.reverse()) restore();
+    });
+
     beforeEach(() => {
         vi.mocked(searchAnilistMedia).mockResolvedValue([searchHit(11, "First"), searchHit(22, "Second")]);
         onInvoke("db:trackers:upsert", async (req) => trackerRow(req.remoteId));
@@ -99,6 +149,13 @@ describe("AnilistSearch", () => {
         await screen.findAllByText("First");
         expect(resultItem("First")).toHaveAttribute("data-focused", "false");
         expect(screen.queryByRole("button", { name: /First/ })).toBeNull();
+    });
+
+    it("slots each result at the search-row height", async () => {
+        renderSearch();
+        await screen.findAllByText("First");
+        expect(resultItem("First").style.height).toBe("150px");
+        expect(resultItem("Second").style.top).toBe("150px");
     });
 
     it("selects a result with listDown then listSelect and upserts the tracker", async () => {

@@ -19,8 +19,12 @@ import { useTranslation } from "react-i18next";
 const SEARCH_DEBOUNCE_MS = 1000;
 /** Matches the overlay `data-state="open"` delay so search focus lands when the panel is visible. */
 const OVERLAY_OPEN_MS = 100;
-/** Fixed height (px) for AniList cover + multi-line title result rows. */
-const ANILIST_RESULT_ROW_ESTIMATE_PX = 88;
+/**
+ * Border-box height of an AniList search result row.
+ * Matches the result anchor height in the search overlay stylesheet.
+ * The virtual list fixed-size path uses this as the row slot.
+ */
+const ANILIST_RESULT_ROW_HEIGHT_PX = 150;
 
 const AnilistSearch = () => {
     const { t } = useTranslation("anilist");
@@ -139,7 +143,7 @@ const AnilistSearch = () => {
                         <div className="results" ref={resultsScrollRef}>
                             <ListNavigator.VirtualList
                                 scrollContainerRef={resultsScrollRef}
-                                estimatedItemSize={ANILIST_RESULT_ROW_ESTIMATE_PX}
+                                estimatedItemSize={ANILIST_RESULT_ROW_HEIGHT_PX}
                                 hostRowElement={false}
                                 rowGapPx={0}
                             />
