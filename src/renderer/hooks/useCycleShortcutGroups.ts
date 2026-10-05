@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { type KeybindHandlerConfig, useKeybindings } from "./useKeybindings";
+import type { CommandId } from "@common/keybindings";
+import { useCommandOwner } from "@features/keybindings";
 
 type CycleDirection = -1 | 1;
 
@@ -10,13 +10,15 @@ export type CycleShortcutGroup<TValue extends string> = {
     onChange: (value: TValue) => void;
 };
 
-type CycleShortcutGroups<TBar1 extends string, TBar2 extends string> = {
+type CycleShortcutGroups<TBar1 extends string, TBar2 extends string = string> = {
     bar1?: CycleShortcutGroup<TBar1>;
     bar2?: CycleShortcutGroup<TBar2>;
 };
 
 type CycleShortcutOptions = {
     enabled: boolean;
+    /** Unique owner id for this screen's bar groups. */
+    ownerId: string;
 };
 
 /**
@@ -46,56 +48,30 @@ const applyCycle = <TValue extends string>(
 };
 
 /**
- * Registers reusable first- and second-bar cycle commands for the current screen.
- * Capture keeps the commands available while a descendant search field owns bubbling.
+ * Registers first- and second-bar cycle commands on the current screen owner.
+ * Catalog context is home; callers set {@link CycleShortcutOptions.enabled} so
+ * only the visible screen's groups run.
  */
 export const useCycleShortcutGroups = <TBar1 extends string, TBar2 extends string = string>(
     groups: CycleShortcutGroups<TBar1, TBar2>,
-    { enabled }: CycleShortcutOptions,
+    { enabled, ownerId }: CycleShortcutOptions,
 ): void => {
-    const bar1Values = groups.bar1?.values;
-    const bar1Current = groups.bar1?.current;
-    const bar1OnChange = groups.bar1?.onChange;
-    const bar2Values = groups.bar2?.values;
-    const bar2Current = groups.bar2?.current;
-    const bar2OnChange = groups.bar2?.onChange;
+    const bar1 = groups.bar1;
+    const bar2 = groups.bar2;
+    const handlers: Partial<Record<CommandId, () => void>> = {};
+    if (bar1) {
+        handlers.cycleBar1Prev = () => applyCycle(bar1.values, bar1.current, bar1.onChange, -1);
+        handlers.cycleBar1Next = () => applyCycle(bar1.values, bar1.current, bar1.onChange, 1);
+    }
+    if (bar2) {
+        handlers.cycleBar2Prev = () => applyCycle(bar2.values, bar2.current, bar2.onChange, -1);
+        handlers.cycleBar2Next = () => applyCycle(bar2.values, bar2.current, bar2.onChange, 1);
+    }
 
-    const handlers = useMemo<KeybindHandlerConfig[]>(() => {
-        const cycleHandlers: KeybindHandlerConfig[] = [];
-        if (bar1Values && bar1Current !== undefined && bar1OnChange) {
-            cycleHandlers.push(
-                {
-                    command: "cycleBar1Prev",
-                    handler: () => applyCycle(bar1Values, bar1Current, bar1OnChange, -1),
-                    allowInInputs: true,
-                    allowRepeated: false,
-                },
-                {
-                    command: "cycleBar1Next",
-                    handler: () => applyCycle(bar1Values, bar1Current, bar1OnChange, 1),
-                    allowInInputs: true,
-                    allowRepeated: false,
-                },
-            );
-        }
-        if (bar2Values && bar2Current !== undefined && bar2OnChange) {
-            cycleHandlers.push(
-                {
-                    command: "cycleBar2Prev",
-                    handler: () => applyCycle(bar2Values, bar2Current, bar2OnChange, -1),
-                    allowInInputs: true,
-                    allowRepeated: false,
-                },
-                {
-                    command: "cycleBar2Next",
-                    handler: () => applyCycle(bar2Values, bar2Current, bar2OnChange, 1),
-                    allowInInputs: true,
-                    allowRepeated: false,
-                },
-            );
-        }
-        return cycleHandlers;
-    }, [bar1Values, bar1Current, bar1OnChange, bar2Values, bar2Current, bar2OnChange]);
-
-    useKeybindings(handlers, { enabled, capture: true });
+    useCommandOwner({
+        ownerId,
+        contextKinds: ["home"],
+        visible: enabled,
+        handlers,
+    });
 };

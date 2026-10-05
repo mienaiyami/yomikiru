@@ -20,7 +20,7 @@ export type ChapterNavDirection = "prev" | "next";
 
 /** Sort keys applied on top of a name-sorted chapter scan. */
 export type MangaChapterListOrder = {
-    sortBy: "name" | "date";
+    sortBy: AppSettings["locationListSortBy"];
     inverse: boolean;
     /**
      * When set, keep this session order for links that still exist, then append

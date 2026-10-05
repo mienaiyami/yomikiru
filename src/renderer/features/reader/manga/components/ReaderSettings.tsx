@@ -1,5 +1,7 @@
+import { useCommandOwner } from "@features/keybindings";
 import { MangaReaderPresetSection } from "@features/reader/components/ReaderPresetSection";
 import { MangaReaderSettingSection } from "@features/reader/components/ReaderSettingSection";
+import { maxReaderWidth, stepReaderWidth } from "@features/reader/readerCommandOps";
 import {
     faArrowsAltH,
     faArrowsAltV,
@@ -11,9 +13,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { selectLiveMangaPresetId, selectLiveMangaReaderSettings } from "@store/reader";
+import { selectLiveMangaPresetId, selectLiveMangaReaderSettings, selectReaderCommandsActive } from "@store/reader";
 import { getActiveMangaPresetName, patchLiveMangaReaderSettings, updateMangaPreset } from "@store/readerPresets";
-import { getShortcutsMapped } from "@store/shortcuts";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
 import InputCheckboxNumber from "@ui/InputCheckboxNumber";
@@ -21,10 +22,14 @@ import InputNumber from "@ui/InputNumber";
 import InputRange from "@ui/InputRange";
 import InputSelect from "@ui/InputSelect";
 import { colorUtils } from "@utils/color";
-import { keyFormatter } from "@utils/keybindings";
 import { defaultMangaReaderSettings } from "@utils/readerSettingsSchema";
 import { memo, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+    MANGA_READER_OWNER_ID,
+    MANGA_READER_PANEL_OWNER_ID,
+    MANGA_READER_SETTINGS_OWNER_ID,
+} from "../useMangaCommandOwner";
 
 const ReaderSettings = memo(
     ({
@@ -32,63 +37,72 @@ const ReaderSettings = memo(
         readerRef,
         readerSettingExtender,
         setShortcutText,
-        sizePlusRef,
-        sizeMinusRef,
     }: {
         makeScrollPos: () => void;
         readerRef: React.RefObject<HTMLDivElement>;
         readerSettingExtender: React.RefObject<HTMLButtonElement>;
         setShortcutText: React.Dispatch<React.SetStateAction<string>>;
-        sizePlusRef: React.RefObject<HTMLButtonElement>;
-        sizeMinusRef: React.RefObject<HTMLButtonElement>;
     }) => {
         const { t } = useTranslation("reader");
         const { t: tSettings } = useTranslation("settings");
         const appSettings = useAppSelector((store) => store.appSettings);
         const readerSettings = useAppSelector(selectLiveMangaReaderSettings);
         const mangaPresetId = useAppSelector(selectLiveMangaPresetId);
-        const shortcutsMapped = useAppSelector(getShortcutsMapped);
         const currentPresetName = useAppSelector(getActiveMangaPresetName);
+        const commandsActive = useAppSelector(selectReaderCommandsActive);
         const dispatch = useAppDispatch();
         const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
-        const [maxWidth, setMaxWidth] = useState<number>(readerSettings.widthClamped ? 100 : 500);
+        const [maxWidth, setMaxWidth] = useState<number>(maxReaderWidth(readerSettings.widthClamped));
+
+        const applySize = (direction: 1 | -1, fromButton?: HTMLElement) => {
+            if (readerSettings.fitOption !== 0) return;
+            makeScrollPos();
+            const readerWidth = stepReaderWidth(readerSettings.readerWidth, maxWidth, direction);
+            if (!fromButton || document.activeElement !== fromButton) setShortcutText(`${readerWidth}%`);
+            dispatch(patchLiveMangaReaderSettings({ readerWidth }));
+        };
+
+        const savePreset = () => {
+            const presetId = mangaPresetId;
+            if (!presetId) return;
+            dispatch(updateMangaPreset({ id: presetId, data: readerSettings }));
+            setShortcutText(
+                t("hud.savedToPreset", {
+                    name: currentPresetName ?? t("hud.unknownPreset"),
+                }),
+            );
+        };
+
+        useCommandOwner({
+            ownerId: MANGA_READER_SETTINGS_OWNER_ID,
+            contextKinds: ["mangaReader"],
+            visible: commandsActive,
+            parentOwnerId: MANGA_READER_OWNER_ID,
+            handlers: {
+                readerSettings: () => {
+                    setReaderSettingOpen((open) => !open);
+                    readerSettingExtender.current?.focus();
+                },
+                sizePlus: () => applySize(1),
+                sizeMinus: () => applySize(-1),
+                savePreset,
+            },
+        });
+
+        useCommandOwner({
+            ownerId: MANGA_READER_PANEL_OWNER_ID,
+            contextKinds: ["readerPanel"],
+            visible: isReaderSettingsOpen,
+            parentOwnerId: MANGA_READER_OWNER_ID,
+            onEscape: () => {
+                setReaderSettingOpen(false);
+                readerRef.current?.focus();
+                return true;
+            },
+        });
 
         useEffect(() => {
-            const f = (e: KeyboardEvent) => {
-                if (isReaderSettingsOpen && e.key === "Escape") {
-                    setReaderSettingOpen(false);
-                    if (readerRef.current) readerRef.current.focus();
-                    return;
-                }
-                const keyStr = keyFormatter(e);
-                if (keyStr && shortcutsMapped.savePreset?.includes(keyStr)) {
-                    e.preventDefault();
-                    const id = mangaPresetId;
-                    if (id) {
-                        dispatch(updateMangaPreset({ id, data: readerSettings }));
-                        setShortcutText(
-                            t("hud.savedToPreset", {
-                                name: currentPresetName ?? t("hud.unknownPreset"),
-                            }),
-                        );
-                    }
-                }
-            };
-            window.addEventListener("keydown", f);
-            return () => window.removeEventListener("keydown", f);
-        }, [
-            isReaderSettingsOpen,
-            shortcutsMapped,
-            mangaPresetId,
-            readerSettings,
-            currentPresetName,
-            dispatch,
-            setShortcutText,
-            readerRef,
-            t,
-        ]);
-        useEffect(() => {
-            setMaxWidth(readerSettings.widthClamped ? 100 : 500);
+            setMaxWidth(maxReaderWidth(readerSettings.widthClamped));
             if (readerSettings.widthClamped) {
                 if (readerSettings.readerWidth > 100) dispatch(patchLiveMangaReaderSettings({ readerWidth: 100 }));
             }
@@ -101,20 +115,12 @@ const ReaderSettings = memo(
                     (isReaderSettingsOpen ? "" : "closed ") +
                     (appSettings.checkboxReaderSetting ? "checkboxSetting " : "")
                 }
-                onKeyDown={(e) => {
-                    if (e.key === "Escape" || e.key === "q") {
-                        e.stopPropagation();
-                        setReaderSettingOpen(false);
-                        if (readerRef.current) readerRef.current.focus();
-                    }
-                }}
             >
                 <button
                     className="menuExtender"
                     ref={readerSettingExtender}
-                    onClick={() => setReaderSettingOpen((init) => !init)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Escape" || e.key === "q") e.currentTarget.blur();
+                    onClick={() => {
+                        setReaderSettingOpen((init) => !init);
                     }}
                     {...(!isReaderSettingsOpen ? { "data-tooltip": t("settings.readerSettingsTooltip") } : {})}
                 >
@@ -138,40 +144,17 @@ const ReaderSettings = memo(
                             labelAfter={t("settings.percentUnit")}
                         />
                         <button
-                            ref={sizeMinusRef}
                             disabled={readerSettings.fitOption !== 0}
                             onClick={(e) => {
-                                makeScrollPos();
-                                // was 20 before
-                                const steps = readerSettings.readerWidth <= 40 ? 5 : 10;
-                                const readerWidth =
-                                    readerSettings.readerWidth - steps > maxWidth
-                                        ? maxWidth
-                                        : readerSettings.readerWidth - steps < 1
-                                          ? 1
-                                          : readerSettings.readerWidth - steps;
-                                if (document.activeElement !== e.currentTarget) setShortcutText(`${readerWidth}%`);
-                                dispatch(patchLiveMangaReaderSettings({ readerWidth }));
-                                // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
+                                applySize(-1, e.currentTarget);
                             }}
                         >
                             <FontAwesomeIcon icon={faMinus} />
                         </button>
                         <button
-                            ref={sizePlusRef}
                             disabled={readerSettings.fitOption !== 0}
                             onClick={(e) => {
-                                makeScrollPos();
-                                const steps = readerSettings.readerWidth <= 40 ? 5 : 10;
-                                const readerWidth =
-                                    readerSettings.readerWidth + steps > maxWidth
-                                        ? maxWidth
-                                        : readerSettings.readerWidth + steps < 1
-                                          ? 1
-                                          : readerSettings.readerWidth + steps;
-
-                                if (document.activeElement !== e.currentTarget) setShortcutText(`${readerWidth}%`);
-                                dispatch(patchLiveMangaReaderSettings({ readerWidth }));
+                                applySize(1, e.currentTarget);
                             }}
                         >
                             <FontAwesomeIcon icon={faPlus} />

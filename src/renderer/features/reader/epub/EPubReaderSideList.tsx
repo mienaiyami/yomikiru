@@ -6,6 +6,7 @@ import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import { useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";
 import { getReaderBook } from "@store/reader";
+import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "src/renderer/App";
@@ -52,7 +53,7 @@ const EPubReaderSideList = memo(
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         findInPage: (str: string, forward?: boolean) => void;
         makeScrollPos: (
-            callback?: (progress: { chapterName: string; chapterId: string; position: string }) => any,
+            onCaptured?: (progress: { chapterName: string; chapterId: string; position: string }) => void,
         ) => void;
         zenMode: boolean;
         addNote: (color?: string) => void;
@@ -177,9 +178,7 @@ const EPubReaderSideList = memo(
                         setSideListPinned((init) => !init);
                         e.currentTarget.blur();
                     }}
-                    onKeyDown={(e) => {
-                        if ([" ", "Enter"].includes(e.key)) e.currentTarget.click();
-                    }}
+                    onKeyDown={clickOnWidgetActivateKey}
                 >
                     <FontAwesomeIcon
                         icon={faThumbtack}

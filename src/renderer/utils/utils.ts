@@ -164,6 +164,22 @@ export const scrollChildInContainer = (
 export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * True when `el` is in the document and not under `display:none` /
+ * `visibility:hidden`. Used so CSS-hidden Settings tabs and search fields
+ * are not treated as focusable.
+ */
+export const isElementShown = (el: HTMLElement): boolean => {
+    if (!el.isConnected) return false;
+    let node: HTMLElement | null = el;
+    while (node) {
+        const style = getComputedStyle(node);
+        if (style.display === "none" || style.visibility === "hidden") return false;
+        node = node.parentElement;
+    }
+    return true;
+};
+
+/**
  * Returns a debounced function that delays invoking `callback` until `waitMs` has elapsed.
  */
 export const debounce = <T extends unknown[]>(

@@ -264,6 +264,13 @@ export const getReaderLink = (state: RootState) => state.reader.link;
 export const getReaderProgress = (state: RootState) => state.reader.content?.progress;
 
 /**
+ * Whether reader command owners (reader, side list, settings panel, bookmark)
+ * should be visible: a reader is open and not loading its content.
+ */
+export const selectReaderCommandsActive = (state: RootState): boolean =>
+    state.reader.active && state.reader.loading === null;
+
+/**
  * Manga reader layout for this window: session copy when a manga session is active, else settings.json.
  */
 export const selectLiveMangaReaderSettings = (state: RootState): MangaReaderSettings => {

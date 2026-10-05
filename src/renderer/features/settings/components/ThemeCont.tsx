@@ -6,6 +6,7 @@ import InputColor from "@ui/InputColor";
 import InputSelect from "@ui/InputSelect";
 import { colorUtils } from "@utils/color";
 import { dialogUtils } from "@utils/dialog";
+import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import { initThemeData, themeProps } from "@utils/theme";
 import { randomString } from "@utils/utils";
 import { type ReactElement, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -80,12 +81,7 @@ const ThemeElement = ({
                 <label
                     className={`${variable === `var(${prop})` ? "disabled" : ""} ${checked ? "selected" : ""}`}
                     title={t("themeMaker.linkToVariable")}
-                    onKeyDown={(e) => {
-                        if ([" ", "Enter"].includes(e.key)) {
-                            e.preventDefault();
-                            e.currentTarget.click();
-                        }
-                    }}
+                    onKeyDown={clickOnWidgetActivateKey}
                     tabIndex={variable === `var(${prop})` ? -1 : 0}
                 >
                     <input

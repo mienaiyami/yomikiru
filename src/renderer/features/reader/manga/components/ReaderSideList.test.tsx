@@ -247,6 +247,15 @@ describe("ReaderSideList chapter search pin", () => {
         expect(openInReader).toHaveBeenCalledWith(CH03);
     });
 
+    it("opens the next chapter from the nextChapter command it registers", async () => {
+        renderSideList();
+        await waitFor(() => expect(screen.getByTestId("nav-next")).toHaveTextContent(CH02));
+        await act(async () => {
+            fireEvent.keyDown(document.body, { key: "]", code: "BracketRight" });
+        });
+        await waitFor(() => expect(openInReader).toHaveBeenCalledWith(CH02));
+    });
+
     /**
      * Auto-refresh may not have run yet. Next must not set reader.link to the
      * old folder name; it should rescan and open the renamed sibling.

@@ -1,5 +1,4 @@
 import Modal from "@ui/Modal";
-import { keyFormatter } from "@utils/keybindings";
 import { memo, useCallback, useRef } from "react";
 
 export type TextDisplayModalButton = {
@@ -31,13 +30,9 @@ type TextDisplayModalProps = {
 const TextDisplayModal = memo(({ open, title, text, buttons, onClose, className }: TextDisplayModalProps) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const handleKeyDown = useCallback(
-        (e: React.KeyboardEvent) => {
-            e.stopPropagation();
-            if (keyFormatter(e, false) === "escape") onClose();
-        },
-        [onClose],
-    );
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+        e.stopPropagation();
+    }, []);
 
     if (!open) return null;
 

@@ -346,7 +346,8 @@ const GalleryToolbar: React.FC<GalleryToolbarProps> = ({
                             placeholder={t("gallery.toolbar.searchPlaceholder")}
                             pageSearch={{
                                 id: "gallery-toolbar",
-                                priority: PAGE_SEARCH_PRIORITY.home,
+                                contextKinds: ["home"],
+                                tieOrder: PAGE_SEARCH_PRIORITY.home,
                                 enabled: !hidden,
                             }}
                         />

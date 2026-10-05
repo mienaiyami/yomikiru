@@ -1,11 +1,9 @@
+import { useCommandOwner, useOwnerId } from "@features/keybindings";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useAppSelector } from "@store/hooks";
-import { getShortcutsMapped } from "@store/shortcuts";
-import { keyFormatter } from "@utils/keybindings";
+import { onWidgetActivateKey } from "@utils/keyboard";
 import type { CSSProperties, KeyboardEvent, ReactNode, RefCallback, RefObject } from "react";
 import { useEffect, useRef } from "react";
-import { shallowEqual } from "react-redux";
 import Popover, { type PopoverAlign, type PopoverPlacement } from "./Popover";
 import SelectionCheckbox from "./SelectionCheckbox";
 
@@ -137,7 +135,6 @@ const InputMultiSelect = ({
     header,
     footer,
 }: InputMultiSelectProps) => {
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const rowRefs = useRef<(HTMLElement | null)[]>([]);
     const activatorRef = useRef<HTMLButtonElement | null>(null);
 
@@ -238,32 +235,17 @@ const InputMultiSelect = ({
         requestAnimationFrame(() => activatorRef.current?.focus());
     };
 
-    const onRowKeyDown = (e: KeyboardEvent<HTMLElement>, close: () => void, activate?: () => void) => {
+    const onRowKeyDown = (e: KeyboardEvent<HTMLElement>, close: () => void) => {
         if (e.key === "Escape") {
             e.preventDefault();
             e.stopPropagation();
             closeAndReturnFocus(close);
             return;
         }
-
+        onWidgetActivateKey(e, {
+            space: () => e.currentTarget.click(),
+        });
         e.stopPropagation();
-        const keyStr = keyFormatter(e, false);
-        if (keyStr === "") return;
-
-        if (shortcutsMapped.listDown.includes(keyStr) || keyStr === "right") {
-            e.preventDefault();
-            stepRowFocus(e.currentTarget, 1);
-            return;
-        }
-        if (shortcutsMapped.listUp.includes(keyStr) || keyStr === "left") {
-            e.preventDefault();
-            stepRowFocus(e.currentTarget, -1);
-            return;
-        }
-        if (shortcutsMapped.listSelect.includes(keyStr) || keyStr === "space") {
-            e.preventDefault();
-            activate?.();
-        }
     };
 
     const optionCheckbox = (
@@ -323,7 +305,7 @@ const InputMultiSelect = ({
                             className="inputMultiSelectRow inputMultiSelectToggleAll"
                             onClick={toggleAll}
                             onMouseEnter={(e) => e.currentTarget.focus()}
-                            onKeyDown={(e) => onRowKeyDown(e, close, toggleAll)}
+                            onKeyDown={(e) => onRowKeyDown(e, close)}
                         >
                             {toggleAllCheckbox}
                             <span className="inputMultiSelectRowLabel">{toggleAllLabelText}</span>
@@ -335,7 +317,7 @@ const InputMultiSelect = ({
                             className="inputMultiSelectRow inputMultiSelectToggleAll"
                             onClick={toggleAll}
                             onMouseEnter={(e) => e.currentTarget.focus()}
-                            onKeyDown={(e) => onRowKeyDown(e, close, toggleAll)}
+                            onKeyDown={(e) => onRowKeyDown(e, close)}
                         >
                             {toggleAllLabelText}
                         </button>
@@ -363,7 +345,7 @@ const InputMultiSelect = ({
                             onMouseEnter={(e) => {
                                 if (!option.disabled) e.currentTarget.focus();
                             }}
-                            onKeyDown={(e) => onRowKeyDown(e, close, toggle)}
+                            onKeyDown={(e) => onRowKeyDown(e, close)}
                         >
                             {renderOption ? (
                                 renderOption({ option, checked, excluded, checkbox })
@@ -419,15 +401,64 @@ const InputMultiSelect = ({
                     </button>
                 )}
             >
-                {({ close }) => (
+                {({ close, ownerId }) => (
                     <>
                         <FocusFirstPanelRow rowRefs={rowRefs} />
+                        <PanelListOwner
+                            parentOwnerId={ownerId}
+                            rowRefs={rowRefs}
+                            onStep={(delta) => {
+                                const active = document.activeElement;
+                                if (active instanceof HTMLElement) stepRowFocus(active, delta);
+                            }}
+                            onActivate={() => {
+                                const active = document.activeElement;
+                                if (active instanceof HTMLElement) active.click();
+                            }}
+                            onEscape={() => {
+                                closeAndReturnFocus(close);
+                            }}
+                        />
                         {panelBody(close)}
                     </>
                 )}
             </Popover>
         </span>
     );
+};
+
+type PanelListOwnerProps = {
+    /** Popover menu owner so Escape on a row wins over the overlay. */
+    parentOwnerId: string;
+    rowRefs: RefObject<(HTMLElement | null)[]>;
+    onStep: (delta: number) => void;
+    onActivate: () => void;
+    onEscape: () => void;
+};
+
+/** List commands while the multi-select panel is mounted. */
+const PanelListOwner = ({ parentOwnerId, rowRefs, onStep, onActivate, onEscape }: PanelListOwnerProps) => {
+    const ownerId = useOwnerId("input-multiselect");
+    useCommandOwner({
+        ownerId,
+        parentOwnerId,
+        contextKinds: ["searchWidget"],
+        visible: true,
+        ownsEventTarget: (node) => {
+            if (!(node instanceof Node)) return false;
+            return Boolean(rowRefs.current?.some((row) => row?.contains(node)));
+        },
+        handlers: {
+            listDown: () => onStep(1),
+            listUp: () => onStep(-1),
+            listSelect: () => onActivate(),
+        },
+        onEscape: () => {
+            onEscape();
+            return true;
+        },
+    });
+    return null;
 };
 
 type FocusFirstPanelRowProps = {

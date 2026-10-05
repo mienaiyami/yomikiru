@@ -28,7 +28,7 @@ Entry: [`src/renderer/features/settings/Settings.tsx`](../src/renderer/features/
 Toggled by the gear icon or `Ctrl+,`. Full-screen modal with five keyboard-navigable tabs driven by `SETTINGS_TABS`:
 
 - **0 — Settings** (`GeneralSettings.tsx`) — Library (Default Location, extra library folders, Scan now, thumbnails) first, then theme, language, gallery, reader, background, PDF, explorer. Discovery / merge: [library-discovery.md](library-discovery.md).
-- **1 — Shortcut Keys** (`Shortcuts.tsx`) — view and rebind all commands
+- **1 — Shortcut Keys** (`Shortcuts.tsx`) — view and rebind all commands (grouped Settings-style sections, key chips)
 - **2 — Theme Maker** (`ThemeCont.tsx`) — create/edit/import/export CSS-var themes
 - **3 — About** (`About.tsx`) — version, build info, detailed info dialog
 - **4 — Extras / Usage** (`Usage.tsx`) — in-app usage guide for all features
@@ -153,17 +153,15 @@ Each theme is `{ name: string; main: Record<CSSVarName, string> }`. `setBodyThem
 
 File: `userData/shortcuts.json`
 Redux: [`src/renderer/store/shortcuts.ts`](../src/renderer/store/shortcuts.ts)
-Command map with defaults: [`src/renderer/utils/keybindings.ts`](../src/renderer/utils/keybindings.ts)
+Catalog: [`src/common/keybindings/`](../src/common/keybindings/) (`COMMAND_CATALOG`, typed `KeyboardCode` triggers)
 
-Shortcuts are `{ command: ShortcutCommands; keys: string[] }`. Up to 4 bindings per command (`SHORTCUT_LIMIT`). The full command list with default keys and human-readable names is in `SHORTCUT_COMMAND_MAP` inside `keybindings.ts` — read that rather than duplicating it here.
+The on-disk envelope is a versioned `KeymapDocument` owned by main (`keymapFileStore`). Renderers hydrate with `keymap:get` and edit with `keymap:edit`; they must not write this file through `saveJSONfile` / `fs:saveFile`. Display rows (`command` + formatted keys) are derived for Usage; the Shortcuts editor reads the document directly.
 
-**Key format** — normalised strings like `"ctrl+shift+f"`, `"space"`, `"bracketleft"`, `"mouse4"`, `"mouse5"`. Mouse buttons 4 and 5 are fully supported.
+**Binding identity** is physical `KeyboardEvent.code` plus modifiers (or a side button), not the displayed label. The editor records live input through the keybinding runtime.
 
-**Reserved keys** (cannot be bound): `ctrl+shift+i`, `escape`, `tab`, `ctrl+n`, `ctrl+w`, `ctrl+r`, `ctrl+shift+r`.
+**Shortcut UI** (Settings tab 1) — catalog groups as Settings-style sections, key chips with always-visible remove, add/reset per command, live conflict warnings (not saved), no binding cap and no duplicate rejection. Reset-all remains on the Settings tab. Changes apply immediately. Native application-menu items show the same chords as display-only accelerators (`registerAccelerator: false`); they do not run a second key dispatcher.
 
-**Shortcut UI** (Settings tab 1) — lists all commands, click to remove a binding, click "Add" to record a new one, reset all to defaults.
-
-**Multi-window sync** — when `syncSettings = true`, `shortcuts.json` changes trigger `refreshShortcuts()` in other windows.
+**Multi-window sync** — after a successful `keymap:edit`, main broadcasts `keymap:changed`. The origin window already applied the invoke result. Other windows apply the snapshot when `syncSettings` is on.
 
 ---
 
@@ -174,11 +172,12 @@ When `fs:fileChanged` is received (main pushes it whenever any window writes a m
 | File | Reload condition | Redux action |
 | --- | --- | --- |
 | `settings.json` | `syncSettings = true` | `refreshAppSettings()` |
-| `shortcuts.json` | `syncSettings = true` | `refreshShortcuts()` |
 | `themes.json` | `syncThemes = true` | `refreshThemes()` |
 | `readerPresets.json` | always | `refreshReaderPresetsWithReconcile()` |
 
-`sourceWindowId` in the event payload lets each renderer skip its own writes (the writing window already has the new state in memory). See `App.tsx` around the `fs:fileChanged` listener.
+Keymap edits use `keymap:changed` instead of `fs:fileChanged` (see Shortcuts above).
+
+`sourceWindowId` in the `fs:fileChanged` payload lets each renderer skip its own writes (the writing window already has the new state in memory). See `App.tsx` around the `fs:fileChanged` listener.
 
 ---
 

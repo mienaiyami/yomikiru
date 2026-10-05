@@ -3,6 +3,7 @@ import {
     confirmDeleteProgressForLinks,
     progressLinksFromSelection,
 } from "@features/home/classic/listSelectionActions";
+import { useCommandOwner, useKeybindingRuntime } from "@features/keybindings";
 import { faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
@@ -10,14 +11,12 @@ import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
 import SelectionCheckbox from "@renderer/components/ui/SelectionCheckbox";
 import { useCycleShortcutGroups } from "@renderer/hooks/useCycleShortcutGroups";
 import { useMultiSelect } from "@renderer/hooks/useMultiSelect";
-import { focusPrimaryPageSearch } from "@renderer/hooks/usePageSearchFocus";
 import { useResizeObserverRafWidth } from "@renderer/hooks/useResizeObserverRafWidth";
 import { useSelectionShortcuts } from "@renderer/hooks/useSelectionShortcuts";
 import { setGalleryTrackContext } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { deleteLibraryItem, setLibraryItemFavourite } from "@store/library";
-import { getShortcutsMapped } from "@store/shortcuts";
 import { selectTrackerCoverCacheGeneration } from "@store/trackers";
 import { selectModalOverlayOpen, setAnilistSearchOpen } from "@store/ui";
 import { confirmWhenMany, dialogUtils } from "@utils/dialog";
@@ -29,7 +28,6 @@ import {
     sortContinueReadingItems,
     sortGalleryItems,
 } from "@utils/gallerySort";
-import { isShortcutEventFromInputTarget, keyFormatter } from "@utils/keybindings";
 import { resolveDetailsCoverSrc, trackerCoverHintByItemLink } from "@utils/libraryCover";
 import { ensurePdfLibraryCover } from "@utils/libraryCoverService";
 import { libraryItemSearchText, resolveAllItemMetadata, trackerByItemLink } from "@utils/libraryMetadata";
@@ -44,7 +42,6 @@ import { resolveMangaStartPath } from "@utils/mangaChapters";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { shallowEqual } from "react-redux";
 import ListNavigator from "../../../components/ListNavigator";
 import BookDetailsPanel from "./components/BookDetailsPanel";
 import GalleryToolbar, {
@@ -87,10 +84,10 @@ const GalleryView: React.FC = () => {
     const bookmarks = useAppSelector((store) => store.bookmarks);
     const appSettings = useAppSelector((store) => store.appSettings);
     const anilistToken = useAppSelector((store) => store.anilist.token);
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const readerActive = useAppSelector((store) => store.reader.active);
     const modalOverlayOpen = useAppSelector(selectModalOverlayOpen);
     const { openInReader, setContextMenuData } = useAppContext();
+    const runtime = useKeybindingRuntime();
 
     const [selectedManga, setSelectedManga] = useState<string | null>(null);
     const [selectedBook, setSelectedBook] = useState<string | null>(null);
@@ -488,9 +485,9 @@ const GalleryView: React.FC = () => {
         setSelectedBook(null);
         setDetailsInitialTab(undefined);
         requestAnimationFrame(() => {
-            focusPrimaryPageSearch();
+            runtime.executeCommand("focusPageSearch");
         });
-    }, []);
+    }, [runtime]);
 
     const handleListContextMenu = useCallback((elem: HTMLElement) => {
         elem.dispatchEvent(window.contextMenu.fakeEvent(elem));
@@ -584,28 +581,23 @@ const GalleryView: React.FC = () => {
         },
         {
             enabled: !detailsOpen && !readerActive && !selection.isSelectionMode && !modalOverlayOpen,
+            ownerId: "home-gallery-cycle",
         },
     );
 
-    useEffect(() => {
-        /* Home stays mounted with display:none during the reader; keep this
-         * listener off then. After close, window capture still runs when focus
-         * is on the TopBar (tree capture on .galleryView did not). */
-        if (!detailsOpen || readerActive || modalOverlayOpen) return;
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (isShortcutEventFromInputTarget(e)) return;
-            const keyStr = keyFormatter(e);
-            if (!shortcutsMapped.dirUp.includes(keyStr)) return;
-            e.preventDefault();
-            e.stopPropagation();
-            handleCloseMangaDetails();
-        };
-        /* capture: details search stopPropagation would skip a bubble listener */
-        window.addEventListener("keydown", onKeyDown, true);
-        return () => window.removeEventListener("keydown", onKeyDown, true);
-    }, [detailsOpen, readerActive, modalOverlayOpen, shortcutsMapped, handleCloseMangaDetails]);
+    useCommandOwner({
+        ownerId: "gallery-details-dirUp",
+        contextKinds: ["galleryDetails"],
+        visible: detailsOpen && !readerActive && !modalOverlayOpen,
+        handlers: {
+            dirUp: () => {
+                handleCloseMangaDetails();
+            },
+        },
+    });
 
     useSelectionShortcuts({
+        ownerId: "gallery-library-selection",
         selection,
         enabled: !detailsOpen,
         onDelete: handleRemoveSelectedFromLibrary,

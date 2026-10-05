@@ -44,7 +44,9 @@ describe("SettingsSearch", () => {
     });
 
     it("does not open MenuList until the query is non-empty", () => {
-        renderWithProviders(<SettingsSearch />, { preloadedState: openSettingsState });
+        renderWithProviders(<SettingsSearch inputRef={{ current: null }} />, {
+            preloadedState: openSettingsState,
+        });
         expect(lastMenu()).toBeNull();
         fireEvent.change(screen.getByPlaceholderText(settings.search.placeholder), {
             target: { value: "library" },
@@ -53,7 +55,9 @@ describe("SettingsSearch", () => {
     });
 
     it("matches section body copy (AniList auto-update)", () => {
-        renderWithProviders(<SettingsSearch />, { preloadedState: openSettingsState });
+        renderWithProviders(<SettingsSearch inputRef={{ current: null }} />, {
+            preloadedState: openSettingsState,
+        });
         fireEvent.change(screen.getByPlaceholderText(settings.search.placeholder), {
             target: { value: "auto-update" },
         });
@@ -62,7 +66,9 @@ describe("SettingsSearch", () => {
     });
 
     it("jumps to an Other Settings control instead of the section heading", () => {
-        renderWithProviders(<SettingsSearch />, { preloadedState: openSettingsState });
+        renderWithProviders(<SettingsSearch inputRef={{ current: null }} />, {
+            preloadedState: openSettingsState,
+        });
         fireEvent.change(screen.getByPlaceholderText(settings.search.placeholder), {
             target: { value: "hardware acceleration" },
         });
@@ -74,7 +80,9 @@ describe("SettingsSearch", () => {
     });
 
     it("navigates on MenuList item action and clears the query", () => {
-        renderWithProviders(<SettingsSearch />, { preloadedState: openSettingsState });
+        renderWithProviders(<SettingsSearch inputRef={{ current: null }} />, {
+            preloadedState: openSettingsState,
+        });
         const input = screen.getByPlaceholderText(settings.search.placeholder);
         fireEvent.change(input, { target: { value: "library" } });
         lastMenu()
@@ -85,7 +93,9 @@ describe("SettingsSearch", () => {
     });
 
     it("navigates the active hit on Enter", () => {
-        renderWithProviders(<SettingsSearch />, { preloadedState: openSettingsState });
+        renderWithProviders(<SettingsSearch inputRef={{ current: null }} />, {
+            preloadedState: openSettingsState,
+        });
         const input = screen.getByPlaceholderText(settings.search.placeholder);
         fireEvent.change(input, { target: { value: "library" } });
         fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
@@ -94,7 +104,9 @@ describe("SettingsSearch", () => {
     });
 
     it("clears a non-empty query on Escape without closing settings", () => {
-        const { store } = renderWithProviders(<SettingsSearch />, { preloadedState: openSettingsState });
+        const { store } = renderWithProviders(<SettingsSearch inputRef={{ current: null }} />, {
+            preloadedState: openSettingsState,
+        });
         const input = screen.getByPlaceholderText(settings.search.placeholder);
         fireEvent.change(input, { target: { value: "library" } });
         fireEvent.keyDown(input, { key: "Escape", code: "Escape" });
@@ -103,7 +115,9 @@ describe("SettingsSearch", () => {
     });
 
     it("closes settings on Escape when the query is empty", () => {
-        const { store } = renderWithProviders(<SettingsSearch />, { preloadedState: openSettingsState });
+        const { store } = renderWithProviders(<SettingsSearch inputRef={{ current: null }} />, {
+            preloadedState: openSettingsState,
+        });
         fireEvent.keyDown(screen.getByPlaceholderText(settings.search.placeholder), {
             key: "Escape",
             code: "Escape",

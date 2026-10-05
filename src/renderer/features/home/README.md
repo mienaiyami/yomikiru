@@ -212,8 +212,8 @@ A reusable compound component providing:
 Key capabilities:
 
 - Filter function (`filterFn`) is caller-supplied; omit it for remote search (Add Tracking) so API hits are not regex-filtered locally.
-- Keyboard navigation: arrow keys move focus, Enter/Space select, Home/End jump to ends.
-- `handleExtraKeyDown` hook allows caller to intercept additional keys (e.g. shortcut commands).
+- Keyboard navigation: configurable list commands move focus and select.
+- `onSelectEmpty` runs when Enter/select fires with no focused row (classic locations uses this for directory-up).
 - `onFilteredItemsChange` callback lets callers track the visible subset (used by multi-select).
 - `persistFilterOnItemsChange` — when true, the filter is not cleared when the item list refreshes or `resetFilterKey` changes.
 - `resetFilterKey` — extra reset signal so unpinned search clears when that value changes (not only when `items` identity changes).
@@ -247,9 +247,9 @@ Shift-range selection uses `getIdsInRange` from [`src/renderer/utils/multiSelect
 
 Keyboard shortcuts layered on top of `useMultiSelect`. Wires:
 
-- `Ctrl+A` → select all.
+- `selectAll` → select all visible items (native Ctrl/Cmd+A remains in text fields).
 - `Escape` → clear selection.
-- `deleteSelected` (default `Delete`, customizable in Settings → Shortcut Keys) → the caller’s bulk remove handler while something is selected (library item, history, bookmarks, notes). Not used on manga chapter lists.
+- `deleteSelected` → the caller’s bulk remove handler while something is selected (library item, history, bookmarks, notes). Not used on manga chapter lists.
 
 Does not run while typing in a field or while the reader is open (Home stays mounted). Classic Bookmark / History use the same hook when list checkboxes are on.
 

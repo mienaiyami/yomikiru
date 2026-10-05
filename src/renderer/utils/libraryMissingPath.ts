@@ -164,7 +164,7 @@ const isReadableMangaChapterPath = async (chapterPath: string): Promise<boolean>
  * First name-sorted readable chapter under the series folder, or `null` if none.
  * Never returns the series root itself (cover-only roots are skipped).
  *
- * ponytail: immediate children only; upgrade: deeper trees / fuzzy rename match.
+ * Immediate children only; upgrade: deeper trees / fuzzy rename match.
  */
 export const pickFirstMangaChapterUnderRoot = async (libraryRoot: string): Promise<string | null> => {
     const root = normalizeMangaPathSegment(libraryRoot);
@@ -723,7 +723,7 @@ export const maybeRelocateMissingSameNameOnOpen = async (
     }
     if (candidates.length > 1) {
         /*
-         * ponytail: several same-name missing rows - do not pick silently.
+         * Several same-name missing rows - do not pick silently.
          * Upgrade: a picker dialog. User can Locate from details.
          */
         await dialogUtils.warn({

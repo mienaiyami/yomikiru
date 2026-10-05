@@ -1,3 +1,4 @@
+import { onWidgetActivateKey } from "@utils/keyboard";
 import type React from "react";
 
 export type SelectionCheckboxProps = {
@@ -71,11 +72,13 @@ const SelectionCheckbox: React.FC<SelectionCheckboxProps> = ({
                 data-excluded={excluded && !checked ? "true" : undefined}
                 className={inputClassName}
                 onKeyDown={(e) => {
-                    if (e.key !== " ") return;
-                    /* Modal overlay treats Space as click; keep that key on this control */
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onToggle({ shiftKey: e.shiftKey });
+                    onWidgetActivateKey(e, {
+                        space: () => {
+                            /* Modal overlay treats Space as click; keep that key on this control */
+                            e.stopPropagation();
+                            onToggle({ shiftKey: e.shiftKey });
+                        },
+                    });
                 }}
             />
             <span className={boxClassName || "checkBox"} />

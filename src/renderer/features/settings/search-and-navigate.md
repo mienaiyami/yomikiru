@@ -26,13 +26,13 @@ Opaque ids are the public API. CSS selectors stay inside the catalog.
 | Pattern | Example | Notes |
 | --------- | --------- | -------- |
 | `setting:<kebab>` | `setting:library` | Settings tab sections / controls |
-| `shortcut:<command>` | `shortcut:focusPageSearch` | Generated from `SHORTCUT_COMMAND_MAP` |
+| `shortcut:<command>` | `shortcut:focusPageSearch` | Generated from `COMMAND_CATALOG` |
 | `about` | About root | |
 | `usage:<kebab>` | `usage:anilist` | Usage section anchors |
 
-Labels come from i18n (`labelKey` / `labelNs`). Optional `keywords` are English synonyms for search matching only (not shown in UI). Optional `contentPath` indexes string leaves under that path in `labelNs` so section body copy matches (e.g. AniList "auto-update"). `contentPath` and `labelKey` are typed against the English catalog for that namespace (typos fail at compile time). Shortcut rows take `labelKey` from `SHORTCUT_COMMAND_MAP.name`, which is typed as `shortcutNames.<command>` against that catalog. `platform: "win32"` omits an entry from search on other OS.
+Labels come from i18n (`labelKey` / `labelNs`). Optional `keywords` are English synonyms for search matching only (not shown in UI). Optional `contentPath` indexes string leaves under that path in `labelNs` so section body copy matches (e.g. AniList "auto-update"). `contentPath` and `labelKey` are typed against the English catalog for that namespace (typos fail at compile time). Shortcut rows take `labelKey` from `COMMAND_CATALOG`, which is typed as `shortcutNames.<command>` against that catalog. `platform: "win32"` omits an entry from search on other OS.
 
-**Indexed:** Settings tab (sections plus individual Other Settings / Style Settings controls), Shortcuts (per command), About, Extras/Usage sections.  
+**Indexed:** Settings tab (sections plus individual Other Settings / Style Settings controls), Shortcuts (notes block plus per command), About, Extras/Usage sections.  
 **Not indexed:** Theme Maker CSS variables, in-reader manga/book settings panels.
 
 Grab-bag sections (`setting:other`, `setting:style`) keep a heading target for the section title only. Each control is its own catalog row with a DOM id so search highlights that row, not the whole block. Optional `groupLabelKey` (parent section title) is the search-row secondary text instead of the tab name.
@@ -70,7 +70,7 @@ the search field.
 Opening Settings focuses the search field (FocusLock's first tabbable). Escape
 in the search field clears a non-empty query; with an empty query (or when
 focus is elsewhere in the overlay) Escape closes Settings. Focus the field later
-with `focusPageSearch` (`usePageSearchFocus` at `PAGE_SEARCH_PRIORITY.overlay`).
+with `focusPageSearch` (`usePageSearchFocus` at overlay `tieOrder`, `PAGE_SEARCH_PRIORITY.overlay`).
 Do not add a settings-only shortcut.
 
 Search rows show the control title and a separate muted group/tab label in

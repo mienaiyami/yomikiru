@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { reservedKeys, SHORTCUT_LIMIT } from "./constants";
+import { SETTINGS_TABS, settingsTabIndex } from "./constants";
 
 describe("settings constants", () => {
-    it("exposes frozen shortcut limits and reserved keys", () => {
-        expect(SHORTCUT_LIMIT).toBe(4);
-        expect(reservedKeys).toContain("escape");
-        expect(Object.isFrozen(SHORTCUT_LIMIT)).toBe(true);
+    it("exposes stable ordered tab keys and indices", () => {
+        expect(SETTINGS_TABS.map((tab) => tab.key)).toEqual([
+            "settings",
+            "shortcutKeys",
+            "makeTheme",
+            "about",
+            "extras",
+        ]);
+        expect(settingsTabIndex("settings")).toBe(0);
+        expect(settingsTabIndex("extras")).toBe(4);
     });
 });

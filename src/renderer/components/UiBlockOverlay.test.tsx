@@ -10,7 +10,7 @@ describe("UiBlockOverlay", () => {
         expect(container.querySelector("#uiBlockOverlay")).toBeNull();
     });
 
-    it("shows the top lock message and swallows capture-phase keydown", () => {
+    it("shows the top lock message and swallows capture-phase pointer input", () => {
         const { store, getByLabelText } = renderWithProviders(<UiBlockOverlay />);
         act(() => {
             store.dispatch(blockUi({ id: "scan", message: "Scanning..." }));
@@ -25,11 +25,11 @@ describe("UiBlockOverlay", () => {
         const onLaterCapture = () => {
             reachedLaterCapture = true;
         };
-        window.addEventListener("keydown", onBubble);
-        window.addEventListener("keydown", onLaterCapture, true);
-        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
-        window.removeEventListener("keydown", onBubble);
-        window.removeEventListener("keydown", onLaterCapture, true);
+        window.addEventListener("mousedown", onBubble);
+        window.addEventListener("mousedown", onLaterCapture, true);
+        window.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true, button: 0 }));
+        window.removeEventListener("mousedown", onBubble);
+        window.removeEventListener("mousedown", onLaterCapture, true);
         expect(reachedBubble).toBe(false);
         expect(reachedLaterCapture).toBe(false);
 

@@ -1,6 +1,8 @@
+import { useCommandOwner, useOwnerId } from "@features/keybindings";
 import { faEyeDropper, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { colorUtils } from "@utils/color";
+import { widgetActivateKind } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
 import type React from "react";
 
@@ -30,6 +32,7 @@ const InputColorReal: React.FC = () => {
     const [color, setColor] = useState(colorUtils.new());
     const [sliding, setSliding] = useState<ValidSlider | null>(null);
     const ref = useRef<HTMLDivElement | null>(null);
+    const ownerId = useOwnerId("color-picker");
     const slRef = useRef<HTMLDivElement | null>(null);
     const hueRef = useRef<HTMLDivElement | null>(null);
     const alphaRef = useRef<HTMLDivElement | null>(null);
@@ -149,6 +152,27 @@ const InputColorReal: React.FC = () => {
         }
     }, [sliding]);
 
+    /**
+     * Moves focus onto the picker root and blurs it so {@link InputColorReal}'s
+     * onBlur dismiss runs. Used by Escape and the contextMenu command.
+     */
+    const dismissPicker = () => {
+        const picker = ref.current;
+        if (!picker) return;
+        picker.focus();
+        picker.blur();
+    };
+
+    useCommandOwner({
+        ownerId,
+        contextKinds: ["menu"],
+        visible: Boolean(colorSelectData),
+        ownsEventTarget: (node) => Boolean(node instanceof Node && ref.current?.contains(node)),
+        handlers: {
+            contextMenu: dismissPicker,
+        },
+    });
+
     return (
         colorSelectData && (
             <FocusLock
@@ -183,27 +207,11 @@ const InputColorReal: React.FC = () => {
                         "--color-noAlpha": colorUtils.new(color).alpha(1).hsl().string(),
                     }}
                     onKeyDown={(e) => {
-                        if (!e.ctrlKey && !["Tab", " ", "Enter"].includes(e.key)) {
+                        if (!e.ctrlKey && e.key !== "Tab" && !widgetActivateKind(e)) {
                             e.stopPropagation();
                             e.preventDefault();
                         }
-                        if (
-                            (e.ctrlKey && e.key === "/") ||
-                            (e.shiftKey && e.key === "F10") ||
-                            e.key === "ContextMenu"
-                        ) {
-                            e.currentTarget.focus();
-                            e.currentTarget.blur();
-                            return;
-                        }
-                        switch (e.key) {
-                            case "Escape":
-                                e.currentTarget.focus();
-                                e.currentTarget.blur();
-                                break;
-                            default:
-                                break;
-                        }
+                        if (e.key === "Escape") dismissPicker();
                     }}
                 >
                     <div

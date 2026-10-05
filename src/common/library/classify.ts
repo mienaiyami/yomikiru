@@ -129,7 +129,7 @@ export const stripWindowsLongPathPrefix = (resolved: string): string => {
  * Normalized path used as `library_items.link`: `realpath` when the adapter provides it
  * and the path exists, otherwise {@link normalizeLibraryPath}.
  *
- * ponytail: identity is realpath only. Hardlinks, NTFS case-fold, and subst/mapped-drive
+ * Identity is realpath only. Hardlinks, NTFS case-fold, and subst/mapped-drive
  * aliases stay distinct; upgrade with inode / casefold keys if those reports show up.
  */
 export const resolveLibraryRealPath = (io: LibraryIo, link: string): string => {

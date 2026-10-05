@@ -1,5 +1,5 @@
 /**
- * Settings overlay constants: tab strip, shortcut editor limits, and reserved combos.
+ * Settings overlay constants: tab strip.
  * Panel components stay in Settings.tsx to avoid import cycles with context.
  */
 
@@ -25,13 +25,3 @@ export const settingsTabIndex = (key: SettingsTabKey): number => {
     if (index < 0) throw new Error(`Unknown settings tab key: ${key}`);
     return index;
 };
-
-/** Key combos the shortcut editor must not accept. */
-const reservedKeys = ["ctrl+shift+i", "escape", "tab", "ctrl+n", "ctrl+w", "ctrl+r", "ctrl+shift+r"];
-
-/** Max bindings stored per shortcut command. */
-const SHORTCUT_LIMIT = 4 as const;
-
-Object.freeze(SHORTCUT_LIMIT);
-
-export { reservedKeys, SHORTCUT_LIMIT };

@@ -1,6 +1,6 @@
 import Colorjs from "color";
+import type { CommandId } from "@common/keybindings";
 import { settingSchema } from "../utils/settingsSchema";
-import { SHORTCUT_COMMAND_MAP } from "../utils/keybindings";
 import { z } from "zod";
 import { themeProps } from "../utils/theme";
 import { addBookmark } from "../store/bookmarks";
@@ -62,9 +62,6 @@ declare global {
                 behavior?: ScrollBehavior,
                 callback?: () => void,
             ) => void;
-            keyRepeated: boolean;
-            // to remove later
-            keydown: boolean;
             /**
              * Sync EPUB scroll CSS position into Redux before progress is persisted (e.g. close reader).
              * Set by {@link EPubReader} while mounted.
@@ -83,7 +80,7 @@ declare global {
     //
     //
 
-    type ShortcutCommands = (typeof SHORTCUT_COMMAND_MAP)[number]["command"];
+    type ShortcutCommands = CommandId;
 
     type ShortcutSchema = {
         command: ShortcutCommands;

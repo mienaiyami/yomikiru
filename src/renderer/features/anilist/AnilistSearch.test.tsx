@@ -5,7 +5,6 @@ import { onInvoke } from "@test/mocks/preload";
 import { renderWithProviders } from "@test/renderWithProviders";
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { searchAnilistMedia } from "@utils/anilist";
-import { healShortcutEntries } from "@utils/keybindings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AnilistSearch from "./AnilistSearch";
 
@@ -22,7 +21,6 @@ vi.mock("@utils/anilist", async (importOriginal) => {
 });
 
 const itemLink = path.join("library", "tracked");
-const defaultShortcuts = { shortcuts: healShortcutEntries([]) };
 
 /** Minimal AniList search hit used as {@link searchAnilistMedia} payload. */
 const searchHit = (id: number, english: string): Anilist.SearchMediaItem => ({
@@ -62,7 +60,6 @@ const resultItem = (english: string) => {
 const renderSearch = () =>
     renderWithProviders(<AnilistSearch />, {
         preloadedState: {
-            ...defaultShortcuts,
             anilist: {
                 token: "token",
                 currentListEntry: null,

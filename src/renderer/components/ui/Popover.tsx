@@ -1,3 +1,4 @@
+import { useCommandOwner, useOwnerId } from "@features/keybindings";
 import {
     cloneElement,
     isValidElement,
@@ -34,6 +35,18 @@ export type PopoverTriggerArg = {
     };
 };
 
+/**
+ * Args for a {@link Popover} body render prop. Nested command owners should
+ * pass {@link PopoverBodyArg.ownerId} as `parentOwnerId` so Escape on a
+ * focused list row reaches that owner before this menu overlay.
+ */
+export type PopoverBodyArg = {
+    /** Close the popover. */
+    close: () => void;
+    /** Command-owner id of this popover menu. */
+    ownerId: string;
+};
+
 /** Props for {@link Popover}. */
 export type PopoverProps = {
     /**
@@ -45,7 +58,7 @@ export type PopoverProps = {
      */
     trigger: ReactElement | ((args: PopoverTriggerArg) => ReactNode);
     /** Popover body — typically a form, slider, menu, etc. */
-    children: ReactNode | ((args: { close: () => void }) => ReactNode);
+    children: ReactNode | ((args: PopoverBodyArg) => ReactNode);
     /** Side of the trigger to anchor to. @default "bottom" */
     placement?: PopoverPlacement;
     /** Horizontal alignment of the popover relative to the trigger. @default "end" */
@@ -111,6 +124,7 @@ const Popover: React.FC<PopoverProps> = ({
 
     const wrapperRef = useRef<HTMLSpanElement>(null);
     const triggerRef = useRef<HTMLElement | null>(null);
+    const ownerId = useOwnerId("popover");
 
     const setOpen = useCallback(
         (next: boolean) => {
@@ -132,9 +146,23 @@ const Popover: React.FC<PopoverProps> = ({
         setOpen(!open);
     }, [open, setOpen]);
 
+    useCommandOwner({
+        ownerId,
+        contextKinds: ["menu"],
+        visible: open && !disableEscapeClose,
+        ownsEventTarget: (node) => {
+            if (!(node instanceof Node)) return false;
+            return Boolean(wrapperRef.current?.contains(node) || triggerRef.current?.contains(node));
+        },
+        onEscape: () => {
+            hide();
+            return true;
+        },
+    });
+
     /**
      * Closes the popover when the user clicks outside of it (and outside the
-     * trigger) or presses Escape. Listeners are only attached while open.
+     * trigger). Escape is the menu owner.
      */
     useEffect(() => {
         if (!open) return;
@@ -145,20 +173,11 @@ const Popover: React.FC<PopoverProps> = ({
             if (triggerRef.current?.contains(target)) return;
             hide();
         };
-        const onKey = (e: KeyboardEvent) => {
-            if (disableEscapeClose) return;
-            if (e.key === "Escape") {
-                e.stopPropagation();
-                hide();
-            }
-        };
         document.addEventListener("mousedown", onPointer);
-        document.addEventListener("keydown", onKey);
         return () => {
             document.removeEventListener("mousedown", onPointer);
-            document.removeEventListener("keydown", onKey);
         };
-    }, [open, hide, disableOutsideClickClose, disableEscapeClose]);
+    }, [open, hide, disableOutsideClickClose]);
 
     /** Stable ref callback handed to the consumer trigger. */
     const triggerRefCb = useCallback<React.RefCallback<HTMLElement>>((node) => {
@@ -190,7 +209,7 @@ const Popover: React.FC<PopoverProps> = ({
         renderedTrigger = trigger;
     }
 
-    const popoverContent = typeof children === "function" ? children({ close: hide }) : children;
+    const popoverContent = typeof children === "function" ? children({ close: hide, ownerId }) : children;
 
     return (
         <span ref={wrapperRef} className={`popover-wrapper ${open ? "open" : ""}`}>

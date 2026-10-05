@@ -1,7 +1,7 @@
 import readerEn from "@common/i18n/locales/en/reader.json";
 import settingsEn from "@common/i18n/locales/en/settings.json";
 import usageEn from "@common/i18n/locales/en/usage.json";
-import { SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { COMMAND_CATALOG } from "@common/keybindings";
 import { describe, expect, it } from "vitest";
 import { SETTINGS_TABS, settingsTabIndex } from "./constants";
 import {
@@ -60,16 +60,17 @@ describe("settingsTargets", () => {
         expect(new Set(ids).size).toBe(ids.length);
     });
 
-    it("generates one shortcut target per SHORTCUT_COMMAND_MAP command", () => {
+    it("generates one shortcut target per catalog command", () => {
         const shortcuts = buildShortcutSettingsTargets();
-        expect(shortcuts).toHaveLength(SHORTCUT_COMMAND_MAP.length);
-        for (const entry of SHORTCUT_COMMAND_MAP) {
-            const target = shortcuts.find((t) => t.id === `shortcut:${entry.command}`);
-            expect(target?.selector).toBe(`#settings-shortcut-${entry.command}`);
+        expect(shortcuts).toHaveLength(COMMAND_CATALOG.length);
+        for (const entry of COMMAND_CATALOG) {
+            const commandId = entry.id;
+            const target = shortcuts.find((t) => t.id === `shortcut:${commandId}`);
+            expect(target?.selector).toBe(`#settings-shortcut-${commandId}`);
             expect(target?.tab).toBe("shortcutKeys");
-            expect(target?.labelKey).toBe(entry.name);
+            expect(target?.labelKey).toBe(entry.labelKey);
             expect(target?.labelNs).toBe("reader");
-            expect(valueAtPath(readerEn, entry.name)).toEqual(expect.any(String));
+            expect(valueAtPath(readerEn, entry.labelKey)).toEqual(expect.any(String));
         }
     });
 
@@ -120,7 +121,7 @@ describe("settingsTargets", () => {
             "readerPresets.title",
         );
         expect(getSettingsTarget("missing:id")).toBeUndefined();
-        expect(getAllSettingsTargets().length).toBe(SETTINGS_TARGETS_STATIC.length + SHORTCUT_COMMAND_MAP.length);
+        expect(getAllSettingsTargets().length).toBe(SETTINGS_TARGETS_STATIC.length + COMMAND_CATALOG.length);
     });
 
     it("filters win32-only targets by platform", () => {
@@ -171,6 +172,21 @@ describe("settingsTargets", () => {
         expect(getSettingsTarget("usage:epub-continuous-scroll")?.selector).toBe(
             "#settings-usage-epubContinuousScroll",
         );
+    });
+
+    it("indexes shortcut-tab notes so hint copy is searchable", () => {
+        const help = getSettingsTarget("setting:shortcuts-help");
+        expect(help).toMatchObject({
+            tab: "shortcutKeys",
+            selector: "#settings-shortcuts-help",
+            labelKey: "shortcuts.helpTitle",
+            labelNs: "settings",
+        });
+        expect(help ? settingsTargetContentPaths(help) : []).toEqual(["shortcuts.hints"]);
+        const hintHits = filterSettingsTargets(SETTINGS_TARGETS_STATIC, "middle mouse", getSearchTextsFromEn).map(
+            (target) => target.id,
+        );
+        expect(hintHits).toContain("setting:shortcuts-help");
     });
 });
 

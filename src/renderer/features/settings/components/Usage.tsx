@@ -29,7 +29,7 @@ const SettingsLink = ({ targetId, id, children }: SettingsLinkProps): ReactEleme
  */
 const Usage = (): ReactElement => {
     const { t, ready } = useTranslation("usage");
-    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const shortcuts = useAppSelector((store) => store.shortcuts.entries);
 
     if (!ready) return <div className="content2 features" />;
 

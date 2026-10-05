@@ -175,7 +175,7 @@ export const libraryItemSearchText = (searchTitles: readonly string[], extra = "
 
 /**
  * First tracker row per library path.
- * ponytail: first row wins until a provider picker exists.
+ * First row wins until a provider picker exists.
  */
 export const trackerByItemLink = (entries: readonly ItemTracker[]): Record<string, ItemTracker> => {
     const map: Record<string, ItemTracker> = {};

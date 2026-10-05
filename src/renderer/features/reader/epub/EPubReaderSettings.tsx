@@ -1,12 +1,18 @@
+import { useCommandOwner } from "@features/keybindings";
 import { BookReaderPresetSection } from "@features/reader/components/ReaderPresetSection";
 import { BookReaderSettingSection } from "@features/reader/components/ReaderSettingSection";
+import { stepFontSize, stepReaderWidth } from "@features/reader/readerCommandOps";
 import { navigateToSetting } from "@features/settings/utils/navigateToSetting";
 import { faBars, faMinus, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { getReaderBook, selectLiveBookPresetId, selectLiveBookReaderSettings } from "@store/reader";
+import {
+    getReaderBook,
+    selectLiveBookPresetId,
+    selectLiveBookReaderSettings,
+    selectReaderCommandsActive,
+} from "@store/reader";
 import { getActiveBookPresetName, patchLiveBookReaderSettings, updateBookPreset } from "@store/readerPresets";
-import { getShortcutsMapped } from "@store/shortcuts";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
 import InputCheckboxNumber from "@ui/InputCheckboxNumber";
@@ -14,15 +20,18 @@ import InputNumber from "@ui/InputNumber";
 import InputRange from "@ui/InputRange";
 import InputSelect from "@ui/InputSelect";
 import { colorUtils } from "@utils/color";
-import { keyFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
-import { memo, useEffect, useLayoutEffect, useState } from "react";
+import { memo, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-
-const log = createRendererLogger("epub/EPubReaderSettings");
-
 import BackgroundSettings from "./components/BackgroundSettings";
 import ContentFrameSettings from "./components/ContentFrameSettings";
+import {
+    BOOK_READER_OWNER_ID,
+    BOOK_READER_PANEL_OWNER_ID,
+    BOOK_READER_SETTINGS_OWNER_ID,
+} from "./useBookCommandOwner";
+
+const log = createRendererLogger("epub/EPubReaderSettings");
 
 const EPUBReaderSettings = memo(
     ({
@@ -30,19 +39,11 @@ const EPUBReaderSettings = memo(
         readerRef,
         readerSettingExtender,
         setShortcutText,
-        sizePlusRef,
-        sizeMinusRef,
-        fontSizePlusRef,
-        fontSizeMinusRef,
     }: {
         makeScrollPos: () => void;
         readerRef: React.RefObject<HTMLDivElement>;
         readerSettingExtender: React.RefObject<HTMLButtonElement>;
         setShortcutText: React.Dispatch<React.SetStateAction<string>>;
-        sizePlusRef: React.RefObject<HTMLButtonElement>;
-        sizeMinusRef: React.RefObject<HTMLButtonElement>;
-        fontSizePlusRef: React.RefObject<HTMLButtonElement>;
-        fontSizeMinusRef: React.RefObject<HTMLButtonElement>;
     }) => {
         const { t } = useTranslation("reader");
         const { t: tSettings } = useTranslation("settings");
@@ -50,8 +51,8 @@ const EPUBReaderSettings = memo(
         const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
         const bookInReader = useAppSelector(getReaderBook);
         const bookPresetId = useAppSelector(selectLiveBookPresetId);
-        const shortcutsMapped = useAppSelector(getShortcutsMapped);
         const currentPresetName = useAppSelector(getActiveBookPresetName);
+        const commandsActive = useAppSelector(selectReaderCommandsActive);
         const dispatch = useAppDispatch();
 
         const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
@@ -69,38 +70,54 @@ const EPUBReaderSettings = memo(
         }, []);
 
         const maxWidth = 100;
-        useEffect(() => {
-            const f = (e: KeyboardEvent) => {
-                if (isReaderSettingsOpen && e.key === "Escape") {
-                    setReaderSettingOpen(false);
-                    if (readerRef.current) readerRef.current.focus();
-                    return;
-                }
-                const keyStr = keyFormatter(e);
-                if (keyStr && shortcutsMapped.savePreset?.includes(keyStr)) {
-                    e.preventDefault();
-                    const id = bookPresetId;
-                    if (id) {
-                        dispatch(updateBookPreset({ id, data: epubReaderSettings }));
-                        setShortcutText(
-                            t("hud.savedToPreset", { name: currentPresetName ?? t("hud.unknownPreset") }),
-                        );
-                    }
-                }
-            };
-            window.addEventListener("keydown", f);
-            return () => window.removeEventListener("keydown", f);
-        }, [
-            isReaderSettingsOpen,
-            shortcutsMapped,
-            bookPresetId,
-            epubReaderSettings,
-            currentPresetName,
-            dispatch,
-            setShortcutText,
-            readerRef,
-            t,
-        ]);
+        const applySize = (direction: 1 | -1, fromButton?: HTMLElement) => {
+            makeScrollPos();
+            const readerWidth = stepReaderWidth(epubReaderSettings.readerWidth, maxWidth, direction);
+            if (!fromButton || document.activeElement !== fromButton) setShortcutText(`${readerWidth}%`);
+            dispatch(patchLiveBookReaderSettings({ readerWidth }));
+        };
+        const applyFontSize = (delta: number, fromButton?: HTMLElement) => {
+            makeScrollPos();
+            const fontSize = stepFontSize(epubReaderSettings.fontSize, delta);
+            if (!fromButton || document.activeElement !== fromButton) setShortcutText(`${fontSize}px`);
+            dispatch(patchLiveBookReaderSettings({ fontSize }));
+        };
+        const savePreset = () => {
+            const presetId = bookPresetId;
+            if (!presetId) return;
+            dispatch(updateBookPreset({ id: presetId, data: epubReaderSettings }));
+            setShortcutText(t("hud.savedToPreset", { name: currentPresetName ?? t("hud.unknownPreset") }));
+        };
+
+        useCommandOwner({
+            ownerId: BOOK_READER_SETTINGS_OWNER_ID,
+            contextKinds: ["bookReader"],
+            visible: commandsActive,
+            parentOwnerId: BOOK_READER_OWNER_ID,
+            handlers: {
+                readerSettings: () => {
+                    setReaderSettingOpen((open) => !open);
+                    readerSettingExtender.current?.focus();
+                },
+                sizePlus: () => applySize(1),
+                sizeMinus: () => applySize(-1),
+                fontSizePlus: () => applyFontSize(1),
+                fontSizeMinus: () => applyFontSize(-1),
+                savePreset,
+            },
+        });
+
+        useCommandOwner({
+            ownerId: BOOK_READER_PANEL_OWNER_ID,
+            contextKinds: ["readerPanel"],
+            visible: isReaderSettingsOpen,
+            parentOwnerId: BOOK_READER_OWNER_ID,
+            onEscape: () => {
+                setReaderSettingOpen(false);
+                readerRef.current?.focus();
+                return true;
+            },
+        });
         return (
             <div
                 id="epubReaderSettings"
@@ -109,21 +126,11 @@ const EPUBReaderSettings = memo(
                     (isReaderSettingsOpen ? "" : "closed ") +
                     (appSettings.checkboxReaderSetting ? "checkboxSetting " : "")
                 }
-                onKeyDown={(e) => {
-                    if (e.key === "Escape" || e.key === "q") {
-                        e.stopPropagation();
-                        setReaderSettingOpen(false);
-                        if (readerRef.current) readerRef.current.focus();
-                    }
-                }}
             >
                 <button
                     className="menuExtender"
                     ref={readerSettingExtender}
                     onClick={() => setReaderSettingOpen((init) => !init)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Escape" || e.key === "q") e.currentTarget.blur();
-                    }}
                     {...(!isReaderSettingsOpen ? { "data-tooltip": t("settings.readerSettingsTooltip") } : {})}
                 >
                     <FontAwesomeIcon icon={isReaderSettingsOpen ? faTimes : faBars} />
@@ -176,38 +183,15 @@ const EPUBReaderSettings = memo(
                             labelAfter={t("settings.percentUnit")}
                         />
                         <button
-                            ref={sizeMinusRef}
                             onClick={(e) => {
-                                makeScrollPos();
-                                // was 20 before
-                                const steps = epubReaderSettings.readerWidth <= 40 ? 5 : 10;
-                                const readerWidth =
-                                    epubReaderSettings.readerWidth - steps > maxWidth
-                                        ? maxWidth
-                                        : epubReaderSettings.readerWidth - steps < 1
-                                          ? 1
-                                          : epubReaderSettings.readerWidth - steps;
-                                if (document.activeElement !== e.currentTarget) setShortcutText(`${readerWidth}%`);
-                                dispatch(patchLiveBookReaderSettings({ readerWidth }));
-                                // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
+                                applySize(-1, e.currentTarget);
                             }}
                         >
                             <FontAwesomeIcon icon={faMinus} />
                         </button>
                         <button
-                            ref={sizePlusRef}
                             onClick={(e) => {
-                                makeScrollPos();
-                                const steps = epubReaderSettings.readerWidth <= 40 ? 5 : 10;
-                                const readerWidth =
-                                    epubReaderSettings.readerWidth + steps > maxWidth
-                                        ? maxWidth
-                                        : epubReaderSettings.readerWidth + steps < 1
-                                          ? 1
-                                          : epubReaderSettings.readerWidth + steps;
-
-                                if (document.activeElement !== e.currentTarget) setShortcutText(`${readerWidth}%`);
-                                dispatch(patchLiveBookReaderSettings({ readerWidth }));
+                                applySize(1, e.currentTarget);
                             }}
                         >
                             <FontAwesomeIcon icon={faPlus} />
@@ -243,29 +227,15 @@ const EPUBReaderSettings = memo(
                                 labelAfter={t("settings.pxUnit")}
                             />
                             <button
-                                ref={fontSizeMinusRef}
                                 onClick={(e) => {
-                                    makeScrollPos();
-                                    let newSize = epubReaderSettings.fontSize - 1;
-
-                                    newSize = newSize < 1 ? 1 : newSize;
-                                    if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(`${newSize}px`);
-                                    dispatch(patchLiveBookReaderSettings({ fontSize: newSize }));
+                                    applyFontSize(-1, e.currentTarget);
                                 }}
                             >
                                 <FontAwesomeIcon icon={faMinus} />
                             </button>
                             <button
-                                ref={fontSizePlusRef}
                                 onClick={(e) => {
-                                    makeScrollPos();
-                                    let newSize = epubReaderSettings.fontSize + 1;
-
-                                    newSize = newSize > 100 ? 100 : newSize;
-                                    if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(`${newSize}px`);
-                                    dispatch(patchLiveBookReaderSettings({ fontSize: newSize }));
+                                    applyFontSize(1, e.currentTarget);
                                 }}
                             >
                                 <FontAwesomeIcon icon={faPlus} />

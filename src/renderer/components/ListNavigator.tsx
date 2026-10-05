@@ -1,15 +1,13 @@
+import { listWidgetOwnsEventTarget, useCommandOwner, useOwnerId } from "@features/keybindings";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { type PageSearchTargetOptions, usePageSearchFocus } from "@renderer/hooks/usePageSearchFocus";
-import { useAppSelector } from "@store/hooks";
-import { getShortcutsMapped } from "@store/shortcuts";
 import {
     observeElementRect as defaultObserveElementRect,
     type Rect,
     useVirtualizer,
     type Virtualizer,
 } from "@tanstack/react-virtual";
-import { keyFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
 import { scrollChildInContainer } from "@utils/utils";
 import React, {
@@ -24,7 +22,6 @@ import React, {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { shallowEqual } from "react-redux";
 
 const log = createRendererLogger("components/ListNavigator");
 
@@ -182,11 +179,10 @@ export type ListNavigatorProps<T> = {
     renderItem: (item: T, index: number, isSelected: boolean) => React.ReactNode;
     onContextMenu?: (element: HTMLElement) => void;
     /**
-     * Extra key handling hook layered on top of built-in list controls.
-     * Return `true` to mark the key as handled (ListNavigator will call
-     * `preventDefault` for that key).
+     * Enter/listSelect when the list has no focused row (e.g. open the current
+     * location folder). Built-in row select still runs first.
      */
-    handleExtraKeyDown?: (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => boolean;
+    onSelectEmpty?: () => void;
     onSelect?: (element: HTMLElement) => void;
     emptyMessage?: string;
     /** When provided, assigned to the search input for external focus etc. */
@@ -214,7 +210,7 @@ function ListNavigatorProviderComponent<T>({
     filterFn,
     renderItem,
     onContextMenu,
-    handleExtraKeyDown,
+    onSelectEmpty,
     onSelect,
     emptyMessage,
     inputRef: inputRefProp,
@@ -226,7 +222,7 @@ function ListNavigatorProviderComponent<T>({
 }: ListNavigatorProps<T>) {
     const { t } = useTranslation("common");
     const resolvedEmptyMessage = emptyMessage ?? t("list.noItems");
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
+    const ownerId = useOwnerId("list-navigator");
     const [filter, setFilter] = useState<string>("");
     const [focused, setFocused] = useState(-1);
     const internalInputRef = useRef<HTMLInputElement>(null);
@@ -257,65 +253,68 @@ function ListNavigatorProviderComponent<T>({
         onFilteredItemsChangeRef.current?.(filteredItems, filter !== "");
     }, [filteredItems, filter]);
 
-    const handleKeyDown = useCallback(
-        (e: React.KeyboardEvent) => {
-            e.stopPropagation();
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+        e.stopPropagation();
+    }, []);
 
-            const keyStr = keyFormatter(e);
-            if (keyStr === "" && e.key !== "Escape") return;
+    const selectFocusedOrOnly = useCallback(() => {
+        const elem = queryFocusedListRow(listRef.current);
+        if (elem) {
+            onSelect?.(elem);
+            return;
+        }
+        const anchors = listRef.current?.querySelectorAll("a");
+        if (anchors?.length === 1) {
+            onSelect?.(anchors[0] as HTMLElement);
+            return;
+        }
+        onSelectEmpty?.();
+    }, [onSelect, onSelectEmpty]);
 
-            switch (true) {
-                case shortcutsMapped.listDown.includes(keyStr):
-                    e.preventDefault();
-                    setFocused((init) => {
-                        if (init + 1 >= filteredItems.length) return 0;
-                        return init + 1;
-                    });
-                    break;
-
-                case shortcutsMapped.listUp.includes(keyStr):
-                    e.preventDefault();
-                    setFocused((init) => {
-                        if (init - 1 < 0) return filteredItems.length - 1;
-                        return init - 1;
-                    });
-                    break;
-
-                case shortcutsMapped.contextMenu.includes(keyStr): {
-                    const elem = queryFocusedListRow(listRef.current);
-                    if (elem) {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        if (e.currentTarget instanceof HTMLElement) {
-                            e.currentTarget.blur();
-                        }
-                        onContextMenu?.(elem);
-                    }
-                    break;
-                }
-
-                case shortcutsMapped.listSelect.includes(keyStr): {
-                    const elem = queryFocusedListRow(listRef.current);
-                    if (elem) return onSelect?.(elem);
-                    const anchors = listRef.current?.querySelectorAll("a");
-                    if (anchors?.length === 1) return onSelect?.(anchors[0] as HTMLElement);
-                    break;
-                }
-
-                case e.key === "Escape":
-                    inputRef.current?.blur();
-                    break;
-
-                default:
-                    break;
-            }
-            const handledByExtra = handleExtraKeyDown?.(keyStr, shortcutsMapped);
-            if (handledByExtra) {
-                e.preventDefault();
-            }
+    useCommandOwner({
+        ownerId,
+        contextKinds: ["searchWidget"],
+        visible: true,
+        ownsEventTarget: (node) =>
+            listWidgetOwnsEventTarget(
+                node,
+                inputRef.current,
+                listRef.current,
+                Boolean(queryFocusedListRow(listRef.current)),
+            ),
+        handlers: {
+            listDown: () => {
+                setFocused((init) => {
+                    if (init + 1 >= filteredItems.length) return 0;
+                    return init + 1;
+                });
+            },
+            listUp: () => {
+                setFocused((init) => {
+                    if (init - 1 < 0) return filteredItems.length - 1;
+                    return init - 1;
+                });
+            },
+            listSelect: () => {
+                selectFocusedOrOnly();
+            },
+            contextMenu: () => {
+                const elem = queryFocusedListRow(listRef.current);
+                if (!elem) return;
+                inputRef.current?.blur();
+                onContextMenu?.(elem);
+            },
         },
-        [shortcutsMapped, filteredItems.length, onContextMenu, onSelect, handleExtraKeyDown],
-    );
+        available: {
+            /* A no-op handler would still consume the Menu key and kill the OS menu. */
+            contextMenu: () => Boolean(queryFocusedListRow(listRef.current)),
+        },
+        onEscape: () => {
+            if (document.activeElement !== inputRef.current) return false;
+            inputRef.current?.blur();
+            return true;
+        },
+    });
 
     const handleFilterChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement> | string, skipProcessing = false) => {
@@ -439,7 +438,7 @@ type SearchInputProps = {
     className?: string;
     /**
      * When set, this field is a candidate for {@link usePageSearchFocus}.
-     * Higher {@link PageSearchTargetOptions.priority} wins among shown, mounted fields.
+     * Context plus {@link PageSearchTargetOptions.tieOrder} pick among shown fields.
      */
     pageSearch?: PageSearchTargetOptions;
     /** @returns value to set to the filter when `runOriginalOnChange` is true
@@ -504,9 +503,10 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
     const [hasValue, setHasValue] = useState(() => Boolean(defaultValue));
 
     usePageSearchFocus(inputRef, {
-        id: pageSearch?.id ?? "",
-        priority: pageSearch?.priority ?? 0,
-        enabled: pageSearch?.enabled ?? true,
+        id: pageSearch?.id ?? "list-search-idle",
+        contextKinds: pageSearch?.contextKinds ?? ["home"],
+        tieOrder: pageSearch?.tieOrder,
+        enabled: Boolean(pageSearch) && (pageSearch?.enabled ?? true),
     });
 
     useEffect(() => {

@@ -71,7 +71,9 @@ graph TD
 - `MainSettings` (`src/electron/util/mainSettings.ts`) — persist/apply; schema and defaults live in `src/common/mainSettings.ts` (hardware acceleration, temp path, tray, single-instance, updates, **library folders**)
 - Library scan engine (`src/electron/util/libraryScan.ts`) — Scan now / start / interval / watch, status broadcast, cancel
 - `Updater` (`src/electron/updater.ts`) — GitHub releases polling
-- IPC handler registrations (covers, DB, dialogs, FS, explorer, library scan, updates)
+- JSON file helpers (`src/electron/util/file.ts`) — exists, atomic text replace, load/save JSON, one-shot backup sibling
+- IPC handler registrations (covers, DB, dialogs, FS, explorer, library scan, keymap, updates)
+- Keymap file owner (`src/electron/util/keymapFileStore.ts`) — versioned `shortcuts.json`, migration, typed edits
 
 There are two settings stores: `settings.json` (renderer app settings) and `main-settings.json` (`MainSettings`). Library scan roots and Default Location live only in MainSettings. Do not read `settings.json` from main for scan config.
 
@@ -121,6 +123,7 @@ src/
 │   │   ├── dialog.ts       dialog:error / warn / confirm / showOpenDialog …
 │   │   ├── explorer.ts     Windows "Open with" context-menu integration
 │   │   ├── fs.ts           fs:unzip / fs:showInExplorer / fs:saveFile / fs:fileChanged
+│   │   ├── keymap.ts       keymap:get / edit / nativeAction
 │   │   ├── libraryScan.ts  libraryScan:start / cancel / getStatus / status; anilist:claimLegacyTrackingImport
 │   │   ├── reader.ts       reader:loadLink / reader:recordPage (m2r pushes)
 │   │   ├── update.ts       update:check:manual
@@ -136,6 +139,8 @@ src/
 │       ├── coverMaterialize.ts  sharp WebP pipeline (userData/covers/<id>.webp)
 │       ├── migrate.ts      JSON -> SQLite migration (bookmarks.json / history.json)
 │       ├── logger.ts       createMainLogger (electron-log scoped sinks)
+│       ├── file.ts         Atomic text/JSON file helpers
+│       ├── keymapFileStore.ts  Process keymap owner (`shortcuts.json`)
 │       └── errorHandler.ts Global uncaught exception capture + issue report dialog
 │
 ├── renderer/         # Renderer (React)
@@ -155,7 +160,7 @@ src/
 │   │   └── anilist/        AniList login, search, progress editing
 │   ├── hooks/              Shared hooks (useMultiSelect, useSelectionShortcuts, useKeybindings…)
 │   ├── store/              Redux slices (one file per slice)
-│   └── utils/              Pure helpers (epub, pdf, keybindings, color, gallerySort, libraryCover…)
+│   └── utils/              Pure helpers (epub, pdf, color, gallerySort, libraryCover…)
 │
 └── test/             # Test harness
     ├── mocks/preload.ts    Typed preload mock (onInvoke, stubFs, installPreloadMocks)
@@ -263,7 +268,7 @@ sequenceDiagram
   - **true** → focuses last open window, sends `reader:loadLink` if a file path was passed.
   - **false** → opens a new window.
 - **Open with**: `--new-window` flag in second-instance args always opens a new window regardless.
-- **Cross-window config sync**: when any window writes `settings.json`, `themes.json`, `shortcuts.json`, or `readerPresets.json` via `fs:saveFile`, main pushes `fs:fileChanged` to all windows. Each renderer reloads only when the relevant setting changed and `syncSettings`/`syncThemes` is enabled.
+- **Cross-window config sync**: when any window writes `settings.json`, `themes.json`, or `readerPresets.json` via `fs:saveFile`, main pushes `fs:fileChanged` to all windows. Each renderer reloads only when the relevant setting changed and `syncSettings`/`syncThemes` is enabled. Keymap edits go through `keymap:edit`; main broadcasts `keymap:changed`.
 - **Window close**: sends `reader:recordPage` (IPC m2r) → renderer saves progress → sends `window:destroy` → main destroys the window. A 5-second safety fallback destroys without waiting.
 - **Temp dir cleanup**: before closing, main deletes any `window:addDirToDelete` path registered for that window (extracted EPUB/ZIP temp dirs).
 - **App-wide vs window-local**: each window has its own renderer, Redux store, and module-level variables. SQLite and on-disk settings are shared. Library scan, folder watch, interval polls, and DB backups run **only in main**. Renderers invoke `libraryScan:start` / `cancel` / `getStatus` and listen for `libraryScan:status` plus `db:*:change`. A renderer `setInterval` / `let lock` is per window. Reader progress is window-local on purpose.

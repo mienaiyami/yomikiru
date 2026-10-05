@@ -1,3 +1,4 @@
+import { useCommandOwner } from "@features/keybindings";
 import { setAnilistToken } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistLoginOpen } from "@store/ui";
@@ -16,6 +17,17 @@ const AniLogin: React.FC = () => {
     const contRef = useRef<HTMLDivElement>(null);
 
     const dispatch = useAppDispatch();
+
+    useCommandOwner({
+        ownerId: "anilist-login",
+        contextKinds: ["modal"],
+        visible: true,
+        onEscape: () => {
+            dispatch(setAnilistLoginOpen(false));
+            return true;
+        },
+    });
+
     useEffect(() => {
         if (isAniLoginOpen) {
             setTimeout(() => {
@@ -44,14 +56,7 @@ const AniLogin: React.FC = () => {
                 }}
             >
                 <div className="clickClose" onClick={() => dispatch(setAnilistLoginOpen(false))}></div>
-                <div
-                    className="overlayCont"
-                    onKeyDown={(e) => {
-                        if (e.key === "Escape") dispatch(setAnilistLoginOpen(false));
-                    }}
-                    tabIndex={-1}
-                    ref={contRef}
-                >
+                <div className="overlayCont" tabIndex={-1} ref={contRef}>
                     <h1>{t("login.title")}</h1>
                     <p className="loginDesc">{t("login.desc")}</p>
                     <div className="btns">

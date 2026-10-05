@@ -77,14 +77,7 @@ const NoteModal: React.FC<{
 
             <div className="note-input">
                 <h4>{t("notes.noteLabel")}</h4>
-                <textarea
-                    ref={inputRef}
-                    defaultValue={note.content || ""}
-                    onKeyDown={(e) => {
-                        e.stopPropagation();
-                    }}
-                    placeholder={t("notes.placeholder")}
-                />
+                <textarea ref={inputRef} defaultValue={note.content || ""} placeholder={t("notes.placeholder")} />
                 <InputColor
                     value={color}
                     onChange={(color) => {

@@ -24,7 +24,6 @@ const userDataURL = window.electron.app.getPath("userData");
 const settingsPath = window.path.join(userDataURL, "settings.json");
 const themesPath = window.path.join(userDataURL, "themes.json");
 const readerPresetsPath = window.path.join(userDataURL, "reader-presets.json");
-const shortcutsPath = window.path.join(userDataURL, "shortcuts.json");
 
 const saveJSONfile = (path: string, data: any) => {
     // console.log("Saving file ", window.fileSaveTimeOut, path);
@@ -33,17 +32,18 @@ const saveJSONfile = (path: string, data: any) => {
     // const str = JSON.stringify(data);
     if (str)
         try {
-            if (JSON.parse(str))
+            if (JSON.parse(str)) {
                 window.electron.invoke("fs:saveFile", {
                     filePath: path,
                     data: str,
                 });
+            }
         } catch (err) {
             log.error(`saveJSONfile: stringify/parse failed before IPC write (${path})`, err);
         }
 };
 
-export { userDataURL, settingsPath, themesPath, readerPresetsPath, shortcutsPath, saveJSONfile };
+export { userDataURL, settingsPath, themesPath, readerPresetsPath, saveJSONfile };
 
 /** Removes characters that cannot be used in generated filesystem names. */
 export const makeFileSafe = (string: string): string => {

@@ -184,6 +184,7 @@ const HistoryTab: React.FC = () => {
     }, [dispatch, library.items, selection]);
 
     useSelectionShortcuts({
+        ownerId: "classic-history-selection",
         selection,
         enabled: checkboxesEnabled,
         onDelete: handleRemoveSelected,
@@ -307,7 +308,11 @@ const HistoryTab: React.FC = () => {
                                 <FontAwesomeIcon icon={faSort} />
                             </button>
                             <ListNavigator.SearchInput
-                                pageSearch={{ id: "classic-history", priority: PAGE_SEARCH_PRIORITY.home }}
+                                pageSearch={{
+                                    id: "classic-history",
+                                    contextKinds: ["home"],
+                                    tieOrder: PAGE_SEARCH_PRIORITY.home,
+                                }}
                             />
                         </div>
                     </div>

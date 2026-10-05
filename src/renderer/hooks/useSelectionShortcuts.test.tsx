@@ -1,3 +1,4 @@
+import { KeybindingProvider } from "@features/keybindings";
 import { configureStore } from "@reduxjs/toolkit";
 import { rootReducer } from "@store/index";
 import { setReaderOpen } from "@store/reader";
@@ -8,7 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 import { useMultiSelect } from "./useMultiSelect";
 import { useSelectionShortcuts } from "./useSelectionShortcuts";
 
-/** Store + Provider so the hook can read shortcuts and reader.active. */
+/** Store + keymap provider so selection owners receive window capture ingress. */
 const renderWithStore = (
     hook: () => ReturnType<typeof useMultiSelect>,
     store = configureStore({
@@ -16,7 +17,11 @@ const renderWithStore = (
         middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
     }),
 ) => {
-    const wrapper = ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider store={store}>
+            <KeybindingProvider>{children}</KeybindingProvider>
+        </Provider>
+    );
     return { store, ...renderHook(hook, { wrapper }) };
 };
 
@@ -24,7 +29,7 @@ describe("useSelectionShortcuts", () => {
     it("selects all on Ctrl+A and clears on Escape while in selection mode", () => {
         const { result } = renderWithStore(() => {
             const selection = useMultiSelect(["a", "b", "c"]);
-            useSelectionShortcuts({ selection });
+            useSelectionShortcuts({ ownerId: "test-selection", selection });
             return selection;
         });
 
@@ -46,10 +51,15 @@ describe("useSelectionShortcuts", () => {
             reducer: rootReducer,
             middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
         });
-        const wrapper = ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>;
+        const wrapper = ({ children }: { children: ReactNode }) => (
+            <Provider store={store}>
+                <KeybindingProvider>{children}</KeybindingProvider>
+            </Provider>
+        );
         renderHook(
             () => {
                 useSelectionShortcuts({
+                    ownerId: "test-selection-off",
                     enabled: false,
                     selection: {
                         orderedIds: ["a"],
@@ -76,7 +86,7 @@ describe("useSelectionShortcuts", () => {
         const onDelete = vi.fn();
         const { result } = renderWithStore(() => {
             const selection = useMultiSelect(["a", "b"]);
-            useSelectionShortcuts({ selection, onDelete });
+            useSelectionShortcuts({ ownerId: "test-selection-del", selection, onDelete });
             return selection;
         });
 
@@ -93,7 +103,7 @@ describe("useSelectionShortcuts", () => {
         const onDelete = vi.fn();
         const { store, result } = renderWithStore(() => {
             const selection = useMultiSelect(["a"]);
-            useSelectionShortcuts({ selection, onDelete });
+            useSelectionShortcuts({ ownerId: "test-selection-reader", selection, onDelete });
             return selection;
         });
 

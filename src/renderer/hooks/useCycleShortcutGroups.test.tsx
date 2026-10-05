@@ -1,3 +1,5 @@
+import type { KeyboardCode } from "@common/keybindings";
+import { KeybindingProvider } from "@features/keybindings";
 import { configureStore } from "@reduxjs/toolkit";
 import { rootReducer } from "@store/index";
 import { act, renderHook } from "@testing-library/react-hooks/dom";
@@ -6,7 +8,7 @@ import { Provider } from "react-redux";
 import { describe, expect, it, vi } from "vitest";
 import { cycleWrappedValue, useCycleShortcutGroups } from "./useCycleShortcutGroups";
 
-/** Wraps a hook under test in a fresh store containing the default shortcut map. */
+/** Store + keymap provider so cycle owners receive window capture ingress. */
 const createWrapper = () => {
     const store = configureStore({
         reducer: rootReducer,
@@ -15,12 +17,16 @@ const createWrapper = () => {
                 serializableCheck: false,
             }),
     });
-    const Wrapper = ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>;
+    const Wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider store={store}>
+            <KeybindingProvider>{children}</KeybindingProvider>
+        </Provider>
+    );
     return Wrapper;
 };
 
 /** Dispatches a cancelable Alt shortcut from the requested event target. */
-const pressAltKey = (target: EventTarget, key: string, code: string): void => {
+const pressAltKey = (target: EventTarget, key: string, code: KeyboardCode): void => {
     target.dispatchEvent(
         new KeyboardEvent("keydown", {
             key,
@@ -67,7 +73,7 @@ describe("useCycleShortcutGroups", () => {
                             onChange,
                         },
                     },
-                    { enabled: true },
+                    { enabled: true, ownerId: "test-cycle" },
                 ),
             { wrapper: Wrapper },
         );
@@ -90,7 +96,7 @@ describe("useCycleShortcutGroups", () => {
                         bar1: { values: ["a", "b"], current: "a", onChange: onBar1Change },
                         bar2: { values: ["x", "y"], current: "x", onChange: onBar2Change },
                     },
-                    { enabled: true },
+                    { enabled: true, ownerId: "test-cycle-two" },
                 ),
             { wrapper: Wrapper },
         );
@@ -108,7 +114,7 @@ describe("useCycleShortcutGroups", () => {
             () =>
                 useCycleShortcutGroups(
                     { bar1: { values: ["a", "b"], current: "a", onChange } },
-                    { enabled: false },
+                    { enabled: false, ownerId: "test-cycle-off" },
                 ),
             { wrapper: Wrapper },
         );
@@ -125,7 +131,7 @@ describe("useCycleShortcutGroups", () => {
             () =>
                 useCycleShortcutGroups(
                     { bar1: { values: ["a", "b"], current: "a", onChange } },
-                    { enabled: true },
+                    { enabled: true, ownerId: "test-cycle-repeat" },
                 ),
             { wrapper: Wrapper },
         );
@@ -153,7 +159,7 @@ describe("useCycleShortcutGroups", () => {
             () =>
                 useCycleShortcutGroups(
                     { bar1: { values: [], current: "current", onChange: onEmptyChange } },
-                    { enabled: true },
+                    { enabled: true, ownerId: "test-cycle-empty" },
                 ),
             { wrapper: EmptyWrapper },
         );
@@ -161,7 +167,7 @@ describe("useCycleShortcutGroups", () => {
             () =>
                 useCycleShortcutGroups(
                     { bar2: { values: ["only"], current: "only", onChange: onSingletonChange } },
-                    { enabled: true },
+                    { enabled: true, ownerId: "test-cycle-one" },
                 ),
             { wrapper: SingletonWrapper },
         );
@@ -184,7 +190,7 @@ describe("useCycleShortcutGroups", () => {
             () =>
                 useCycleShortcutGroups(
                     { bar1: { values: ["a", "b"], current: "a", onChange } },
-                    { enabled: true },
+                    { enabled: true, ownerId: "test-cycle-input" },
                 ),
             { wrapper: Wrapper },
         );

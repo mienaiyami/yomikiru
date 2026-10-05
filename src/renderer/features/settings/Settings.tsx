@@ -1,6 +1,6 @@
+import { useCommandOwner } from "@features/keybindings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { clearPendingSettingsNav, setSettingsOpen } from "@store/ui";
-import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { createRendererLogger } from "@utils/logger";
 import {
     createContext,
@@ -67,11 +67,11 @@ const renderTabPanel = (key: SettingsTabKey, usageTitle: string): ReactElement =
 
 const Settings = (): ReactElement => {
     const { t } = useTranslation("settings");
-    const shortcuts = useAppSelector((store) => store.shortcuts);
     const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const pendingSettingsNav = useAppSelector((store) => store.ui.pendingSettingsNav);
     /** Index into {@link SETTINGS_TABS}. */
     const [currentTab, setCurrentTab] = useState(0);
+    const searchInputRef = useRef<HTMLInputElement | null>(null);
 
     const dispatch = useAppDispatch();
 
@@ -87,6 +87,30 @@ const Settings = (): ReactElement => {
     const prevTab = useCallback(() => {
         setCurrentTab((init) => (init - 1 + SETTINGS_TABS.length) % SETTINGS_TABS.length);
     }, []);
+
+    useCommandOwner({
+        ownerId: "settings",
+        contextKinds: ["settings"],
+        visible: isSettingOpen,
+        handlers: {
+            settingsTabNext: () => {
+                nextTab();
+            },
+            settingsTabPrev: () => {
+                prevTab();
+            },
+            focusPageSearch: () => {
+                const el = searchInputRef.current;
+                if (!el) return;
+                el.focus();
+                el.select();
+            },
+        },
+        onEscape: () => {
+            dispatch(setSettingsOpen(false));
+            return true;
+        },
+    });
 
     useEffect(() => {
         if (!isSettingOpen || !pendingSettingsNav) return;
@@ -129,40 +153,6 @@ const Settings = (): ReactElement => {
         };
     }, []);
 
-    useEffect(() => {
-        const handleShortcut = (keyStr: string, e?: Event) => {
-            const i = (keys: string[]) => keys.includes(keyStr);
-            switch (true) {
-                case i(shortcuts.find((s) => s.command === "nextChapter")?.keys || []):
-                    e?.preventDefault();
-                    nextTab();
-                    break;
-                case i(shortcuts.find((s) => s.command === "prevChapter")?.keys || []):
-                    e?.preventDefault();
-                    prevTab();
-                    break;
-            }
-        };
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (!settingContRef.current?.contains(document.activeElement)) return;
-            const keyStr = keyFormatter(e);
-            if (keyStr === "") return;
-            handleShortcut(keyStr, e);
-        };
-        const onMouseDown = (e: MouseEvent) => {
-            if (!settingContRef.current?.contains(e.target as Node)) return;
-            const keyStr = mouseEventFormatter(e);
-            if (keyStr === "") return;
-            handleShortcut(keyStr, e);
-        };
-        window.addEventListener("keydown", onKeyDown);
-        window.addEventListener("mousedown", onMouseDown);
-        return () => {
-            window.removeEventListener("keydown", onKeyDown);
-            window.removeEventListener("mousedown", onMouseDown);
-        };
-    }, [shortcuts, nextTab, prevTab]);
-
     useLayoutEffect(() => {
         if (skipTabScrollResetRef.current) {
             skipTabScrollResetRef.current = false;
@@ -184,20 +174,10 @@ const Settings = (): ReactElement => {
     return (
         <SettingsContext.Provider value={{ currentTab, setCurrentTab, nextTab, prevTab }}>
             <FocusLock disabled={!isSettingOpen}>
-                <div
-                    id="settings"
-                    data-state={isSettingOpen ? "open" : "closed"}
-                    onKeyDown={(e) => {
-                        if (e.key !== "Escape") return;
-                        if (!(e.target instanceof HTMLElement)) return;
-                        /* Combobox owns search-field Escape; nested Modal portals bubble here */
-                        if (e.target.closest(".settingsSearch") || e.target.closest(".modal-element")) return;
-                        dispatch(setSettingsOpen(false));
-                    }}
-                >
+                <div id="settings" data-state={isSettingOpen ? "open" : "closed"}>
                     <div className="clickClose" onClick={() => dispatch(setSettingsOpen(false))}></div>
                     <div className="overflowWrap">
-                        <SettingsSearch />
+                        <SettingsSearch inputRef={searchInputRef} />
                         <div className="tabMovers">
                             {SETTINGS_TABS.map((tab, index) => (
                                 <button

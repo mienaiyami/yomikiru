@@ -1,4 +1,5 @@
 import type { MangaBookmark } from "@common/types/db";
+import { useCommandOwner } from "@features/keybindings";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import {
     faArrowLeft,
@@ -21,9 +22,10 @@ import { setAppSettings } from "@store/appSettings";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectResolvedItemMetadata } from "@store/library";
-import { selectLiveMangaReaderSettings } from "@store/reader";
+import { selectLiveMangaReaderSettings, selectReaderCommandsActive } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
 import { normalizeMangaPathSegment, resolveMangaChapterPath } from "@utils/mangaChapterPath";
 import {
@@ -40,6 +42,7 @@ import {
 } from "@utils/mangaChapters";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { MANGA_BOOKMARK_OWNER_ID, MANGA_READER_OWNER_ID, MANGA_SIDE_LIST_OWNER_ID } from "../useMangaCommandOwner";
 
 const log = createRendererLogger("manga/ReaderSideList");
 
@@ -105,6 +108,7 @@ const ReaderSideList = memo(
 
         const readerLink = useAppSelector((store) => store.reader.link);
         const readerType = useAppSelector((store) => store.reader.type);
+        const commandsActive = useAppSelector(selectReaderCommandsActive);
         /** Reader content identifies the manga, while readerLink identifies its active chapter. */
         const mangaContentLink = useAppSelector((store) =>
             store.reader.type === "manga" ? store.reader.content?.link : undefined,
@@ -345,10 +349,6 @@ const ReaderSideList = memo(
             (e.currentTarget as HTMLElement).blur();
         };
 
-        const handleIndicatorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-            if ([" ", "Enter"].includes(e.key)) (e.currentTarget as HTMLElement).click();
-        };
-
         const handleReSizerMouseDown = () => {
             setDraggingResizer(true);
         };
@@ -512,6 +512,18 @@ const ReaderSideList = memo(
             openInReader(randomChapter.link);
         };
 
+        useCommandOwner({
+            ownerId: MANGA_SIDE_LIST_OWNER_ID,
+            contextKinds: ["mangaReader"],
+            visible: commandsActive,
+            parentOwnerId: MANGA_READER_OWNER_ID,
+            handlers: {
+                nextChapter: handleNextChapterClick,
+                prevChapter: handlePrevChapterClick,
+                randomChapter: handleRandomChapterClick,
+            },
+        });
+
         const handleContentToggle = () => {
             setDisplayList((init) => (init === "content" ? "" : "content"));
         };
@@ -592,7 +604,7 @@ const ReaderSideList = memo(
                     className="indicator"
                     onClick={handleIndicatorClick}
                     tabIndex={0}
-                    onKeyDown={handleIndicatorKeyDown}
+                    onKeyDown={clickOnWidgetActivateKey}
                 >
                     <FontAwesomeIcon
                         icon={faThumbtack}
@@ -625,7 +637,8 @@ const ReaderSideList = memo(
                                     placeholder={t("sideList.searchChapters")}
                                     pageSearch={{
                                         id: "reader-manga-sidelist",
-                                        priority: PAGE_SEARCH_PRIORITY.reader,
+                                        contextKinds: ["mangaReader"],
+                                        tieOrder: PAGE_SEARCH_PRIORITY.reader,
                                     }}
                                 />
                                 <button
@@ -793,6 +806,7 @@ const ReaderSideList = memo(
 
 /**
  * Isolates page-sensitive bookmark state so page ticks do not reconcile the chapter navigator.
+ * Owns the bookmark command so keyboard and the reader context menu share this operation.
  */
 const MangaBookmarkButton = memo(
     ({
@@ -819,6 +833,7 @@ const MangaBookmarkButton = memo(
                 ? (store.bookmarks.manga[mangaContentLink] ?? EMPTY_MANGA_BOOKMARKS)
                 : EMPTY_MANGA_BOOKMARKS,
         );
+        const commandsActive = useAppSelector(selectReaderCommandsActive);
         const dispatch = useAppDispatch();
         const bookmarkedId = bookmarks.find(
             (bookmark) => bookmark.chapterName === mangaChapterName && bookmark.page === currentPage,
@@ -855,6 +870,14 @@ const MangaBookmarkButton = memo(
             );
             setShortcutText(t("hud.bookmarkAdded"));
         };
+
+        useCommandOwner({
+            ownerId: MANGA_BOOKMARK_OWNER_ID,
+            contextKinds: ["mangaReader"],
+            visible: commandsActive,
+            parentOwnerId: MANGA_READER_OWNER_ID,
+            handlers: { bookmark: handleClick },
+        });
 
         return (
             <Button

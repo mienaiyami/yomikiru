@@ -137,7 +137,7 @@ export const resolveDetailsCoverAbsolutePath = (
 
 /**
  * First library path that has a tracker snapshot cover hint.
- * ponytail: multiple providers can share a path; first row with a hint wins until a picker exists.
+ * Multiple providers can share a path; first row with a hint wins until a picker exists.
  */
 export const trackerCoverHintByItemLink = (
     entries: readonly Pick<ItemTracker, "itemLink" | "media">[],

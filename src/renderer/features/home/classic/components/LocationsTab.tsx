@@ -1,5 +1,6 @@
 import { getDefaultLocationPath, planLocationsListLoad } from "@common/library/folders";
 import LocationListItem from "@features/home/classic/components/LocationListItem";
+import { useCommandOwner } from "@features/keybindings";
 import { faAngleUp, faSort } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { LIST_ITEM_ROW_PX } from "@renderer/components/ListItem";
@@ -190,22 +191,22 @@ const LocationsTab = (): ReactElement => {
     const handleSelect = useCallback((elem: HTMLElement) => {
         elem.click();
     }, []);
-    const handleKeyDown = useCallback(
-        (keyStr: string, shortcutsMapped: Record<ShortcutCommands, string[]>) => {
-            if (shortcutsMapped.dirUp.includes(keyStr)) {
+    const handleSelectEmpty = useCallback(() => {
+        if (locations.length === 0 && imageCount > 0) {
+            openInReader(currentLink);
+        }
+    }, [imageCount, locations.length, currentLink, openInReader]);
+
+    useCommandOwner({
+        ownerId: "classic-locations-dirUp",
+        contextKinds: ["home"],
+        visible: true,
+        handlers: {
+            dirUp: () => {
                 setCurrentLink((link) => window.path.dirname(link));
-                return true;
-            }
-            if (shortcutsMapped.listSelect.includes(keyStr)) {
-                if (locations.length === 0 && imageCount > 0) {
-                    openInReader(currentLink);
-                    return true;
-                }
-            }
-            return false;
+            },
         },
-        [imageCount, locations, currentLink, openInReader],
-    );
+    });
     const handleOnChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
             let val = e.target.value;
@@ -254,7 +255,7 @@ const LocationsTab = (): ReactElement => {
                 getItemKey={(location) => location.link}
                 renderItem={renderLocationItem}
                 onContextMenu={handleContextMenu}
-                handleExtraKeyDown={handleKeyDown}
+                onSelectEmpty={handleSelectEmpty}
                 onSelect={handleSelect}
                 emptyMessage={t("classic.location.empty")}
             >
@@ -339,7 +340,8 @@ const LocationsTab = (): ReactElement => {
                             onChange={handleOnChange}
                             pageSearch={{
                                 id: "classic-locations",
-                                priority: PAGE_SEARCH_PRIORITY.homeLast,
+                                contextKinds: ["home"],
+                                tieOrder: PAGE_SEARCH_PRIORITY.homeLast,
                             }}
                         />
                     </div>

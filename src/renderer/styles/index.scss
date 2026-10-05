@@ -1082,63 +1082,140 @@ html{
                         }
 
                         .shortcutKey {
-                            padding: 0 1.3em;
-                            display: grid;
-                            // place-items: center;
-                            table {
-                                tr {
-                                    th,
-                                    td {
-                                        &:nth-child(1) {
-                                            width: 40%;
-                                        }
-                                        &:nth-child(2) {
-                                            width: 60%;
-                                            overflow-x: auto;
-                                        }
-                                    }
+                            --shortcut-control-height: 2.5em;
+                            --shortcut-add-width: 7.25em;
+                            --shortcut-key-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                                "Liberation Mono", monospace;
+                            .settingItem2 ul.shortcutHints {
+                                list-style: disc;
+                                margin: 0 0 0 1.25em;
+                                li {
+                                    list-style: disc;
+                                    padding: 0.15em 0;
                                 }
                             }
-                            .addNewKey {
-                                min-width: 7em;
-                                width: 7em;
-                                font-size: 0.9em;
-                                text-align: center;
-                                &::placeholder {
-                                    opacity: 1;
+                            .shortcut-save-status {
+                                margin: 0.75em 0 0;
+                                color: var(--error-color);
+                            }
+                            .shortcutCommand {
+                                margin: 0.35em 1em;
+                                padding: 0.55em 0;
+                                box-shadow: inset 0 -1px 0 0 var(--divider-color);
+                                &:last-of-type {
+                                    box-shadow: none;
                                 }
                             }
-                            div.keyDisplay {
+                            .shortcutCommandMain {
                                 display: flex;
-                                flex-direction: row;
-                                position: relative;
-                                justify-content: start;
-                                align-items: start;
-                                font-size: 0.9rem;
-                                input {
-                                    min-width: 0;
-                                    text-align: center;
-                                }
-                                button {
-                                    position: absolute;
-                                    right: 8px;
-                                    top: 50%;
-                                    transform: translateY(-50%);
-                                    // font-size: 0.5rem;
-                                    display: none;
-                                    padding: 4px 8px;
-                                }
-                                &:hover,
-                                &:focus-within {
-                                    button {
-                                        display: block;
-                                    }
+                                flex-wrap: wrap;
+                                align-items: flex-start;
+                                gap: 0.5em 1em;
+                            }
+                            .shortcutCommandName {
+                                flex: 1 1 12em;
+                                min-width: 9em;
+                                display: flex;
+                                flex-wrap: wrap;
+                                align-items: baseline;
+                                gap: 0.25em 0.7em;
+                                font-size: 1.15em;
+                                padding-top: 0.35em;
+                                a {
+                                    font-size: 0.8em;
                                 }
                             }
-                            p {
-                                width: 100%;
-                                padding-bottom: 10px;
-                                padding-left: 20px;
+                            .shortcutCommandBindings {
+                                display: flex;
+                                flex-wrap: wrap;
+                                align-items: center;
+                                gap: 0.4em;
+                                flex: 2 1 16em;
+                                min-width: 12em;
+                            }
+                            .shortcutChip {
+                                display: inline-flex;
+                                align-items: center;
+                                min-height: var(--shortcut-control-height);
+                                max-width: 100%;
+                                gap: 0.6em;
+                                padding: 0 0.25em 0 0.5em;
+                                background-color: var(--text-input-bg);
+                                border-radius: 3px;
+                                .shortcutChord {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    font-family: var(--shortcut-key-font);
+                                    font-size: 0.95em;
+                                    font-weight: 600;
+                                    white-space: nowrap;
+                                }
+                                .shortcutChipRemove {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-sizing: border-box;
+                                    height: var(--shortcut-control-height);
+                                    aspect-ratio: 1 / 1;
+                                    padding: 0;
+                                    font-size: 0.65em;
+                                    line-height: 1;
+                                    border-radius: 3px;
+                                    flex-shrink: 0;
+                                    align-self: center;
+                                }
+                            }
+                            .addNewKey,
+                            .shortcutReset {
+                                box-sizing: border-box;
+                                height: var(--shortcut-control-height);
+                                min-height: var(--shortcut-control-height);
+                                max-height: var(--shortcut-control-height);
+                                padding: 0 0.75em;
+                                font-size: 0.95em;
+                                line-height: 1;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                flex-shrink: 0;
+                            }
+                            .addNewKey,
+                            input.addNewKey {
+                                width: var(--shortcut-add-width);
+                                min-width: var(--shortcut-add-width);
+                                max-width: var(--shortcut-add-width);
+                                gap: 0.35em;
+                                overflow: hidden;
+                            }
+                            input.addNewKey {
+                                /* same box as the Add button; beat global text-input padding/width */
+                                padding: 0 0.75em;
+                                font-size: 0.95em;
+                                font-family: inherit;
+                                box-shadow: var(--btn-color-focus) 0 0 0 2px;
+                                text-align: center;
+                                cursor: text;
+                            }
+                            .shortcutCommandAlerts {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.2em;
+                                margin-top: 0.45em;
+                                font-size: 0.9em;
+                                color: var(--font-color-secondary);
+                                p {
+                                    width: auto;
+                                    padding: 0;
+                                    margin: 0;
+                                }
+                                .shortcut-conflict {
+                                    color: var(--font-color);
+                                }
+                                .shortcutDiagChord {
+                                    font-family: var(--shortcut-key-font);
+                                    font-weight: 600;
+                                    margin-right: 0.35em;
+                                }
                             }
                         }
                     }

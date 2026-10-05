@@ -1,7 +1,7 @@
 import { getDefaultLocationPath, setDefaultLocationPath } from "@common/library/folders";
 import { confirmDeleteProgressForLinks } from "@features/home/classic/listSelectionActions";
+import { useAppCommandOwner } from "@features/keybindings";
 import { useDirectoryValidator } from "@features/reader/hooks/useDirectoryValidator";
-import { dispatchFocusPageSearchShortcut } from "@hooks/usePageSearchFocus";
 import {
     runAnilistLegacyStartupIfClaimed,
     setAnilistCurrentListEntry,
@@ -23,20 +23,13 @@ import {
 import { getMainSettings, setMainSettings, updateMainSettings } from "@store/mainSettings";
 import { resetReaderState } from "@store/reader";
 import { refreshReaderPresetsWithReconcile } from "@store/readerPresets";
-import { getShortcutsMapped, refreshShortcuts } from "@store/shortcuts";
+import { applyExternalKeymapSnapshot, hydrateKeymap, shouldApplyRemoteKeymapChange } from "@store/shortcuts";
 import { fetchAllTags } from "@store/tags";
 import { refreshThemes, setTheme } from "@store/themes";
 import { fetchAllTrackers } from "@store/trackers";
-import {
-    setAnilistEditOpen,
-    setAnilistLoginOpen,
-    setAnilistSearchOpen,
-    setLibraryScanStatus,
-    toggleSettingsOpen,
-} from "@store/ui";
+import { setAnilistEditOpen, setAnilistLoginOpen, setAnilistSearchOpen, setLibraryScanStatus } from "@store/ui";
 import { hydrateAnilistClientFromStorage } from "@utils/anilist";
 import { dialogUtils } from "@utils/dialog";
-import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { maybePromptPost0001LibraryThumbnails } from "@utils/libraryCoverService";
 import { resolveMissingOpenPath } from "@utils/libraryMissingPath";
 import { getExistingBaseDir, promptForInitialDefaultLocation } from "@utils/librarySettingsImport";
@@ -50,19 +43,11 @@ import {
     useRef,
     useState,
 } from "react";
-import { shallowEqual } from "react-redux";
 import UiBlockOverlay from "./components/UiBlockOverlay";
 import i18n from "./i18n";
 import Main from "./Main";
 import TopBar from "./TopBar";
-import {
-    formatUtils,
-    promptSelectDir,
-    readerPresetsPath,
-    settingsPath,
-    shortcutsPath,
-    themesPath,
-} from "./utils/file";
+import { formatUtils, promptSelectDir, readerPresetsPath, settingsPath, themesPath } from "./utils/file";
 import { createRendererLogger } from "./utils/logger";
 
 const log = createRendererLogger("App");
@@ -101,9 +86,7 @@ const App = (): ReactElement => {
     const libraryFolders = useAppSelector((state) => state.mainSettings.library.folders);
     // const isReaderOpen = useAppSelector((state) => state.ui.isOpen.reader);
     const isReaderOpen = useAppSelector((state) => state.reader.active);
-    const isSettingsOpen = useAppSelector((state) => state.ui.isOpen.settings);
     const linkInReader = useAppSelector((state) => state.reader.link);
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
     const theme = useAppSelector((state) => state.theme.name);
 
     const pageNumberInputRef: React.RefObject<HTMLInputElement> = createRef();
@@ -237,6 +220,8 @@ const App = (): ReactElement => {
         })();
     };
 
+    useAppCommandOwner({ isReaderOpen, closeReader });
+
     useLayoutEffect(() => {
         if (window.app.deleteDirOnClose)
             window.electron.send("window:addDirToDelete", window.app.deleteDirOnClose);
@@ -274,6 +259,8 @@ const App = (): ReactElement => {
         dispatch(fetchAllBookmarks());
         dispatch(fetchAllNotes());
         void dispatch(fetchAllTrackers());
+        // main owns shortcuts.json; first paint used catalog defaults
+        void dispatch(hydrateKeymap());
         void dispatch(getMainSettings()).then(() => {
             setMainSettingsReady(true);
         });
@@ -313,11 +300,22 @@ const App = (): ReactElement => {
             window.electron.on("mainSettings:sync", (settings) => {
                 dispatch(setMainSettings(settings));
             }),
+            window.electron.on("keymap:changed", ({ snapshot, originWindowId }) => {
+                if (
+                    !shouldApplyRemoteKeymapChange(
+                        originWindowId,
+                        window.electron.currentWindow.id(),
+                        appSettings.syncSettings,
+                    )
+                ) {
+                    return;
+                }
+                void dispatch(applyExternalKeymapSnapshot(snapshot));
+            }),
             window.electron.on("fs:fileChanged", ({ filePath, sourceWindowId }) => {
                 // saving window already has in-memory state (main also skips self-notify)
                 if (sourceWindowId !== undefined && sourceWindowId === window.electron.currentWindow.id()) return;
                 if (filePath === settingsPath && appSettings.syncSettings) dispatch(refreshAppSettings());
-                if (filePath === shortcutsPath && appSettings.syncSettings) dispatch(refreshShortcuts());
                 if (filePath === themesPath && appSettings.syncThemes) dispatch(refreshThemes());
                 if (filePath === readerPresetsPath) dispatch(refreshReaderPresetsWithReconcile());
             }),
@@ -598,71 +596,6 @@ const App = (): ReactElement => {
             },
         };
     }, [appSettings, openInReaderIfValid]);
-
-    useEffect(() => {
-        const handleShortcut = (keyStr: string, e: Event) => {
-            const i = (keys: string[]) => keys.includes(keyStr);
-            const afterUIScale = () => {
-                process.platform === "win32" &&
-                    window.electron.currentWindow.setTitleBarOverlay()({
-                        height: Math.floor(40 * window.electron.webFrame.getZoomFactor()),
-                    });
-                // page nav/ window btn cont width
-                (document.querySelector(".windowBtnCont") as HTMLDivElement).style.right = `${
-                    140 * (1 / window.electron.webFrame.getZoomFactor())
-                }px`;
-            };
-            switch (true) {
-                case i(shortcutsMapped.navToHome):
-                    e.preventDefault();
-                    if (window.electron.currentWindow.isFullScreen())
-                        window.electron.currentWindow.setFullScreen(false);
-                    if (isReaderOpen) return closeReader();
-                    window.location.reload();
-                    break;
-                case i(shortcutsMapped.openSettings):
-                    e.preventDefault();
-                    dispatch(toggleSettingsOpen());
-                    break;
-                case i(shortcutsMapped.uiSizeReset):
-                    e.preventDefault();
-                    window.electron.webFrame.setZoomFactor(1);
-                    afterUIScale();
-                    break;
-                case i(shortcutsMapped.uiSizeDown):
-                    e.preventDefault();
-                    window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() - 0.1);
-                    afterUIScale();
-                    break;
-                case i(shortcutsMapped.uiSizeUp):
-                    e.preventDefault();
-                    window.electron.webFrame.setZoomFactor(window.electron.webFrame.getZoomFactor() + 0.1);
-                    afterUIScale();
-                    break;
-                case i(shortcutsMapped.focusPageSearch):
-                    dispatchFocusPageSearchShortcut(e, { settingsOpen: isSettingsOpen });
-                    break;
-                default:
-                    break;
-            }
-        };
-        const onKeyDown = (e: KeyboardEvent) => {
-            const keyStr = keyFormatter(e);
-            if (keyStr === "") return;
-            handleShortcut(keyStr, e);
-        };
-        const onMouseDown = (e: MouseEvent) => {
-            const keyStr = mouseEventFormatter(e);
-            if (keyStr === "") return;
-            handleShortcut(keyStr, e);
-        };
-        window.addEventListener("keydown", onKeyDown);
-        window.addEventListener("mousedown", onMouseDown);
-        return () => {
-            window.removeEventListener("keydown", onKeyDown);
-            window.removeEventListener("mousedown", onMouseDown);
-        };
-    }, [shortcutsMapped, isReaderOpen, isSettingsOpen]);
 
     useEffect(() => {
         const abortController = new AbortController();

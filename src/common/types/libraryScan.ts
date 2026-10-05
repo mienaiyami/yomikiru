@@ -51,7 +51,7 @@ export const LIBRARY_SCAN_INTERVAL_POLL_MS = 60_000;
 
 /**
  * How long watch events sit before classify-upward runs.
- * ponytail: coalesces copy/extract bursts; upgrade: longer quiet window or ignore incomplete folders.
+ * Coalesces copy/extract bursts; upgrade: longer quiet window or ignore incomplete folders.
  */
 export const LIBRARY_FOLDER_WATCH_DEBOUNCE_MS = 2000;
 

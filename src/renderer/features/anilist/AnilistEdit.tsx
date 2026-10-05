@@ -1,3 +1,4 @@
+import { useCommandOwner } from "@features/keybindings";
 import { cacheAnilistListEntry, removeAnilistTracker, setAnilistCurrentListEntry } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistEditOpen } from "@store/ui";
@@ -53,6 +54,16 @@ const AnilistEdit = () => {
         setTempData(anilistCurrentListEntry);
     }, [anilistCurrentListEntry]);
 
+    useCommandOwner({
+        ownerId: "anilist-edit",
+        contextKinds: ["modal"],
+        visible: true,
+        onEscape: () => {
+            dispatch(setAnilistEditOpen(false));
+            return true;
+        },
+    });
+
     return (
         <FocusLock>
             <div
@@ -67,14 +78,7 @@ const AnilistEdit = () => {
                 }}
             >
                 <div className="clickClose" onClick={() => dispatch(setAnilistEditOpen(false))}></div>
-                <div
-                    className="overlayCont"
-                    onKeyDown={(e) => {
-                        if (e.key === "Escape") dispatch(setAnilistEditOpen(false));
-                    }}
-                    tabIndex={-1}
-                    ref={contRef}
-                >
+                <div className="overlayCont" tabIndex={-1} ref={contRef}>
                     {tempData && (
                         <>
                             <span

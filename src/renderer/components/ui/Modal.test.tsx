@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { renderWithProviders } from "@test/renderWithProviders";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import Modal from "./Modal";
 
@@ -10,7 +11,7 @@ describe("Modal", () => {
     it("closes on Escape without notifying a React ancestor", () => {
         const onParentEsc = vi.fn();
         const onClose = vi.fn();
-        render(
+        renderWithProviders(
             <div
                 onKeyDown={(e) => {
                     if (e.key === "Escape") onParentEsc();
@@ -21,13 +22,13 @@ describe("Modal", () => {
                 </Modal>
             </div>,
         );
-        fireEvent.keyDown(screen.getByRole("button", { name: "inside" }), { key: "Escape" });
+        fireEvent.keyDown(screen.getByRole("button", { name: "inside" }), { key: "Escape", code: "Escape" });
         expect(onClose).toHaveBeenCalledTimes(1);
         expect(onParentEsc).not.toHaveBeenCalled();
     });
 
     it("does not preventDefault Space when the target is a text field", () => {
-        render(
+        renderWithProviders(
             <Modal open onClose={vi.fn()}>
                 <textarea aria-label="note" />
             </Modal>,
@@ -37,7 +38,7 @@ describe("Modal", () => {
     });
 
     it("does not preventDefault Space on a button inside the overlay", () => {
-        render(
+        renderWithProviders(
             <Modal open onClose={vi.fn()}>
                 <button type="button">cancel</button>
             </Modal>,

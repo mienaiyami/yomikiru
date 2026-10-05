@@ -1,8 +1,7 @@
-import { PAGE_SEARCH_PRIORITY, usePageSearchFocus } from "@renderer/hooks/usePageSearchFocus";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { useAppDispatch } from "@store/hooks";
 import { setSettingsOpen } from "@store/ui";
 import Combobox, { type ComboboxOption } from "@ui/Combobox";
-import { type ReactElement, useRef, useState } from "react";
+import { type ReactElement, type RefObject, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SETTINGS_TABS } from "../utils/constants";
 import { navigateToSetting } from "../utils/navigateToSetting";
@@ -14,26 +13,21 @@ import {
     type SettingsTarget,
 } from "../utils/settingsTargets";
 
+type SettingsSearchProps = {
+    inputRef: RefObject<HTMLInputElement | null>;
+};
+
 /**
  * Settings chrome search: filters the target catalog (label + keywords + section
- * content) and jumps via {@link navigateToSetting}. Uses {@link Combobox}
- * (Input* + MenuList) and registers with {@link usePageSearchFocus} at overlay priority.
+ * content) and jumps via {@link navigateToSetting}. Slash focuses this field
+ * through the Settings command owner.
  */
-const SettingsSearch = (): ReactElement => {
+const SettingsSearch = ({ inputRef }: SettingsSearchProps): ReactElement => {
     const { t, i18n } = useTranslation("settings");
     const { t: tReader } = useTranslation("reader");
     const { t: tUsage } = useTranslation("usage");
     const dispatch = useAppDispatch();
-    const isSettingOpen = useAppSelector((s) => s.ui.isOpen.settings);
-
-    const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState("");
-
-    usePageSearchFocus(inputRef, {
-        id: "settings-search",
-        priority: PAGE_SEARCH_PRIORITY.overlay,
-        enabled: isSettingOpen,
-    });
 
     const resolveLabel = (target: SettingsTarget): string => {
         if (target.labelNs === "reader") return tReader(target.labelKey);
@@ -71,6 +65,7 @@ const SettingsSearch = (): ReactElement => {
         <div className="settingsSearch">
             <Combobox
                 inputRef={inputRef}
+                parentOwnerId="settings"
                 value={query}
                 onChange={setQuery}
                 options={options}
@@ -81,7 +76,6 @@ const SettingsSearch = (): ReactElement => {
                 placeholder={t("search.placeholder")}
                 emptyMessage={t("search.noResults")}
                 onDismiss={() => {
-                    // search sits outside .settingCont; close Settings explicitly
                     dispatch(setSettingsOpen(false));
                 }}
             />

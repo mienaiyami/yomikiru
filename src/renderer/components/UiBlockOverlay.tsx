@@ -3,13 +3,10 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 /**
- * Window events swallowed in capture while a UI lock is active, so neither
- * bubbling app shortcuts nor the page behind the overlay can run.
+ * Window pointer/drop events swallowed in capture while a UI lock is active.
+ * Keyboard lock is the keybinding runtime (KeybindingProvider).
  */
 const UI_BLOCK_CAPTURE_EVENTS = [
-    "keydown",
-    "keyup",
-    "keypress",
     "mousedown",
     "mouseup",
     "auxclick",
@@ -42,7 +39,8 @@ if (typeof window !== "undefined") {
 
 /**
  * Full-window, non-dismissible lock driven by `ui.blocks`. Covers mouse via the
- * overlay and keyboard / pointer shortcuts via capture-phase window listeners.
+ * overlay and keyboard via the keybinding runtime. Pointer / drop stay on this
+ * overlay so they do not depend on listener registration order.
  * Dispatch `blockUi` / `unblockUi` from any feature.
  */
 const UiBlockOverlay = () => {

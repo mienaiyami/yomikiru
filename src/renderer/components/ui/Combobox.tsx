@@ -1,13 +1,10 @@
+import { useCommandOwner, useOwnerId } from "@features/keybindings";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppContext } from "@renderer/App";
-import { useAppSelector } from "@store/hooks";
-import { getShortcutsMapped } from "@store/shortcuts";
-import { keyFormatter } from "@utils/keybindings";
 import type React from "react";
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { shallowEqual } from "react-redux";
 
 /** One row in {@link Combobox}, same shape as {@link Menu.OptSelectOption} plus optional description. */
 export type ComboboxOption = {
@@ -45,8 +42,10 @@ const Combobox: React.FC<{
     onDismiss?: () => void;
     className?: string;
     disabled?: boolean;
-    /** Ref to the text input (e.g. page-search focus registration). */
+    /** Ref to the text input (e.g. page-search focus). */
     inputRef?: RefObject<HTMLInputElement | null>;
+    /** Nested owner parent, e.g. Settings so Escape clears the query first. */
+    parentOwnerId?: string;
 }> = ({
     value,
     onChange,
@@ -59,10 +58,11 @@ const Combobox: React.FC<{
     className = "",
     disabled = false,
     inputRef: inputRefProp,
+    parentOwnerId,
 }) => {
     const { t } = useTranslation("common");
     const { setOptSelectData } = useAppContext();
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
+    const ownerId = useOwnerId("combobox");
     const inputRef = useRef<HTMLInputElement | null>(null);
     const navRef = useRef<Menu.OptSelectNav | null>(null);
     /** Fallback highlight when MenuList is not mounted (tests). */
@@ -161,45 +161,55 @@ const Combobox: React.FC<{
 
     useEffect(() => () => setOptSelectData(null), [setOptSelectData]);
 
-    const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        e.stopPropagation();
-        const keyStr = keyFormatter(e);
-        if (keyStr === "" && e.key !== "Escape") return;
+    /**
+     * Confirms the highlighted option, or the first enabled option when the
+     * option list is not mounted (tests).
+     */
+    const selectHighlighted = () => {
+        if (navRef.current) {
+            navRef.current.select();
+            return;
+        }
+        const highlightedOption = optionsRef.current[highlightRef.current] ?? optionsRef.current[0];
+        if (highlightedOption && !highlightedOption.disabled) selectValue(highlightedOption.value);
+    };
 
-        if (e.key === "Escape") {
-            e.preventDefault();
+    useCommandOwner({
+        ownerId,
+        contextKinds: ["searchWidget"],
+        visible: !disabled,
+        parentOwnerId,
+        ownsEventTarget: (node) => Boolean(node instanceof Node && inputRef.current?.contains(node)),
+        handlers: {
+            listDown: () => {
+                stepHighlight(1);
+            },
+            listUp: () => {
+                stepHighlight(-1);
+            },
+            listSelect: selectHighlighted,
+        },
+        available: {
+            listDown: () => listOpen,
+            listUp: () => listOpen,
+            listSelect: () => listOpen,
+        },
+        onEscape: () => {
+            if (document.activeElement !== inputRef.current) return false;
             if (trimmed !== "") {
                 onChange("");
                 highlightRef.current = 0;
                 closeList();
-                return;
+                return true;
             }
             closeList();
             onDismiss?.();
-            return;
-        }
+            return true;
+        },
+    });
 
-        if (!listOpen) return;
-
-        if (shortcutsMapped.listDown.includes(keyStr)) {
-            e.preventDefault();
-            stepHighlight(1);
-            return;
-        }
-        if (shortcutsMapped.listUp.includes(keyStr)) {
-            e.preventDefault();
-            stepHighlight(-1);
-            return;
-        }
-        if (shortcutsMapped.listSelect.includes(keyStr)) {
-            e.preventDefault();
-            if (navRef.current) {
-                navRef.current.select();
-                return;
-            }
-            const hit = options[highlightRef.current] ?? options[0];
-            if (hit && !hit.disabled) selectValue(hit.value);
-        }
+    const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        e.stopPropagation();
     };
 
     return (

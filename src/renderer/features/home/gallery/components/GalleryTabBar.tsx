@@ -2,8 +2,8 @@ import { faBookmark, faBookOpen, faHeart, faPlay } from "@fortawesome/free-solid
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTranslation } from "react-i18next";
 
-/** Persisted `galleryActiveTab` id. */
-export type GalleryTabId = "continue-reading" | "library" | "bookmarks" | "favourites";
+/** Persisted {@link AppSettings.galleryActiveTab} id. */
+export type GalleryTabId = AppSettings["galleryActiveTab"];
 
 /** Display config for gallery home section tabs (labels resolved via i18n in the bar). */
 type TabConfig = {

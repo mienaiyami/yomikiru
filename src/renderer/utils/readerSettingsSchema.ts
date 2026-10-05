@@ -152,6 +152,11 @@ export const mangaReaderSettingsSchema = z.object({
 
 export type MangaReaderSettings = z.infer<typeof mangaReaderSettingsSchema>;
 
+/** Values of {@link MangaReaderSettings.fitOption}. */
+export type MangaFitOption = MangaReaderSettings["fitOption"];
+/** Values of {@link MangaReaderSettings.pagesPerRowSelected}. */
+export type MangaPagesPerRow = MangaReaderSettings["pagesPerRowSelected"];
+
 export const defaultMangaReaderSettings: MangaReaderSettings = {
     readerWidth: 60,
     variableImageSize: true,

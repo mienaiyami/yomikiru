@@ -9,6 +9,8 @@ import {
     spineIndexFromPublicationFraction,
 } from "@common/epub";
 import type { BookProgress } from "@common/types/db";
+import { useKeybindingRuntime } from "@features/keybindings";
+import { useHeldScroll } from "@features/reader/hooks/useHeldScroll";
 import { useAppContext } from "@renderer/App";
 import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings, setReaderSettings } from "@store/appSettings";
@@ -19,18 +21,12 @@ import { selectLibraryItem, updateCurrentItemProgress } from "@store/library";
 import {
     getReaderBook,
     selectLiveBookReaderSettings,
+    selectReaderCommandsActive,
     setReaderLoading,
     setReaderOpen,
     updateReaderBookProgress,
 } from "@store/reader";
-import {
-    cyclePresetNext,
-    cyclePresetPrev,
-    ensureReaderPresetSession,
-    patchLiveBookReaderSettings,
-    selectPresetSlot,
-} from "@store/readerPresets";
-import { getShortcutsMapped } from "@store/shortcuts";
+import { ensureReaderPresetSession, patchLiveBookReaderSettings } from "@store/readerPresets";
 import { updateTrackerSnapshot } from "@store/trackers";
 import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
@@ -54,18 +50,17 @@ import {
     spineRowAtReaderTop,
 } from "@utils/epub";
 import { DEFAULT_HIGHLIGHT_COLORS, highlightUtils } from "@utils/highlight";
-import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { syncBookLibraryOnReaderOpen } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import type React from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { shallowEqual } from "react-redux";
 import FootNodeModal from "./components/FootNodeModal";
 import EPUBReaderSettings from "./EPubReaderSettings";
 import EPubReaderSideList from "./EPubReaderSideList";
 import HTMLPart from "./HTMLPart";
 import StyleSheets from "./StyleSheets";
+import { BOOK_BOOKMARK_OWNER_ID, BOOK_READER_SETTINGS_OWNER_ID, useBookCommandOwner } from "./useBookCommandOwner";
 import { type EpubScrollTarget, useContinuousEpubScroll } from "./useContinuousEpubScroll";
 
 const log = createRendererLogger("epub/EPubReader");
@@ -81,11 +76,11 @@ const EPubReader: React.FC = () => {
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
-    const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const readerState = useAppSelector((store) => store.reader);
     const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     const isLoading = useAppSelector((store) => store.reader.loading !== null);
+    const commandsActive = useAppSelector(selectReaderCommandsActive);
+    const runtime = useKeybindingRuntime();
 
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, readerState.link));
     const isContinuousScroll = epubReaderSettings.continuousChapters;
@@ -128,12 +123,8 @@ const EPubReader: React.FC = () => {
     const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks" | "notes">("content");
 
     const readerRef = useRef<HTMLDivElement>(null);
-    const mainRef = useRef<HTMLSelectElement>(null);
+    const mainRef = useRef<HTMLElement>(null);
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
-    const sizePlusRef = useRef<HTMLButtonElement>(null);
-    const sizeMinusRef = useRef<HTMLButtonElement>(null);
-    const fontSizePlusRef = useRef<HTMLButtonElement>(null);
-    const fontSizeMinusRef = useRef<HTMLButtonElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
     const addToBookmarkRef = useRef<HTMLButtonElement>(null);
     const [spineWeights, setSpineWeights] = useState<number[]>([]);
@@ -224,22 +215,13 @@ const EPubReader: React.FC = () => {
         };
     }, [currentChapter.index, epubData, isContinuousScroll]);
 
-    const scrollReader = (intensity: number) => {
+    const { start: startHeldScrollLoop, stop: stopHeldScroll } = useHeldScroll((intensity) => {
+        readerRef.current?.scrollBy(0, intensity);
+    });
+    const startHeldScroll = (intensity: number) => {
+        // drop a pending continuous chapter jump so keyboard scroll owns the viewport
         if (isContinuousScroll) continuous.cancelNavigation();
-        if (readerRef.current) {
-            let prevTime: number;
-            const anim = (timeStamp: number) => {
-                if (prevTime !== timeStamp && readerRef.current) {
-                    readerRef.current.scrollBy(0, intensity);
-                }
-                if (window.app.keydown) {
-                    prevTime = timeStamp;
-                    window.requestAnimationFrame(anim);
-                }
-            };
-            window.requestAnimationFrame(anim);
-            return;
-        }
+        startHeldScrollLoop(intensity);
     };
     /** Finishes one continuous destination before publishing its visible chapter and locator. */
     const navigateContinuous = useCallback(
@@ -517,7 +499,7 @@ const EPubReader: React.FC = () => {
                 return;
             }
             if (!(root instanceof HTMLElement) || root.childNodes.length === 0) return;
-            /* ponytail: current chapter only; upgrade is whole-book search over extracted spine text */
+            /* current chapter only; upgrade is whole-book search over extracted spine text */
             let session = findSessionRef.current;
             if (!session || session.query !== query || session.chapterId !== spineItem.id) {
                 session = { query, chapterId: spineItem.id, matchIndex: forward ? -1 : 0 };
@@ -630,7 +612,7 @@ const EPubReader: React.FC = () => {
     }, [currentChapter.index, isContinuousScroll]);
 
     useLayoutEffect(() => {
-        /* ponytail: AniList auto skipped in continuous; upgrade is a book-specific tracker rule */
+        /* AniList auto skipped in continuous; upgrade is a book-specific tracker rule */
         if (isContinuousScroll) return;
         if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
         if (bookProgress < 70) return;
@@ -721,6 +703,33 @@ const EPubReader: React.FC = () => {
         if (!zenMode) setSideListPinned(false);
         setZenMode((prev) => !prev);
     };
+    /** Near chapter start/end so page commands can switch chapter (chapter-at-a-time only). */
+    const atChapterEdge = () => {
+        const readerEl = readerRef.current;
+        if (!readerEl) return false;
+        return (
+            Math.ceil(
+                readerEl.scrollTop +
+                    window.innerHeight +
+                    (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor())),
+            ) >= readerEl.scrollHeight || readerEl.scrollTop < window.innerHeight / 4
+        );
+    };
+    useBookCommandOwner({
+        visible: commandsActive,
+        readerRef,
+        mainRef,
+        openNextChapter,
+        openPrevChapter,
+        atChapterEdge,
+        isContinuousScroll,
+        toggleZenMode,
+        holdReadingPlace,
+        setZenMode,
+        setShortcutText,
+        startHeldScroll,
+        stopHeldScroll,
+    });
     useEffect(() => {
         if (zenMode) {
             setWasMaximized(window.electron.currentWindow.isMaximized());
@@ -767,211 +776,21 @@ const EPubReader: React.FC = () => {
     }, [sideListWidth]);
 
     useLayoutEffect(() => {
-        window.app.clickDelay = 100;
         const wheelFunction = (e: WheelEvent) => {
             if (e.ctrlKey) {
-                if (e.deltaY < 0) {
-                    sizePlusRef.current?.click();
-                    return;
-                }
-                if (e.deltaY > 0) {
-                    sizeMinusRef.current?.click();
-                    return;
-                }
+                if (!readerState.active || isLoading) return;
+                e.preventDefault();
+                if (e.deltaY < 0) runtime.executeCommand("sizePlus", BOOK_READER_SETTINGS_OWNER_ID);
+                else if (e.deltaY > 0) runtime.executeCommand("sizeMinus", BOOK_READER_SETTINGS_OWNER_ID);
+                return;
             }
             if (isContinuousScroll) releaseReadingPlace();
         };
-
-        type ShortcutEv = {
-            preventDefault: () => void;
-            stopPropagation: () => void;
-            repeat: boolean;
-            key?: string;
-        };
-        const handleShortcut = (keyStr: string, e: ShortcutEv): boolean => {
-            window.app.keyRepeated = e.repeat;
-            window.app.keydown = true;
-
-            const is = (keys: string[]) => keys.includes(keyStr);
-            const isReaderActive = !isSettingOpen && readerState.active && !isLoading;
-            const isReaderFocused =
-                document.activeElement?.tagName === "BODY" || document.activeElement === readerRef.current;
-            const topBottomLogic =
-                readerRef.current &&
-                !e.repeat &&
-                (Math.ceil(
-                    readerRef.current.scrollTop +
-                        window.innerHeight +
-                        (1 + Math.abs(1 - window.electron.webFrame.getZoomFactor())),
-                ) >= readerRef.current.scrollHeight ||
-                    readerRef.current.scrollTop < window.innerHeight / 4);
-            if (is(shortcutsMapped.contextMenu)) {
-                e.stopPropagation();
-                e.preventDefault();
-                if (mainRef.current)
-                    mainRef.current.dispatchEvent(
-                        window.contextMenu.fakeEvent(
-                            { posX: window.innerWidth / 2, posY: window.innerHeight / 2 },
-                            readerRef.current,
-                        ),
-                    );
-                return true;
-            }
-
-            if (!isReaderActive) return false;
-
-            if (e.key && [" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
-
-            if (e.repeat) return false;
-
-            switch (true) {
-                case is(shortcutsMapped.nextPage):
-                    if (!isReaderFocused) break;
-                    if (topBottomLogic && !isContinuousScroll) openNextChapter();
-                    return true;
-                case is(shortcutsMapped.prevPage):
-                    if (!isReaderFocused) break;
-                    if (topBottomLogic && !isContinuousScroll) openPrevChapter();
-                    return true;
-                case is(shortcutsMapped.readerSettings):
-                    readerSettingExtender.current?.click();
-                    readerSettingExtender.current?.focus();
-                    return true;
-                case is(shortcutsMapped.toggleZenMode):
-                    toggleZenMode();
-                    return true;
-                case keyStr === "escape":
-                    holdReadingPlace();
-                    setZenMode(false);
-                    return true;
-                case is(shortcutsMapped.nextChapter):
-                    openNextChapter();
-                    return true;
-                case is(shortcutsMapped.prevChapter):
-                    openPrevChapter();
-                    return true;
-                case is(shortcutsMapped.bookmark):
-                    addToBookmarkRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.sizePlus):
-                    sizePlusRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.sizeMinus):
-                    sizeMinusRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.fontSizePlus):
-                    fontSizePlusRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.fontSizeMinus):
-                    fontSizeMinusRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.showHidePageNumberInZen):
-                    setShortcutText(
-                        epubReaderSettings.showProgressInZenMode
-                            ? t("hud.hideProgressInZen")
-                            : t("hud.showProgressInZen"),
-                    );
-                    dispatch(
-                        patchLiveBookReaderSettings({
-                            showProgressInZenMode: !epubReaderSettings.showProgressInZenMode,
-                        }),
-                    );
-                    return true;
-                case is(shortcutsMapped.cyclePresetNext): {
-                    const name = dispatch(cyclePresetNext("book")) as string | null;
-                    if (name) setShortcutText(t("hud.presetNamed", { name }));
-                    return true;
-                }
-                case is(shortcutsMapped.cyclePresetPrev): {
-                    const name = dispatch(cyclePresetPrev("book")) as string | null;
-                    if (name) setShortcutText(t("hud.presetNamed", { name }));
-                    return true;
-                }
-                case is(shortcutsMapped.selectPreset1):
-                case is(shortcutsMapped.selectPreset2):
-                case is(shortcutsMapped.selectPreset3):
-                case is(shortcutsMapped.selectPreset4):
-                case is(shortcutsMapped.selectPreset5): {
-                    const slotIdx = [
-                        shortcutsMapped.selectPreset1,
-                        shortcutsMapped.selectPreset2,
-                        shortcutsMapped.selectPreset3,
-                        shortcutsMapped.selectPreset4,
-                        shortcutsMapped.selectPreset5,
-                    ].findIndex((keys) => is(keys ?? []));
-                    if (slotIdx >= 0) {
-                        const name = dispatch(selectPresetSlot("book", slotIdx)) as string | null;
-                        if (name) setShortcutText(t("hud.presetNamed", { name }));
-                    }
-                    return true;
-                }
-                default:
-                    break;
-            }
-            if (isReaderFocused) {
-                switch (true) {
-                    case is(shortcutsMapped.largeScrollReverse):
-                        e.preventDefault();
-                        scrollReader(0 - epubReaderSettings.scrollSpeedB);
-                        return true;
-                    case is(shortcutsMapped.largeScroll):
-                        e.preventDefault();
-                        scrollReader(epubReaderSettings.scrollSpeedB);
-                        return true;
-                    case is(shortcutsMapped.scrollDown):
-                        scrollReader(epubReaderSettings.scrollSpeedA);
-                        return true;
-                    case is(shortcutsMapped.scrollUp):
-                        scrollReader(0 - epubReaderSettings.scrollSpeedA);
-                        return true;
-                    default:
-                        break;
-                }
-            }
-            return false;
-        };
-        const registerShortcuts = (e: KeyboardEvent) => {
-            const keyStr = keyFormatter(e);
-            if (keyStr === "" && e.key !== "Escape") return;
-            handleShortcut(keyStr, e);
-        };
-        const registerMouseShortcuts = (e: MouseEvent) => {
-            const keyStr = mouseEventFormatter(e);
-            if (keyStr === "") return;
-            if (
-                handleShortcut(keyStr, {
-                    preventDefault: () => e.preventDefault(),
-                    stopPropagation: () => e.stopPropagation(),
-                    repeat: false,
-                })
-            )
-                e.preventDefault();
-        };
-        const onPointerUp = () => {
-            window.app.keydown = false;
-        };
-        window.addEventListener("wheel", wheelFunction);
-        window.addEventListener("keydown", registerShortcuts);
-        window.addEventListener("mousedown", registerMouseShortcuts);
-        window.addEventListener("keyup", onPointerUp);
-        window.addEventListener("mouseup", onPointerUp);
+        window.addEventListener("wheel", wheelFunction, { passive: false });
         return () => {
             window.removeEventListener("wheel", wheelFunction);
-            window.removeEventListener("keydown", registerShortcuts);
-            window.removeEventListener("mousedown", registerMouseShortcuts);
-            window.removeEventListener("keyup", onPointerUp);
-            window.removeEventListener("mouseup", onPointerUp);
         };
-    }, [
-        isSideListPinned,
-        appSettings,
-        isLoading,
-        shortcutsMapped,
-        isSettingOpen,
-        epubData,
-        readerState.active,
-        isContinuousScroll,
-    ]);
+    }, [readerState.active, isLoading, isContinuousScroll, runtime]);
 
     useLayoutEffect(() => {
         if (!isContinuousScroll) return;
@@ -1081,11 +900,7 @@ const EPubReader: React.FC = () => {
                 readerRef={readerRef}
                 makeScrollPos={holdReadingPlace}
                 readerSettingExtender={readerSettingExtender}
-                sizePlusRef={sizePlusRef}
-                sizeMinusRef={sizeMinusRef}
                 setShortcutText={setShortcutText}
-                fontSizePlusRef={fontSizePlusRef}
-                fontSizeMinusRef={fontSizeMinusRef}
             />
             {epubData && (
                 <EPubReaderSideList
@@ -1287,7 +1102,7 @@ const EPubReader: React.FC = () => {
                             {
                                 label: t("contextMenu.bookmark"),
                                 action() {
-                                    addToBookmarkRef.current?.click();
+                                    runtime.executeCommand("bookmark", BOOK_BOOKMARK_OWNER_ID);
                                 },
                             },
                             window.contextMenu.template.divider(),

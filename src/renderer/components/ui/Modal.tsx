@@ -1,3 +1,5 @@
+import { useCommandOwner, useOwnerId } from "@features/keybindings";
+import { onWidgetActivateKey } from "@utils/keyboard";
 import { memo, type ReactNode } from "react";
 import FocusLock from "react-focus-lock";
 
@@ -13,6 +15,16 @@ type Props2 = PropsBase & { children: string; asHTML: true };
 // todo: replace with radix ui
 
 const Modal = memo((props: Props1 | Props2) => {
+    const ownerId = useOwnerId("modal");
+    useCommandOwner({
+        ownerId,
+        contextKinds: ["modal"],
+        visible: true,
+        onEscape: () => {
+            props.onClose();
+            return true;
+        },
+    });
     return (
         <FocusLock disabled={!!props.noFocusLock}>
             <div
@@ -40,17 +52,13 @@ const Modal = memo((props: Props1 | Props2) => {
                         }
                     }}
                     onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                            // Settings (and similar overlays) listen for Escape on React ancestors
-                            e.stopPropagation();
-                            props.onClose();
-                            return;
-                        }
                         // space on the overlay itself; leave buttons and fields to native behavior
-                        if (e.key === " " && e.target === e.currentTarget) {
-                            e.preventDefault();
-                            e.currentTarget.click();
-                        }
+                        if (e.target !== e.currentTarget) return;
+                        onWidgetActivateKey(e, {
+                            space: () => {
+                                e.currentTarget.click();
+                            },
+                        });
                     }}
                     tabIndex={-1}
                 >

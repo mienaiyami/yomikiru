@@ -1,5 +1,12 @@
 import os from "node:os";
 import path from "node:path";
+import {
+    applyKeymapEdit,
+    emptyKeymapDocument,
+    type KeymapDocument,
+    type KeymapSnapshot,
+    keymapPlatformFromNode,
+} from "@common/keybindings";
 import type { ScopedLogSink } from "@common/logger";
 import type { IPCChannels } from "@common/types/ipc";
 import { vi } from "vitest";
@@ -13,6 +20,34 @@ type RegisteredInvokeHandler = (request: unknown) => unknown;
 
 const invokeHandlers = new Map<string, RegisteredInvokeHandler>();
 let clipboardText = "";
+/** In-memory keymap for unit tests; reset between tests with {@link resetPreloadMocks}. */
+let keymapDocument: KeymapDocument = emptyKeymapDocument();
+
+/**
+ * Snapshot of the in-memory keymap used by default `keymap:*` invoke stubs.
+ */
+const testKeymapSnapshot = (): KeymapSnapshot => ({
+    status: "ready",
+    document: keymapDocument,
+    platform: keymapPlatformFromNode(process.platform),
+});
+
+/**
+ * Default `keymap:get` / `keymap:edit` so App hydrate and shortcut thunks do not throw.
+ * Tests may override either channel with {@link onInvoke}.
+ */
+const registerDefaultKeymapHandlers = (): void => {
+    onInvoke("keymap:get", () => testKeymapSnapshot());
+    onInvoke("keymap:edit", (operation) => {
+        const platform = keymapPlatformFromNode(process.platform);
+        const edited = applyKeymapEdit(keymapDocument, operation, platform);
+        if (edited.ok) {
+            keymapDocument = edited.document;
+            return { ok: true, snapshot: testKeymapSnapshot() };
+        }
+        return { ok: false, code: edited.code, snapshot: testKeymapSnapshot() };
+    });
+};
 
 /**
  * Returns a no-op {@link ScopedLogSink} so {@link createRendererLogger} works in jsdom.
@@ -45,10 +80,11 @@ export const onInvoke = <T extends keyof IPCChannels>(channel: T, handler: Invok
     invokeHandlers.set(channel, handler as RegisteredInvokeHandler);
 };
 
-/** Clears invoke handlers and the in-memory clipboard between tests. */
+/** Clears invoke handlers, clipboard, and the in-memory keymap between tests. */
 export const resetPreloadMocks = (): void => {
     invokeHandlers.clear();
     clipboardText = "";
+    keymapDocument = emptyKeymapDocument();
 };
 
 /**
@@ -133,8 +169,6 @@ export const installPreloadMocks = (): void => {
         clickDelay: 0,
         lastClick: 0,
         scrollToPage: vi.fn(),
-        keyRepeated: false,
-        keydown: false,
     };
 
     /*
@@ -226,4 +260,6 @@ export const installPreloadMocks = (): void => {
     onInvoke("covers:materializeFromUrl", () => ({ ok: true }));
     onInvoke("covers:claimPost0001ThumbnailPrompt", () => false);
     onInvoke("db:library:getAllAndProgress", () => []);
+    onInvoke("keymap:nativeAction", () => undefined);
+    registerDefaultKeymapHandlers();
 };

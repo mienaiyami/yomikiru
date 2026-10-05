@@ -1,5 +1,6 @@
 import i18n from "@renderer/i18n";
 import { dialogUtils } from "@utils/dialog";
+import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import type React from "react";
 
 type LinkProps = {
@@ -17,11 +18,7 @@ const Link = ({ href, tabIndex = 0, confirmOpen = true, children }: LinkProps) =
         <a
             className="real-anchor"
             tabIndex={tabIndex}
-            onKeyDown={(e) => {
-                if ([" ", "Enter"].includes(e.key)) {
-                    e.currentTarget.click();
-                }
-            }}
+            onKeyDown={clickOnWidgetActivateKey}
             onClick={() => {
                 if (confirmOpen)
                     dialogUtils

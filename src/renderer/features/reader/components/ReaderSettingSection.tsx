@@ -1,6 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { selectLiveBookReaderSettings, selectLiveMangaReaderSettings } from "@store/reader";
 import { patchLiveBookReaderSettings, patchLiveMangaReaderSettings } from "@store/readerPresets";
+import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import type { BookReaderSettings, MangaReaderSettings } from "@utils/readerSettingsSchema";
 import type { ReactElement, ReactNode } from "react";
 
@@ -39,11 +40,7 @@ export const ReaderSettingSection = ({
             className={`name ${expanded ? "expanded " : ""}`}
             tabIndex={0}
             title={headerTitle}
-            onKeyDown={(e) => {
-                if (e.key !== " " && e.key !== "Enter") return;
-                e.preventDefault();
-                e.currentTarget.click();
-            }}
+            onKeyDown={clickOnWidgetActivateKey}
             onClick={onToggle}
         >
             {title}

@@ -279,7 +279,7 @@ export const clearEpubFindHighlights = (root: ParentNode): void => {
 
 /**
  * Wraps case-insensitive substring hits in `root` and returns the nth mark, or null.
- * ponytail: substring only; does not compile the query as a regex.
+ * Substring only; does not compile the query as a regex.
  */
 export const highlightNthFindMatch = (
     root: HTMLElement,

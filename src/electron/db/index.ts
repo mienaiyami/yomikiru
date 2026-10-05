@@ -46,7 +46,7 @@ type BookProgressRow = SqliteSelectRow<BookProgress>;
 
 /**
  * Child tables keyed by `itemLink`. Relocate rewrites these with the library row.
- * ponytail: add a name here when a new ON DELETE CASCADE child is keyed the same way.
+ * Add a name here when a new ON DELETE CASCADE child is keyed the same way.
  */
 const ITEMLINK_CHILD_TABLES = [
     "manga_progress",
@@ -397,7 +397,7 @@ export class DatabaseService {
      * Folds live rows whose path resolves to `canonical` into one keeper, then relocates
      * that keeper onto `canonical` when the stored link still differs.
      *
-     * ponytail: O(n) realpath over same-type catalogue rows per add. Upgrade: persist a
+     * O(n) realpath over same-type catalogue rows per add. Upgrade: persist a
      * realpath column if libraries grow large enough that this shows up in profiles.
      *
      * @returns whether any row was merged or relocated

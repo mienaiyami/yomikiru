@@ -1,12 +1,10 @@
-import { getShortcutsMapped } from "@store/shortcuts";
-import { keyFormatter } from "@utils/keybindings";
+import { useCommandOwner, useOwnerId } from "@features/keybindings";
+import { onWidgetActivateKey } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
 import type React from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
-import { shallowEqual } from "react-redux";
 import { useAppContext } from "../../App";
-import { useAppSelector } from "../../store/hooks";
 
 const log = createRendererLogger("components/ui/MenuList");
 
@@ -16,7 +14,7 @@ const log = createRendererLogger("components/ui/MenuList");
 //todo rename later for select only
 const MenuList: React.FC = () => {
     const { optSelectData } = useAppContext();
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
+    const ownerId = useOwnerId("menu-list");
 
     //todo, maybe add height,width to it as well.
     const [pos, setPos] = useState({ x: 0, y: 0, width: 1 });
@@ -92,6 +90,43 @@ const MenuList: React.FC = () => {
         };
     }, [optSelectData]);
 
+    const moveFocus = (delta: number) => {
+        const items = optSelectData?.items;
+        if (!items || items.length <= 0) return;
+        setFocused((init) => {
+            if (init + delta >= items.length) return 0;
+            if (init + delta < 0) return items.length - 1;
+            return init + delta;
+        });
+    };
+
+    const activateFocused = () => {
+        const elem = ref.current?.querySelector('[data-focused="true"]') as HTMLLIElement | null;
+        if (elem && !elem.classList.contains("disabled")) elem.click();
+    };
+
+    useCommandOwner({
+        ownerId,
+        /* menu blocks background commands; searchWidget is how list movement is catalogued */
+        contextKinds: ["menu", "searchWidget"],
+        visible: Boolean(optSelectData) && !optSelectData?.retainFocus,
+        ownsEventTarget: (node) => Boolean(node instanceof Node && ref.current?.contains(node)),
+        handlers: {
+            listDown: () => moveFocus(1),
+            listUp: () => moveFocus(-1),
+            listSelect: () => activateFocused(),
+            contextMenu: () => {
+                ref.current?.blur();
+            },
+        },
+        onEscape: () => {
+            if (!optSelectData || optSelectData.retainFocus) return false;
+            if (!ref.current?.contains(document.activeElement)) return false;
+            ref.current.blur();
+            return true;
+        },
+    });
+
     useLayoutEffect(() => {
         const ff = () => {
             ref.current?.blur();
@@ -142,16 +177,9 @@ const MenuList: React.FC = () => {
             }}
             onKeyDown={(e) => {
                 e.stopPropagation();
-                e.preventDefault();
-
-                const keyStr = keyFormatter(e, false);
-                if (keyStr === "") return;
-
-                if (shortcutsMapped.contextMenu.includes(keyStr)) {
-                    e.currentTarget.blur();
-                    return;
-                }
+                /* letter typeahead is specific to this menu; list movement is a command */
                 if (!e.ctrlKey && e.key.length === 1 && /^[\w]/i.test(e.key)) {
+                    e.preventDefault();
                     if (ref.current) {
                         const elems = [...ref.current.querySelectorAll("li")];
                         let i = focused;
@@ -169,36 +197,10 @@ const MenuList: React.FC = () => {
                             );
                         }
                         if (i >= 0) setFocused(i);
-                        return;
                     }
+                    return;
                 }
-                switch (true) {
-                    case keyStr === "escape":
-                        e.currentTarget.blur();
-                        break;
-                    case shortcutsMapped.listDown.includes(keyStr):
-                    case keyStr === "right":
-                        setFocused((init) => {
-                            if (init + 1 >= optSelectData.items.length) return 0;
-                            return init + 1;
-                        });
-                        break;
-                    case shortcutsMapped.listUp.includes(keyStr):
-                    case keyStr === "left":
-                        setFocused((init) => {
-                            if (init - 1 < 0) return optSelectData.items.length - 1;
-                            return init - 1;
-                        });
-                        break;
-                    case shortcutsMapped.listSelect.includes(keyStr):
-                    case keyStr === "space": {
-                        const elem = ref.current?.querySelector('[data-focused="true"]') as HTMLLIElement | null;
-                        if (elem && !elem.classList.contains("disabled")) elem.click();
-                        break;
-                    }
-                    default:
-                        break;
-                }
+                onWidgetActivateKey(e, { space: activateFocused });
             }}
         >
             <ul>

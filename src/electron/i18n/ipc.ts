@@ -30,10 +30,16 @@ let rebuildApplicationMenu: MenuRebuild = () => {
 };
 
 /**
- * Registers a callback that rebuilds the Electron application menu after language changes.
+ * Registers a callback that rebuilds the Electron application menu after
+ * language or keymap changes.
  */
 export const setApplicationMenuRebuild = (fn: MenuRebuild): void => {
     rebuildApplicationMenu = fn;
+};
+
+/** Rebuilds the application menu using the callback registered from main. */
+export const rebuildApplicationMenuNow = (): void => {
+    rebuildApplicationMenu();
 };
 
 const broadcastI18n = (): void => {

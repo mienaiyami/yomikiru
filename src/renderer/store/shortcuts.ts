@@ -1,124 +1,233 @@
-import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { dialogUtils } from "@utils/dialog";
-import { healShortcutEntries } from "@utils/keybindings";
-import { saveJSONfile, shortcutsPath } from "../utils/file";
+import {
+    type BindingTrigger,
+    type CommandId,
+    effectiveBindingsFor,
+    emptyKeymapDocument,
+    type KeymapDocument,
+    type KeymapEditOp,
+    type KeymapLoadStatus,
+    type KeymapPlatform,
+    type KeymapSnapshot,
+    keymapPlatformFromNode,
+    toShortcutDisplayEntries,
+} from "@common/keybindings";
+import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { createRendererLogger } from "../utils/logger";
-import { readJsonFileWithRetrySync } from "../utils/readJsonFileWithRetry";
+import type { RootState } from ".";
 
 const log = createRendererLogger("store/shortcuts");
 
-import type { RootState } from ".";
+const platformOfThisWindow = (): KeymapPlatform => keymapPlatformFromNode(window.process.platform);
 
-const initialState: ShortcutSchema[] = [];
+/**
+ * Renderer keymap session: canonical {@link KeymapDocument} plus derived
+ * display rows for Usage.
+ */
+export type ShortcutsState = {
+    entries: ShortcutSchema[];
+    /** Canonical keymap envelope (not the DOM document). */
+    document: KeymapDocument;
+    status: "hydrating" | KeymapLoadStatus;
+    saveState: "idle" | "saving" | "failed" | "stale";
+    /** Catalog command id of a stale same-command edit; null for resetAll. */
+    staleCommandId: CommandId | null;
+    platform: KeymapPlatform;
+};
 
-/** Mutable default keymap; copies keys so Redux does not share frozen map tuples. */
-const defaultShortcuts: ShortcutSchema[] = healShortcutEntries([]);
+const entriesFromSnapshot = (snapshot: KeymapSnapshot): ShortcutSchema[] =>
+    toShortcutDisplayEntries(snapshot.document, snapshot.platform);
 
-//todo make function readJSONfile
-if (window.fs.existsSync(shortcutsPath)) {
-    try {
-        let data = readJsonFileWithRetrySync<ShortcutSchema[]>(shortcutsPath, {
-            maxAttempts: 10,
-            onRetry: (attempt, error) => {
-                log.log(`shortcuts.json read retry ${attempt}/10`, error);
-            },
-        });
-        // check if shortcut.json is pre version 2.18.5
-        if (Object.keys(data[0] ?? {}).includes("key1")) {
-            throw Error("old shortcuts.json detected");
-        }
+const stateFromSnapshot = (
+    snapshot: KeymapSnapshot,
+    saveState: ShortcutsState["saveState"] = "idle",
+    staleCommandId: CommandId | null = null,
+): ShortcutsState => ({
+    entries: entriesFromSnapshot(snapshot),
+    document: snapshot.document,
+    status: snapshot.status,
+    saveState,
+    staleCommandId,
+    platform: snapshot.platform,
+});
 
-        const parsed = data;
-        const beforeCommands = new Set(parsed.map((e) => e.command as string));
-        data = healShortcutEntries(parsed);
-        for (const command of beforeCommands) {
-            if (!data.some((e) => e.command === command)) {
-                log.log(`shortcuts.json: dropped unknown command "${command}"`);
-            }
-        }
-        for (const e of data) {
-            if (!beforeCommands.has(e.command)) {
-                log.log(`shortcuts.json: added missing command "${e.command}" with defaults`);
-            }
-        }
-        const healedSameAsParsed =
-            parsed.length === data.length &&
-            parsed.every(
-                (row, i) =>
-                    row.command === data[i]?.command && JSON.stringify(row.keys) === JSON.stringify(data[i]?.keys),
-            );
-        if (!healedSameAsParsed) saveJSONfile(shortcutsPath, data);
-        initialState.push(...data);
-    } catch (err) {
-        if (err instanceof Error && err.message.includes("old shortcuts")) {
-            dialogUtils.warn({
-                message:
-                    "Shortcut system is updating to support advanced key combinations. This will replace the old shortcut system and result in the loss of your current shortcuts. Sorry for the inconvenience.",
-            });
-        } else
-            dialogUtils.customError({
-                message: `Unable to parse ${shortcutsPath}\nMaking new shortcuts.json...`,
-            });
-        log.error("shortcuts.json parse failed; restored default keymap", err);
-        saveJSONfile(shortcutsPath, defaultShortcuts);
-        initialState.push(...defaultShortcuts);
-    }
-} else {
-    saveJSONfile(shortcutsPath, defaultShortcuts);
-    initialState.push(...defaultShortcuts);
-}
+const initialPlatform = platformOfThisWindow();
+
+/**
+ * Catalog defaults until {@link hydrateKeymap} returns the durable snapshot.
+ *
+ * First paint may briefly show catalog keys before custom ones.
+ * Upgrade is a blocking splash or a snapshot injected before first React paint.
+ */
+export const initialShortcutsState: ShortcutsState = {
+    entries: toShortcutDisplayEntries(emptyKeymapDocument(), initialPlatform),
+    document: emptyKeymapDocument(),
+    status: "hydrating",
+    saveState: "idle",
+    staleCommandId: null,
+    platform: initialPlatform,
+};
+
+/**
+ * Loads the canonical keymap from main. Safe to call more than once; later
+ * snapshots with a lower revision are ignored.
+ */
+export const hydrateKeymap = createAsyncThunk("shortcuts/hydrate", async () => {
+    return await window.electron.invoke("keymap:get");
+});
+
+/** Sends one typed edit to the main-process keymap owner. */
+const editKeymap = createAsyncThunk("shortcuts/edit", async (operation: KeymapEditOp) => {
+    return await window.electron.invoke("keymap:edit", operation);
+});
+
+type BindingEditArgs = {
+    commandId: CommandId;
+    trigger: BindingTrigger;
+};
+
+/**
+ * Adds one {@link BindingTrigger} to a command. Duplicate add is a no-op in main.
+ */
+export const addKeymapBinding = createAsyncThunk(
+    "shortcuts/addBinding",
+    async ({ commandId, trigger }: BindingEditArgs, { getState, dispatch }) => {
+        const session = (getState() as RootState).shortcuts;
+        const expectedBindings = effectiveBindingsFor(session.document, commandId, session.platform);
+        await dispatch(
+            editKeymap({
+                type: "addBinding",
+                commandId,
+                trigger,
+                expectedBindings,
+            }),
+        );
+    },
+);
+
+/** Removes one {@link BindingTrigger} from a command. */
+export const removeKeymapBinding = createAsyncThunk(
+    "shortcuts/removeBinding",
+    async ({ commandId, trigger }: BindingEditArgs, { getState, dispatch }) => {
+        const session = (getState() as RootState).shortcuts;
+        const expectedBindings = effectiveBindingsFor(session.document, commandId, session.platform);
+        await dispatch(
+            editKeymap({
+                type: "removeBinding",
+                commandId,
+                trigger,
+                expectedBindings,
+            }),
+        );
+    },
+);
+
+/** Restores catalog defaults for one command (drops its override). */
+export const resetKeymapCommand = createAsyncThunk(
+    "shortcuts/resetCommand",
+    async (commandId: CommandId, { getState, dispatch }) => {
+        const session = (getState() as RootState).shortcuts;
+        const expectedBindings = effectiveBindingsFor(session.document, commandId, session.platform);
+        await dispatch(
+            editKeymap({
+                type: "resetCommand",
+                commandId,
+                expectedBindings,
+            }),
+        );
+    },
+);
+
+/** Clears every override (inherit catalog defaults) after a revision check. */
+export const resetShortcuts = createAsyncThunk("shortcuts/resetAll", async (_, { getState, dispatch }) => {
+    const session = (getState() as RootState).shortcuts;
+    await dispatch(
+        editKeymap({
+            type: "resetAll",
+            expectedRevision: session.document.revision,
+        }),
+    );
+});
+
+/**
+ * Applies a snapshot from another window when Sync Settings is on.
+ * Same-window echoes and older revisions are ignored by the caller / reducer.
+ */
+export const applyExternalKeymapSnapshot = createAsyncThunk(
+    "shortcuts/applyExternal",
+    async (snapshot: KeymapSnapshot) => snapshot,
+);
+
+/**
+ * Whether this window should apply a `keymap:changed` broadcast.
+ * The origin window already applied the invoke result; others follow Sync Settings.
+ *
+ * @param originWindowId BrowserWindow id that submitted the edit, or null
+ * @param thisWindowId this renderer's {@link window.electron.currentWindow} id
+ */
+export const shouldApplyRemoteKeymapChange = (
+    originWindowId: number | null,
+    thisWindowId: number,
+    syncSettingsEnabled: boolean,
+): boolean => {
+    if (originWindowId !== null && originWindowId === thisWindowId) return false;
+    return syncSettingsEnabled;
+};
+
+/**
+ * Replaces session state when the snapshot is not older than the current revision.
+ * Equal revision is applied so a no-op edit still leaves saveState idle.
+ */
+const applySnapshotIfNewer = (state: ShortcutsState, snapshot: KeymapSnapshot): ShortcutsState => {
+    if (snapshot.document.revision < state.document.revision) return state;
+    return stateFromSnapshot(snapshot, "idle", null);
+};
 
 const shortcuts = createSlice({
     name: "shortcuts",
-    initialState,
-    reducers: {
-        setShortcuts: (state, action: PayloadAction<{ command: ShortcutCommands; key: string }>) => {
-            const { command, key } = action.payload;
-            const index = state.findIndex((e) => e.command === command);
-            if (index > -1) {
-                if (!state[index].keys.includes(key)) state[index].keys.push(key);
-                log.log(`Keybinding add: ${command} <- ${key}`);
+    initialState: initialShortcutsState,
+    reducers: {},
+    extraReducers: (builder) => {
+        builder.addCase(hydrateKeymap.fulfilled, (state, action) => applySnapshotIfNewer(state, action.payload));
+        builder.addCase(hydrateKeymap.rejected, (state) => {
+            log.error("keymap:get invoke failed");
+            // keep catalog defaults; IPC failure is not a durable recovery snapshot
+            state.saveState = "failed";
+        });
+        builder.addCase(editKeymap.pending, (state) => {
+            state.saveState = "saving";
+        });
+        builder.addCase(editKeymap.fulfilled, (state, action) => {
+            const result = action.payload;
+            if (result.ok) {
+                return applySnapshotIfNewer(state, result.snapshot);
             }
-            saveJSONfile(shortcutsPath, JSON.parse(JSON.stringify(state)));
-        },
-        removeShortcuts: (state, action: PayloadAction<{ command: ShortcutCommands; key: string }>) => {
-            const { command, key } = action.payload;
-            const index = state.findIndex((e) => e.command === command);
-            if (index > -1) {
-                state[index].keys = state[index].keys.filter((e) => e !== key);
-                log.log(`Keybinding remove: ${command} <- ${key}`);
+            if (result.code === "stale") {
+                const operation = action.meta.arg;
+                const staleCommandId = operation.type === "resetAll" ? null : operation.commandId;
+                return stateFromSnapshot(result.snapshot, "stale", staleCommandId);
             }
-            saveJSONfile(shortcutsPath, JSON.parse(JSON.stringify(state)));
-        },
-        resetShortcuts: () => {
-            saveJSONfile(shortcutsPath, defaultShortcuts);
-            return defaultShortcuts;
-        },
-        refreshShortcuts: (state) => {
-            try {
-                const data = readJsonFileWithRetrySync<ShortcutSchema[]>(shortcutsPath, {
-                    maxAttempts: 8,
-                    onRetry: (attempt, error) => {
-                        log.log(`shortcuts.json refresh retry ${attempt}/8`, error);
-                    },
-                });
-                return data;
-            } catch (error) {
-                log.error("refreshShortcuts: could not read shortcuts.json; keeping in-memory state", error);
-                return state;
-            }
-        },
+            return stateFromSnapshot(result.snapshot, "failed");
+        });
+        builder.addCase(editKeymap.rejected, (state) => {
+            state.saveState = "failed";
+            log.error("keymap:edit invoke failed");
+        });
+        builder.addCase(applyExternalKeymapSnapshot.fulfilled, (state, action) =>
+            applySnapshotIfNewer(state, action.payload),
+        );
     },
 });
 
-export const { setShortcuts, resetShortcuts, removeShortcuts, refreshShortcuts } = shortcuts.actions;
-
 /**
- * Command -> keys map for keybinding UI. Memoized so callers do not re-render when
- * unrelated store slices change (avoids unstable `Object.fromEntries` identity).
+ * Command -> display-key map for Usage. Memoized so callers do not re-render
+ * when unrelated store slices change.
  */
-export const getShortcutsMapped = createSelector([(state: RootState) => state.shortcuts], (shortcutsList) => {
-    return Object.fromEntries(shortcutsList.map((e) => [e.command, e.keys])) as Record<ShortcutCommands, string[]>;
+export const getShortcutsMapped = createSelector([(state: RootState) => state.shortcuts.entries], (entries) => {
+    const mapped = {} as Record<ShortcutCommands, string[]>;
+    for (const entry of entries) {
+        mapped[entry.command] = entry.keys;
+    }
+    return mapped;
 });
 
 export default shortcuts.reducer;

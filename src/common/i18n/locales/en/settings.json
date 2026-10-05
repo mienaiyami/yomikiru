@@ -408,23 +408,31 @@
     },
     "shortcuts": {
         "commandNotFound": "Command \"{{command}}\" not found.",
+        "helpTitle": "Using shortcuts",
         "addNew": "Add New",
-        "alreadyBound": "\"{{key}}\" already bound to \"{{name}}\".",
-        "reservedCombo": "Can't use reserved key combination.",
-        "hintRestart": "Some changes may require app to restart.",
-        "hintMiddleMouse": "You can use middle mouse button or grab to scroll reader.",
-        "hintMouse45": "Mouse button 4 or 5 (back/forward): hover over \"Add New\" input first, then click to bind.",
-        "hintBackspaceBefore": "Use ",
-        "backspace": "Backspace",
-        "hintBackspaceAfter": " to clear key binding.",
-        "reservedKeys": "Reserved Keys : ",
-        "function": "Function",
-        "key": "Key",
-        "newWindow": "New Window",
-        "closeWindow": "Close Window",
-        "readerWidth": "Reader width",
-        "reloadUi": "Reload UI",
-        "reloadUiClearCache": "Reload UI and try to clear cache",
-        "devTool": "Dev Tool"
+        "recording": "Press a key...",
+        "removeBinding": "Remove binding",
+        "conflictWith": "Competes with <command />.",
+        "harmlessReuse": "Used on another screen by <command />.",
+        "hints": {
+            "live": "Changes apply immediately. You do not need to restart.",
+            "duplicates": "The same key can be assigned to more than one command. Notes on the row do not block the assignment.",
+            "middleMouse": "You can use middle mouse button or grab to scroll reader.",
+            "mouse45": "Mouse button 4 or 5 (back/forward): click Add New, then press the side button.",
+            "escapeTab": "Escape or Tab cancels recording without saving. Tab, Escape, and native text editing stay protected.",
+            "readerWidth": "Reader width with Ctrl+scroll is a pointer gesture, not a rebindable command."
+        },
+        "saveFailed": "Could not save shortcuts. Try again.",
+        "saveStale": "Shortcuts changed in another window. Reload and try again.",
+        "saveStaleCommand": "\"{{name}}\" changed in another window. Reload it and try again.",
+        "groups": {
+            "readerNavigation": "Reader navigation",
+            "readerView": "Reader view",
+            "readerPresets": "Reader presets",
+            "home": "Home",
+            "lists": "Lists",
+            "window": "Window",
+            "settings": "Settings"
+        }
     }
 }

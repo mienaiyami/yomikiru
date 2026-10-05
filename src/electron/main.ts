@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import * as remote from "@electron/remote/main";
-import { app, BrowserWindow, Menu, type MenuItemConstructorOptions, shell } from "electron";
+import { app, BrowserWindow, Menu, type MenuItemConstructorOptions } from "electron";
 import { createMainLogger } from "./util/logger";
 
 const logger = createMainLogger("main");
@@ -22,6 +22,7 @@ import { registerDialogHandlers } from "./ipc/dialog";
 import { registerErrorReportingHandlers } from "./ipc/errorReporting";
 import { registerExplorerHandlers } from "./ipc/explorer";
 import { registerFSHandlers } from "./ipc/fs";
+import { nativeMenuAccelerator, registerKeymapHandlers, runNativeKeymapAction } from "./ipc/keymap";
 import { registerLibraryScanHandlers, stopLibraryScan } from "./ipc/libraryScan";
 import { registerUpdateHandlers } from "./ipc/update";
 import {
@@ -90,8 +91,9 @@ if (app.isPackaged) {
 }
 
 /**
- * Builds the application menu from the current main i18n language.
- * Electron `role` items stay OS-localized; custom labels use `menu` namespace keys.
+ * Builds the application menu from the current main i18n language and the
+ * effective keymap. Electron `role` items stay OS-localized; custom labels use
+ * `menu` namespace keys. Configurable chords are display-only accelerators.
  */
 const rebuildApplicationMenu = (): void => {
     const t = mainT;
@@ -111,9 +113,22 @@ const rebuildApplicationMenu = (): void => {
         {
             label: t("view", { ns: "menu" }),
             submenu: [
-                { role: "reload" },
-                { role: "forceReload" },
-                { role: "toggleDevTools" },
+                /* menu click still runs on the BrowserWindow so a dead renderer can recover; keys are renderer-only */
+                {
+                    role: "reload",
+                    registerAccelerator: false,
+                    accelerator: nativeMenuAccelerator("reload") || undefined,
+                },
+                {
+                    role: "forceReload",
+                    registerAccelerator: false,
+                    accelerator: nativeMenuAccelerator("forceReload") || undefined,
+                },
+                {
+                    role: "toggleDevTools",
+                    registerAccelerator: false,
+                    accelerator: nativeMenuAccelerator("toggleDevTools") || undefined,
+                },
                 { type: "separator" },
             ],
         },
@@ -122,18 +137,21 @@ const rebuildApplicationMenu = (): void => {
             submenu: [
                 {
                     role: "help",
-                    accelerator: "F1",
-                    click: () => shell.openExternal("https://github.com/mienaiyami/yomikiru"),
+                    registerAccelerator: false,
+                    accelerator: nativeMenuAccelerator("help") || undefined,
+                    click: () => runNativeKeymapAction("help", null),
                 },
                 {
                     label: t("newWindow", { ns: "menu" }),
-                    accelerator: process.platform === "darwin" ? "Cmd+N" : "Ctrl+N",
-                    click: () => WindowManager.createWindow(),
+                    registerAccelerator: false,
+                    accelerator: nativeMenuAccelerator("newWindow") || undefined,
+                    click: () => runNativeKeymapAction("newWindow", null),
                 },
                 {
                     label: t("close", { ns: "menu" }),
-                    accelerator: process.platform === "darwin" ? "Cmd+W" : "Ctrl+W",
-                    click: (_, window) => window?.close(),
+                    registerAccelerator: false,
+                    accelerator: nativeMenuAccelerator("closeWindow") || undefined,
+                    click: (_, window) => runNativeKeymapAction("closeWindow", window ?? null),
                 },
                 {
                     label: t("reportIssue", { ns: "menu" }),
@@ -191,6 +209,8 @@ app.on("ready", async () => {
 
         registerExplorerHandlers();
         registerFSHandlers();
+        await registerKeymapHandlers();
+        rebuildApplicationMenu();
         registerLibraryScanHandlers(db);
         registerDialogHandlers();
         registerErrorReportingHandlers();

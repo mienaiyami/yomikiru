@@ -2,8 +2,8 @@ import { faBook, faImages, faLayerGroup } from "@fortawesome/free-solid-svg-icon
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTranslation } from "react-i18next";
 
-/** Persisted `galleryTypeFilter` id. */
-export type GalleryTypeFilterId = "all" | "manga" | "book";
+/** Persisted {@link AppSettings.galleryTypeFilter} id. */
+export type GalleryTypeFilterId = AppSettings["galleryTypeFilter"];
 
 /** Display config for a single type-filter segment (labels resolved via i18n in the bar). */
 type TypeFilterConfig = {

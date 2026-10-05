@@ -177,6 +177,7 @@ const BookmarkTab: React.FC = () => {
     }, [bookmarksArray, dispatch, selection, t, tCommon]);
 
     useSelectionShortcuts({
+        ownerId: "classic-bookmark-selection",
         selection,
         enabled: checkboxesEnabled,
         onDelete: handleRemoveSelected,
@@ -298,7 +299,8 @@ const BookmarkTab: React.FC = () => {
                             <ListNavigator.SearchInput
                                 pageSearch={{
                                     id: "classic-bookmark",
-                                    priority: PAGE_SEARCH_PRIORITY.homeFallback,
+                                    contextKinds: ["home"],
+                                    tieOrder: PAGE_SEARCH_PRIORITY.homeFallback,
                                 }}
                             />
                         </div>

@@ -1,13 +1,13 @@
 # Reader Feature
 
-> Last updated: 2026-08-29. Covers v2.25.x.
+> Last updated: 2026-09-12. Covers v2.25.x.
 
 Yomikiru has two separate reader implementations mounted side-by-side in `Main.tsx`:
 
 - **Manga Reader** — image-based (manga, manhwa, webtoon, comics, CBZ/ZIP archives, PDF).
 - **EPUB Reader** — HTML-chapter-based (novels, comics in EPUB format).
 
-Both share the same Redux `reader` slice, `appSettings`, keyboard shortcut system, AniList bar, and zen mode.
+Both share the same Redux `reader` slice, `appSettings`, keybinding runtime, AniList bar, and zen mode.
 
 Entry points:
 
@@ -277,7 +277,16 @@ Password-protected PDFs show an error dialog.
 
 ## Shared Keyboard Shortcuts
 
-Both readers share the same shortcut command map. The full list of commands with default keys and human-readable names is in `SHORTCUT_COMMAND_MAP` inside [`src/renderer/utils/keybindings.ts`](../../utils/keybindings.ts) — read that directly rather than duplicating it here.
+Both readers register command owners on the keybinding runtime (`src/renderer/features/keybindings/`). Command ids, default bindings, and labels live in [`src/common/keybindings/catalog.ts`](../../../common/keybindings/catalog.ts) — read that directly rather than duplicating it here.
+
+Feature adapters:
+
+- Manga: [`manga/useMangaCommandOwner.ts`](manga/useMangaCommandOwner.ts)
+- Book: [`epub/useBookCommandOwner.ts`](epub/useBookCommandOwner.ts)
+- Held scroll: [`hooks/useHeldScroll.ts`](hooks/useHeldScroll.ts)
+- Size / fit / chapter-edge math: [`readerCommandOps.ts`](readerCommandOps.ts)
+
+Each command is registered by the component that owns its state. The reader hooks above handle page, zen, fit, mode, preset, scroll, and context-menu commands. The settings panel registers size, font size, save preset, and panel toggle; the manga side list registers next / previous / random chapter; each side-list bookmark button registers bookmark. They share the reader context, and the runtime routes a key to whichever visible owner has that handler. Reader code that needs one of those operations from a pointer or page-edge path (click zones, Ctrl+scroll, the context menu, the chapter-edge press) calls `executeCommand(commandId, ownerId)` with the owner id exported next to the reader hook. It does not hold the child's functions. All reader owners use `selectReaderCommandsActive` for visibility.
 
 Notable non-obvious bindings:
 

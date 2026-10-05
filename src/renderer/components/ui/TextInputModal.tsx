@@ -1,5 +1,5 @@
 import Modal from "@ui/Modal";
-import { keyFormatter } from "@utils/keybindings";
+import { onWidgetActivateKey } from "@utils/keyboard";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -66,9 +66,7 @@ const TextInputModal = memo(
                     onChange={(e) => setValue(e.currentTarget.value)}
                     onKeyDown={(e) => {
                         e.stopPropagation();
-                        const keyStr = keyFormatter(e, false);
-                        if (keyStr === "enter") handleSubmit();
-                        if (keyStr === "escape") onClose();
+                        onWidgetActivateKey(e, { enter: handleSubmit });
                     }}
                     placeholder={placeholder}
                     aria-invalid={error !== null}

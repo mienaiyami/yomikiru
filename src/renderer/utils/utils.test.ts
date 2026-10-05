@@ -8,6 +8,7 @@ import {
     findCover,
     getCSSPath,
     getCSSPathWithin,
+    isElementShown,
     randomString,
     scrollChildInContainer,
     sleep,
@@ -171,5 +172,24 @@ describe("randomString / sleep / debounce", () => {
         expect(cb).toHaveBeenCalledOnce();
         expect(cb).toHaveBeenCalledWith("b");
         vi.useRealTimers();
+    });
+});
+
+describe("isElementShown", () => {
+    it("is false for disconnected or display-none nodes", () => {
+        const orphan = document.createElement("div");
+        expect(isElementShown(orphan)).toBe(false);
+        const hidden = document.createElement("div");
+        hidden.style.display = "none";
+        document.body.append(hidden);
+        expect(isElementShown(hidden)).toBe(false);
+        hidden.remove();
+    });
+
+    it("is true for a connected visible node", () => {
+        const shown = document.createElement("div");
+        document.body.append(shown);
+        expect(isElementShown(shown)).toBe(true);
+        shown.remove();
     });
 });

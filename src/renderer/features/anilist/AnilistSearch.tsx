@@ -1,3 +1,4 @@
+import { useCommandOwner } from "@features/keybindings";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { addAnilistTracker, setGalleryTrackContext } from "@store/anilist";
@@ -39,6 +40,16 @@ const AnilistSearch = () => {
         dispatch(setGalleryTrackContext(null));
         dispatch(setAnilistSearchOpen(false));
     }, [dispatch]);
+
+    useCommandOwner({
+        ownerId: "anilist-search",
+        contextKinds: ["modal"],
+        visible: true,
+        onEscape: () => {
+            closeSearch();
+            return true;
+        },
+    });
 
     useEffect(() => {
         setSearch(effectiveTitle);
@@ -102,16 +113,7 @@ const AnilistSearch = () => {
                 }}
             >
                 <div className="clickClose" onClick={() => closeSearch()}></div>
-                <div
-                    className="overlayCont"
-                    onKeyDownCapture={(e) => {
-                        /* capture: ListNavigator.SearchInput stopPropagation so bubble never reaches here */
-                        if (e.key !== "Escape") return;
-                        e.stopPropagation();
-                        closeSearch();
-                    }}
-                    tabIndex={-1}
-                >
+                <div className="overlayCont" tabIndex={-1}>
                     <h1>{t("search.title")}</h1>
                     <ListNavigator.Provider
                         key={`${effectiveLink ?? ""}|${effectiveTitle}`}
@@ -129,7 +131,8 @@ const AnilistSearch = () => {
                                 onChange={handleSearchChange}
                                 pageSearch={{
                                     id: "anilist-search",
-                                    priority: PAGE_SEARCH_PRIORITY.overlay,
+                                    contextKinds: ["modal"],
+                                    tieOrder: PAGE_SEARCH_PRIORITY.overlay,
                                 }}
                             />
                         </div>

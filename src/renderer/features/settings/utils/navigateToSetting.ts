@@ -1,7 +1,7 @@
-import { isPageSearchElementShown } from "@hooks/usePageSearchFocus";
 import type { AppDispatch } from "@store/index";
 import { requestSettingsNav } from "@store/ui";
 import { createRendererLogger } from "@utils/logger";
+import { isElementShown } from "@utils/utils";
 import {
     getSettingsTarget,
     SETTINGS_TARGET_HIGHLIGHT_CLASS,
@@ -39,7 +39,7 @@ export const waitForSettingsTargetElement = (selector: string): Promise<HTMLElem
         const tick = () => {
             const root = document.querySelector("#settings");
             const el = root?.querySelector(selector) ?? null;
-            if (el instanceof HTMLElement && isPageSearchElementShown(el)) {
+            if (el instanceof HTMLElement && isElementShown(el)) {
                 resolve(el);
                 return;
             }
@@ -67,7 +67,7 @@ const SETTINGS_TARGET_CONTROL_SELECTOR = [
  * disabled toggle labels.
  */
 const isUsableFocusTarget = (el: HTMLElement): boolean => {
-    if (!isPageSearchElementShown(el)) return false;
+    if (!isElementShown(el)) return false;
     if (el.closest("[disabled], [aria-disabled='true'], label.disabled")) return false;
     if (el.getAttribute("aria-hidden") === "true") return false;
     return true;

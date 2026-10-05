@@ -1,3 +1,4 @@
+import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
 import type React from "react";
 
@@ -29,19 +30,11 @@ const InputCheckbox = ({
         <label
             title={title}
             className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") e.currentTarget.click();
-            }}
+            onKeyDown={clickOnWidgetActivateKey}
         >
             {/* {labelBefore}
             {paraBefore && <p>{paraBefore}</p>} */}
-            <span
-                className={`toggle-area ${checked ? "on" : "off"} `}
-                tabIndex={0}
-                onKeyDown={(e) => {
-                    if (e.key === " ") e.preventDefault();
-                }}
-            >
+            <span className={`toggle-area ${checked ? "on" : "off"} `} tabIndex={0}>
                 <span className={`toggle-state`}></span>
             </span>
             <input type="checkbox" checked={checked} disabled={disabled} onChange={onChange} />

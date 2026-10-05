@@ -26,6 +26,7 @@
         "selectPreset5": "Select Preset 5",
         "showHidePageNumberInZen": "Show/Hide Page number in Zen Mode",
         "cycleFitOptions": "Cycle through fit options",
+        "cycleFitOptionsReverse": "Cycle through fit options (reverse)",
         "selectReaderMode0": "Reading mode - Vertical Scroll",
         "selectReaderMode1": "Reading mode - Left to Right",
         "selectReaderMode2": "Reading mode - Right to Left",
@@ -53,7 +54,16 @@
         "cycleBar1Next": "Next in first tab bar",
         "cycleBar2Prev": "Previous in second tab bar",
         "cycleBar2Next": "Next in second tab bar",
-        "deleteSelected": "Delete selected items"
+        "deleteSelected": "Delete selected items",
+        "settingsTabNext": "Next Settings tab",
+        "settingsTabPrev": "Previous Settings tab",
+        "newWindow": "New Window",
+        "closeWindow": "Close Window",
+        "reload": "Reload",
+        "forceReload": "Force Reload",
+        "toggleDevTools": "Toggle Developer Tools",
+        "help": "Help",
+        "selectAll": "Select All"
     },
     "hud": {
         "savedToPreset": "Saved to preset \"{{name}}\"",

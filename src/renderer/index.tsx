@@ -1,5 +1,6 @@
 /* Installs process-wide library Io (preload fs/path) before other renderer modules. */
 import "./utils/file";
+import { KeybindingProvider } from "@features/keybindings";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
 import App from "./App";
@@ -15,7 +16,9 @@ const boot = async (): Promise<void> => {
     await syncRendererI18nFromMain();
     ReactDOM.render(
         <Provider store={store}>
-            <App />
+            <KeybindingProvider>
+                <App />
+            </KeybindingProvider>
         </Provider>,
         document.getElementById("root"),
     );

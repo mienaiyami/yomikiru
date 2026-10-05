@@ -1,3 +1,4 @@
+import { KeybindingProvider } from "@features/keybindings";
 import { configureStore } from "@reduxjs/toolkit";
 import i18n from "@renderer/i18n";
 import type { RootState } from "@store/index";
@@ -42,7 +43,9 @@ export const renderWithProviders = (ui: ReactElement, options: ExtendedOptions =
 
     const Wrapper = ({ children }: { children: ReactNode }) => (
         <I18nextProvider i18n={i18n}>
-            <Provider store={store}>{children}</Provider>
+            <Provider store={store}>
+                <KeybindingProvider>{children}</KeybindingProvider>
+            </Provider>
         </I18nextProvider>
     );
 

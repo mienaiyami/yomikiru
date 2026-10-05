@@ -1,4 +1,5 @@
 import type { I18nChangedPayload, I18nState, LanguageSource } from "@common/i18n";
+import type { KeymapEditIpcResult, KeymapEditOp, KeymapSnapshot, NativeKeymapAction } from "@common/keybindings";
 import type { MainSettingsType } from "@common/mainSettings";
 import type {
     LibraryScanStartRequest,
@@ -327,6 +328,19 @@ export type I18nChannels = {
     "i18n:changed": ChannelDefinition<I18nChangedPayload, void, "m2r">;
 };
 
+export type KeymapChangedPayload = {
+    snapshot: KeymapSnapshot;
+    /** BrowserWindow id that submitted the edit; null for non-edit broadcasts. */
+    originWindowId: number | null;
+};
+
+export type KeymapChannels = {
+    "keymap:get": ChannelDefinition<void, KeymapSnapshot>;
+    "keymap:edit": ChannelDefinition<KeymapEditOp, KeymapEditIpcResult>;
+    "keymap:changed": ChannelDefinition<KeymapChangedPayload, void, "m2r">;
+    "keymap:nativeAction": ChannelDefinition<{ action: NativeKeymapAction }, void>;
+};
+
 export type IPCChannels = DatabaseChannels &
     DatabaseChangeChannels &
     WindowManagementChannels &
@@ -340,7 +354,8 @@ export type IPCChannels = DatabaseChannels &
     DbBackupChannels &
     CoverChannels &
     LibraryScanChannels &
-    I18nChannels;
+    I18nChannels &
+    KeymapChannels;
 
 export type MainToRendererChannels = {
     [K in keyof IPCChannels as IPCChannels[K] extends ChannelDefinition<unknown, unknown, "m2r">

@@ -1,5 +1,6 @@
 import { faCaretDown, faCaretUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
 import type React from "react";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -118,9 +119,7 @@ const InputCheckboxNumber = ({
     return (
         <label
             className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") e.currentTarget.click();
-            }}
+            onKeyDown={clickOnWidgetActivateKey}
         >
             <span className={`toggle-area ${checked ? "on" : "off"} `}>
                 <span className={`toggle-state`}></span>

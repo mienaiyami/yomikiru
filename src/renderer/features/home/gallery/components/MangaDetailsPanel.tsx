@@ -154,6 +154,7 @@ const MangaDetailsPanel = ({
         },
         {
             enabled: Boolean(manga) && !readerActive && !modalOverlayOpen && !metadataEditorOpen,
+            ownerId: "gallery-details-manga-cycle",
         },
     );
 
@@ -564,10 +565,12 @@ const MangaDetailsPanel = ({
     }, [bookmarkSelection, mangaLink, dispatch, t, tCommon]);
 
     useSelectionShortcuts({
+        ownerId: "gallery-manga-chapter-selection",
         selection: chapterSelection,
         enabled: activeTab === "content",
     });
     useSelectionShortcuts({
+        ownerId: "gallery-manga-bookmark-selection",
         selection: bookmarkSelection,
         enabled: activeTab === "bookmarks",
         onDelete: handleBulkDeleteBookmarks,
@@ -922,7 +925,8 @@ const MangaDetailsPanel = ({
                                         autoFocus={false}
                                         pageSearch={{
                                             id: "gallery-manga-chapters",
-                                            priority: PAGE_SEARCH_PRIORITY.details,
+                                            contextKinds: ["galleryDetails"],
+                                            tieOrder: PAGE_SEARCH_PRIORITY.details,
                                         }}
                                     />
                                 }
@@ -1014,7 +1018,8 @@ const MangaDetailsPanel = ({
                                         autoFocus={false}
                                         pageSearch={{
                                             id: "gallery-manga-bookmarks",
-                                            priority: PAGE_SEARCH_PRIORITY.details,
+                                            contextKinds: ["galleryDetails"],
+                                            tieOrder: PAGE_SEARCH_PRIORITY.details,
                                         }}
                                     />
                                 }

@@ -16,6 +16,7 @@ import { selectLiveBookReaderSettings } from "@store/reader";
 import { setSysBtnColor } from "@store/themes";
 import { setSettingsOpen, toggleSettingsOpen } from "@store/ui";
 import { formatUtils } from "@utils/file";
+import { isWidgetEnterKey } from "@utils/keyboard";
 import { type ReactElement, useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppContext } from "./App";
@@ -213,7 +214,7 @@ const TopBar = (): ReactElement => {
                                     !(
                                         /[0-9]/gi.test(e.key) ||
                                         e.key === "Backspace" ||
-                                        e.key === "Enter" ||
+                                        isWidgetEnterKey(e) ||
                                         e.key === "Escape"
                                     )
                                 )
@@ -221,10 +222,10 @@ const TopBar = (): ReactElement => {
                             }}
                             onKeyUp={(e) => {
                                 if (pageScrollTimeoutID) clearTimeout(pageScrollTimeoutID);
-                                if (e.key === "Enter" || e.key === "Escape") {
+                                if (isWidgetEnterKey(e) || e.key === "Escape") {
                                     e.currentTarget.blur();
                                 }
-                                if (e.key === "Enter") {
+                                if (isWidgetEnterKey(e)) {
                                     let pagenumber = parseInt(e.currentTarget.value);
                                     if (pagenumber > readerTotalPages) pagenumber = readerTotalPages;
                                     if (pageNumberInputRef.current) {
@@ -277,14 +278,14 @@ const TopBar = (): ReactElement => {
                                     !(
                                         /[0-9.]/gi.test(e.key) ||
                                         e.key === "Backspace" ||
-                                        e.key === "Enter" ||
+                                        isWidgetEnterKey(e) ||
                                         e.key === "Escape"
                                     )
                                 )
                                     e.preventDefault();
                             }}
                             onKeyUp={(e) => {
-                                if (e.key === "Enter" || e.key === "Escape") {
+                                if (isWidgetEnterKey(e) || e.key === "Escape") {
                                     e.currentTarget.blur();
                                 }
                                 if (/[0-9.]/gi.test(e.key) || e.key === "Backspace") {

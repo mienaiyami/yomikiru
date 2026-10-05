@@ -111,6 +111,7 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
         },
         {
             enabled: Boolean(book) && !readerActive && !modalOverlayOpen && !metadataEditorOpen,
+            ownerId: "gallery-details-book-cycle",
         },
     );
 
@@ -392,11 +393,13 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
     }, [noteSelection, bookLink, dispatch, t, tCommon]);
 
     useSelectionShortcuts({
+        ownerId: "gallery-book-bookmark-selection",
         selection: bookmarkSelection,
         enabled: activeTab === "bookmarks",
         onDelete: handleBulkDeleteBookmarks,
     });
     useSelectionShortcuts({
+        ownerId: "gallery-book-note-selection",
         selection: noteSelection,
         enabled: activeTab === "notes",
         onDelete: handleBulkDeleteNotes,
@@ -745,7 +748,8 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                                         autoFocus={false}
                                         pageSearch={{
                                             id: "gallery-book-bookmarks",
-                                            priority: PAGE_SEARCH_PRIORITY.details,
+                                            contextKinds: ["galleryDetails"],
+                                            tieOrder: PAGE_SEARCH_PRIORITY.details,
                                         }}
                                     />
                                 }
@@ -792,7 +796,8 @@ const BookDetailsPanel = ({ bookLink, onClose, onRelocated, initialTab = "bookma
                                         autoFocus={false}
                                         pageSearch={{
                                             id: "gallery-book-notes",
-                                            priority: PAGE_SEARCH_PRIORITY.details,
+                                            contextKinds: ["galleryDetails"],
+                                            tieOrder: PAGE_SEARCH_PRIORITY.details,
                                         }}
                                     />
                                 }

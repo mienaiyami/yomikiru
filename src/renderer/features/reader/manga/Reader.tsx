@@ -1,3 +1,5 @@
+import { type InvokeContext, useKeybindingRuntime } from "@features/keybindings";
+import { canCrossChapterEdge } from "@features/reader/readerCommandOps";
 import { applyMakeCoverFromPageImage } from "@features/reader/services/readerCoverFlows";
 import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
@@ -6,31 +8,32 @@ import store from "@store/index";
 import { selectLibraryItem, updateChaptersRead } from "@store/library";
 import {
     selectLiveMangaReaderSettings,
+    selectReaderCommandsActive,
     setReaderLoading,
     setReaderOpen,
     updateReaderMangaCurrentPage,
 } from "@store/reader";
-import {
-    cyclePresetNext,
-    cyclePresetPrev,
-    ensureReaderPresetSession,
-    patchLiveMangaReaderSettings,
-    selectPresetSlot,
-} from "@store/readerPresets";
+import { ensureReaderPresetSession, patchLiveMangaReaderSettings } from "@store/readerPresets";
 import { updateTrackerSnapshot } from "@store/trackers";
 import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
 import { fileSrcToImagePath, formatUtils } from "@utils/file";
-import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
 import { syncMangaLibraryOnReaderOpen } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { InView } from "react-intersection-observer";
 import { useAppContext } from "../../../App";
+import { useHeldScroll } from "../hooks/useHeldScroll";
 import useSmoothScroll from "../hooks/useSmoothScroll";
 import ReaderSettings from "./components/ReaderSettings";
 import ReaderSideList from "./components/ReaderSideList";
+import {
+    MANGA_BOOKMARK_OWNER_ID,
+    MANGA_READER_SETTINGS_OWNER_ID,
+    MANGA_SIDE_LIST_OWNER_ID,
+    useMangaCommandOwner,
+} from "./useMangaCommandOwner";
 
 const SCROLLBAR_THRESHOLD = 20;
 
@@ -50,9 +53,8 @@ const Reader: React.FC = () => {
 
     const appSettings = useAppSelector((store) => store.appSettings);
     const readerSettings = useAppSelector(selectLiveMangaReaderSettings);
-    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const shortcuts = useAppSelector((store) => store.shortcuts.entries);
     const isReaderOpen = useAppSelector((store) => store.reader.active);
-    const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const linkInReader = useAppSelector((store) => store.reader.link);
     // primitives only - avoid selecting whole reader slice so page ticks do not reconcile the image tree
     const mangaOpenPage = useAppSelector((store) =>
@@ -124,8 +126,6 @@ const Reader: React.FC = () => {
     const [prevNextChapter, setPrevNextChapter] = useState<{ prev: string; next: string }>({ prev: "", next: "" });
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
-    const sizePlusRef = useRef<HTMLButtonElement>(null);
-    const sizeMinusRef = useRef<HTMLButtonElement>(null);
     const openPrevChapterRef = useRef<HTMLButtonElement>(null);
     const openNextChapterRef = useRef<HTMLButtonElement>(null);
     const openRandomChapterRef = useRef<HTMLButtonElement>(null);
@@ -137,33 +137,20 @@ const Reader: React.FC = () => {
     const readerRef = useRef<HTMLDivElement>(null);
     const imgContRef = useRef<HTMLDivElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
+    const runtime = useKeybindingRuntime();
+    const commandsActive = useAppSelector(selectReaderCommandsActive);
+
+    /** Next/prev chapter is implemented by the side list owner; page edges and click zones call it here. */
+    const openSiblingChapter = (direction: "next" | "prev") => {
+        runtime.executeCommand(direction === "next" ? "nextChapter" : "prevChapter", MANGA_SIDE_LIST_OWNER_ID);
+    };
 
     useSmoothScroll(isSideListPinned ? imgContRef : readerRef);
 
-    const scrollReader = (intensity: number) => {
-        if (readerRef.current) {
-            // let startTime: number
-            let prevTime: number;
-            const anim = (timeStamp: number) => {
-                // if (startTime === undefined) startTime = timeStamp;
-                // const elapsed = timeStamp - startTime;
-                if (prevTime !== timeStamp && readerRef.current) {
-                    if (isSideListPinned && imgContRef.current) {
-                        imgContRef.current.scrollBy(0, intensity);
-                    } else {
-                        readerRef.current.scrollBy(0, intensity);
-                    }
-                }
-                // if (elapsed < window.app.clickDelay) {
-                if (window.app.keydown) {
-                    prevTime = timeStamp;
-                    window.requestAnimationFrame(anim);
-                }
-            };
-            window.requestAnimationFrame(anim);
-            return;
-        }
-    };
+    const { start: startHeldScroll, stop: stopHeldScroll } = useHeldScroll((intensity) => {
+        const scroller = isSideListPinned && imgContRef.current ? imgContRef.current : readerRef.current;
+        scroller?.scrollBy(0, intensity);
+    });
 
     const scrollToPage = (pageNumber: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         if (readerRef.current) {
@@ -255,311 +242,17 @@ const Reader: React.FC = () => {
         } else if ([1, 2].includes(readerSettings.readerTypeSelected)) return 3;
     };
     useLayoutEffect(() => {
-        window.app.clickDelay = 100;
         const wheelFunction = (e: WheelEvent) => {
-            if (e.ctrlKey) {
-                if (e.deltaY < 0) {
-                    sizePlusRef.current?.click();
-                    return;
-                }
-                if (e.deltaY > 0) {
-                    sizeMinusRef.current?.click();
-                    return;
-                }
-            }
+            if (!e.ctrlKey || !isReaderOpen || isLoadingManga) return;
+            e.preventDefault();
+            if (e.deltaY < 0) runtime.executeCommand("sizePlus", MANGA_READER_SETTINGS_OWNER_ID);
+            else if (e.deltaY > 0) runtime.executeCommand("sizeMinus", MANGA_READER_SETTINGS_OWNER_ID);
         };
-        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
-            ShortcutCommands,
-            string[]
-        >;
-        type ShortcutEv = {
-            preventDefault: () => void;
-            stopPropagation: () => void;
-            repeat: boolean;
-            key?: string;
-            shiftKey: boolean;
-        };
-        const handleShortcut = (keyStr: string, e: ShortcutEv): boolean => {
-            window.app.keyRepeated = e.repeat;
-            window.app.keydown = true;
-
-            if (
-                e.key &&
-                [" ", "Enter"].includes(e.key) &&
-                document.activeElement &&
-                document.activeElement.tagName === "BUTTON"
-            )
-                return false;
-            const is = (keys: string[]) => keys.includes(keyStr);
-            const isReaderActive = !isSettingOpen && isReaderOpen && !isLoadingManga;
-            const isReaderFocused =
-                document.activeElement?.tagName === "BODY" || document.activeElement === readerRef.current;
-
-            if (is(shortcutsMapped.contextMenu)) {
-                e.stopPropagation();
-                e.preventDefault();
-                if (imgContRef.current)
-                    imgContRef.current.dispatchEvent(
-                        window.contextMenu.fakeEvent(
-                            { posX: window.innerWidth / 2, posY: window.innerHeight / 2 },
-                            readerRef.current,
-                        ),
-                    );
-                return true;
-            }
-
-            if (!isReaderActive) return false;
-
-            if (e.key && [" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
-
-            switch (true) {
-                case is(shortcutsMapped.nextPage): {
-                    if (!isReaderFocused) break;
-                    const abc = prevNextDeciderLogic();
-                    if (abc === 1) openNextChapterRef.current?.click();
-                    else if (abc === 2) openNextChapterRef.current?.click();
-                    else if (abc === 3) {
-                        if (readerSettings.readerTypeSelected === 1) openNextPageRef.current?.click();
-                        if (readerSettings.readerTypeSelected === 2) openPrevPageRef.current?.click();
-                    }
-                    return true;
-                }
-                case is(shortcutsMapped.prevPage): {
-                    if (!isReaderFocused) break;
-                    const abc = prevNextDeciderLogic();
-                    if (abc === 1) openPrevChapterRef.current?.click();
-                    else if (abc === 2) openPrevChapterRef.current?.click();
-                    else if (abc === 3) {
-                        if (readerSettings.readerTypeSelected === 2) openNextPageRef.current?.click();
-                        if (readerSettings.readerTypeSelected === 1) openPrevPageRef.current?.click();
-                    }
-                    return true;
-                }
-                default:
-                    break;
-            }
-
-            if (e.repeat) return false;
-
-            const readerSizes = [50, 100, 150, 200, 250] as const;
-            const handleReaderSize = (w: number) => {
-                makeScrollPos();
-                dispatch(
-                    patchLiveMangaReaderSettings({
-                        ...(w > 100 ? { widthClamped: false } : {}),
-                        fitOption: 0,
-                        readerWidth: w,
-                    }),
-                );
-                setShortcutText(`${w}%`);
-            };
-
-            switch (true) {
-                case is(shortcutsMapped[`readerSize_${readerSizes[0]}`]):
-                case is(shortcutsMapped[`readerSize_${readerSizes[1]}`]):
-                case is(shortcutsMapped[`readerSize_${readerSizes[2]}`]):
-                case is(shortcutsMapped[`readerSize_${readerSizes[3]}`]):
-                case is(shortcutsMapped[`readerSize_${readerSizes[4]}`]): {
-                    const idx = readerSizes.findIndex((w) => is(shortcutsMapped[`readerSize_${w}`]));
-                    if (idx >= 0) {
-                        handleReaderSize(readerSizes[idx]);
-                    }
-                    return true;
-                }
-                case is(shortcutsMapped.navToPage):
-                    navToPageButtonRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.toggleZenMode):
-                    setZenMode((prev) => !prev);
-                    return true;
-                case keyStr === "escape":
-                    setZenMode(false);
-                    return true;
-                case is(shortcutsMapped.readerSettings):
-                    readerSettingExtender.current?.click();
-                    readerSettingExtender.current?.focus();
-                    return true;
-                case is(shortcutsMapped.nextChapter):
-                    openNextChapterRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.prevChapter):
-                    openPrevChapterRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.randomChapter):
-                    openRandomChapterRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.bookmark):
-                    addToBookmarkRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.sizePlus):
-                    sizePlusRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.sizeMinus):
-                    sizeMinusRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.showHidePageNumberInZen):
-                    setShortcutText(
-                        readerSettings.showPageNumberInZenMode
-                            ? t("hud.hidePageNumberInZen")
-                            : t("hud.showPageNumberInZen"),
-                    );
-                    dispatch(
-                        patchLiveMangaReaderSettings({
-                            showPageNumberInZenMode: !readerSettings.showPageNumberInZenMode,
-                        }),
-                    );
-                    return true;
-                case is(shortcutsMapped.cycleFitOptions): {
-                    let fitOption = readerSettings.fitOption + (e.shiftKey ? -1 : 1);
-                    if (fitOption < 0) fitOption = 3;
-                    fitOption %= 4;
-                    if (fitOption === 0) setShortcutText(t("hud.free"));
-                    if (fitOption === 1) setShortcutText(t("hud.fitVertically"));
-                    if (fitOption === 2) setShortcutText(t("hud.fitHorizontally"));
-                    if (fitOption === 3) setShortcutText(t("hud.originalRatio"));
-                    dispatch(
-                        patchLiveMangaReaderSettings({
-                            fitOption: fitOption as 0 | 1 | 2 | 3,
-                        }),
-                    );
-                    return true;
-                }
-                case is(shortcutsMapped.selectReaderMode0):
-                    setShortcutText(t("hud.readingModeVertical"));
-                    dispatch(patchLiveMangaReaderSettings({ readerTypeSelected: 0 }));
-                    return true;
-                case is(shortcutsMapped.selectReaderMode1):
-                    setShortcutText(t("hud.readingModeLtr"));
-                    dispatch(patchLiveMangaReaderSettings({ readerTypeSelected: 1 }));
-                    return true;
-                case is(shortcutsMapped.selectReaderMode2):
-                    setShortcutText(t("hud.readingModeRtl"));
-                    dispatch(patchLiveMangaReaderSettings({ readerTypeSelected: 2 }));
-                    return true;
-                case is(shortcutsMapped.selectPagePerRow1):
-                    if (readerSettings.pagesPerRowSelected !== 0) {
-                        const pagesPerRowSelected = 0;
-                        let readerWidth = readerSettings.readerWidth / 2;
-
-                        if (readerWidth > (readerSettings.widthClamped ? 100 : 500))
-                            readerWidth = readerSettings.widthClamped ? 100 : 500;
-                        if (readerWidth < 1) readerWidth = 1;
-                        setShortcutText(t("hud.pagePerRow1"));
-                        dispatch(patchLiveMangaReaderSettings({ pagesPerRowSelected, readerWidth }));
-                    }
-                    return true;
-                case is(shortcutsMapped.selectPagePerRow2): {
-                    const pagesPerRowSelected = 1;
-                    let readerWidth = readerSettings.readerWidth;
-                    if (readerSettings.pagesPerRowSelected === 0) {
-                        readerWidth *= 2;
-                        if (readerWidth > (readerSettings.widthClamped ? 100 : 500))
-                            readerWidth = readerSettings.widthClamped ? 100 : 500;
-                        if (readerWidth < 1) readerWidth = 1;
-                    }
-                    setShortcutText(t("hud.pagePerRow2"));
-                    dispatch(patchLiveMangaReaderSettings({ pagesPerRowSelected, readerWidth }));
-                    return true;
-                }
-                case is(shortcutsMapped.selectPagePerRow2odd): {
-                    const pagesPerRowSelected = 2;
-                    let readerWidth = readerSettings.readerWidth;
-                    if (readerSettings.pagesPerRowSelected === 0) {
-                        readerWidth *= 2;
-                        if (readerWidth > (readerSettings.widthClamped ? 100 : 500))
-                            readerWidth = readerSettings.widthClamped ? 100 : 500;
-                        if (readerWidth < 1) readerWidth = 1;
-                    }
-                    setShortcutText(t("hud.pagePerRow2odd"));
-                    dispatch(patchLiveMangaReaderSettings({ pagesPerRowSelected, readerWidth }));
-                    return true;
-                }
-                case is(shortcutsMapped.cyclePresetNext): {
-                    const name = dispatch(cyclePresetNext("manga"));
-                    if (name) setShortcutText(t("hud.presetNamed", { name }));
-                    return true;
-                }
-                case is(shortcutsMapped.cyclePresetPrev): {
-                    const name = dispatch(cyclePresetPrev("manga"));
-                    if (name) setShortcutText(t("hud.presetNamed", { name }));
-                    return true;
-                }
-                case is(shortcutsMapped.selectPreset1):
-                case is(shortcutsMapped.selectPreset2):
-                case is(shortcutsMapped.selectPreset3):
-                case is(shortcutsMapped.selectPreset4):
-                case is(shortcutsMapped.selectPreset5): {
-                    const slotIdx = [
-                        shortcutsMapped.selectPreset1,
-                        shortcutsMapped.selectPreset2,
-                        shortcutsMapped.selectPreset3,
-                        shortcutsMapped.selectPreset4,
-                        shortcutsMapped.selectPreset5,
-                    ].findIndex((keys) => is(keys ?? []));
-                    if (slotIdx >= 0) {
-                        const name = dispatch(selectPresetSlot("manga", slotIdx));
-                        if (name) setShortcutText(t("hud.presetNamed", { name }));
-                    }
-                    return true;
-                }
-                default:
-                    break;
-            }
-
-            if (isReaderFocused) {
-                switch (true) {
-                    case is(shortcutsMapped.largeScrollReverse):
-                        scrollReader(-readerSettings.scrollSpeedB);
-                        return true;
-                    case is(shortcutsMapped.largeScroll):
-                        scrollReader(readerSettings.scrollSpeedB);
-                        return true;
-                    case is(shortcutsMapped.scrollDown):
-                        scrollReader(readerSettings.scrollSpeedA);
-                        return true;
-                    case is(shortcutsMapped.scrollUp):
-                        scrollReader(0 - readerSettings.scrollSpeedA);
-                        return true;
-                    default:
-                        break;
-                }
-            }
-            return false;
-        };
-        const registerShortcuts = (e: KeyboardEvent) => {
-            const keyStr = keyFormatter(e, false);
-            if (keyStr === "") return;
-            handleShortcut(keyStr, e);
-        };
-        const registerMouseShortcuts = (e: MouseEvent) => {
-            const keyStr = mouseEventFormatter(e);
-            if (keyStr === "") return;
-            if (
-                handleShortcut(keyStr, {
-                    preventDefault: () => e.preventDefault(),
-                    stopPropagation: () => e.stopPropagation(),
-                    repeat: false,
-                    shiftKey: e.shiftKey,
-                })
-            )
-                e.preventDefault();
-        };
-        window.addEventListener("wheel", wheelFunction);
-        window.addEventListener("keydown", registerShortcuts);
-        window.addEventListener("mousedown", registerMouseShortcuts);
-        const onPointerUp = () => {
-            window.app.keydown = false;
-        };
-        window.addEventListener("keyup", onPointerUp);
-        window.addEventListener("mouseup", onPointerUp);
+        window.addEventListener("wheel", wheelFunction, { passive: false });
         return () => {
             window.removeEventListener("wheel", wheelFunction);
-            window.removeEventListener("keydown", registerShortcuts);
-            window.removeEventListener("mousedown", registerMouseShortcuts);
-            window.removeEventListener("keyup", onPointerUp);
-            window.removeEventListener("mouseup", onPointerUp);
         };
-    }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen, isReaderOpen]);
+    }, [isReaderOpen, isLoadingManga, runtime]);
 
     const makeScrollPos = useCallback(() => {
         if (isSideListPinned && imgContRef.current)
@@ -601,16 +294,12 @@ const Reader: React.FC = () => {
         }
     };
 
-    const openPrevPage = () => {
-        // Prevents unintended continuous chapter changes when holding down page navigation keys.
-        // window.app.keydown and window.app.keyRepeated are used so that when holding the left/right (prev/next) page key,
-        // it doesn't auto-trigger a chapter switch when reaching the start/end of the chapter. Chapter change should only occur on a new keypress, not while held.
+    const openPrevPage = (ctx: InvokeContext = { repeat: false, freshPress: true }) => {
+        /* only a fresh press may leave the chapter while the edge overlay is showing */
         if (currentImageRow <= 1) {
-            if (
-                chapterChangerDisplay &&
-                (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
-            ) {
-                return openPrevChapterRef.current?.click();
+            if (canCrossChapterEdge(chapterChangerDisplay, ctx.freshPress)) {
+                openSiblingChapter("prev");
+                return;
             }
             setChapterChangerDisplay(true);
             return;
@@ -623,13 +312,11 @@ const Reader: React.FC = () => {
         });
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
-    const openNextPage = () => {
+    const openNextPage = (ctx: InvokeContext = { repeat: false, freshPress: true }) => {
         if (currentImageRow >= imageRow.length) {
-            if (
-                chapterChangerDisplay &&
-                (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
-            ) {
-                return openNextChapterRef.current?.click();
+            if (canCrossChapterEdge(chapterChangerDisplay, ctx.freshPress)) {
+                openSiblingChapter("next");
+                return;
             }
             setChapterChangerDisplay(true);
             return;
@@ -642,6 +329,22 @@ const Reader: React.FC = () => {
         });
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
+
+    useMangaCommandOwner({
+        visible: commandsActive,
+        readerRef,
+        imgContRef,
+        pageNumberInputRef,
+        openNextPage,
+        openPrevPage,
+        openSiblingChapter,
+        prevNextDeciderLogic,
+        setZenMode,
+        setShortcutText,
+        makeScrollPos,
+        startHeldScroll,
+        stopHeldScroll,
+    });
     /**
      * Load images for `options.link` when the folder is valid.
      * `options.page` is reader `mangaPageNumber` (chapter-open target). The manga Reader stays
@@ -1028,23 +731,23 @@ const Reader: React.FC = () => {
                 const abc = prevNextDeciderLogic();
                 if (abc === 1) {
                     const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
-                    if (clickPos <= 40) openPrevChapterRef.current?.click();
-                    if (clickPos > 60) openNextChapterRef.current?.click();
+                    if (clickPos <= 40) openSiblingChapter("prev");
+                    if (clickPos > 60) openSiblingChapter("next");
                 } else if (abc === 2) {
                     const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                    if (clickPos <= 40) openPrevChapterRef.current?.click();
-                    if (clickPos > 60) openNextChapterRef.current?.click();
+                    if (clickPos <= 40) openSiblingChapter("prev");
+                    if (clickPos > 60) openSiblingChapter("next");
                 } else if (abc === 3) {
                     const clickPos =
                         ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
 
                     if (readerSettings.readerTypeSelected === 1) {
-                        if (clickPos <= 40) openPrevPageRef.current?.click();
-                        if (clickPos > 60) openNextPageRef.current?.click();
+                        if (clickPos <= 40) openPrevPage();
+                        if (clickPos > 60) openNextPage();
                     }
                     if (readerSettings.readerTypeSelected === 2) {
-                        if (clickPos <= 40) openNextPageRef.current?.click();
-                        if (clickPos > 60) openPrevPageRef.current?.click();
+                        if (clickPos <= 40) openNextPage();
+                        if (clickPos > 60) openPrevPage();
                     }
                 }
             }}
@@ -1142,8 +845,6 @@ const Reader: React.FC = () => {
                 readerRef={readerRef}
                 makeScrollPos={makeScrollPos}
                 readerSettingExtender={readerSettingExtender}
-                sizePlusRef={sizePlusRef}
-                sizeMinusRef={sizeMinusRef}
                 setShortcutText={setShortcutText}
             />
             <ReaderSideList
@@ -1161,10 +862,10 @@ const Reader: React.FC = () => {
             />
 
             <div className="hiddenPageMover" style={{ display: "none" }}>
-                <button ref={openPrevPageRef} onClick={openPrevPage}>
+                <button ref={openPrevPageRef} onClick={() => openPrevPage()}>
                     {t("chapterNav.prevHidden")}
                 </button>
-                <button ref={openNextPageRef} onClick={openNextPage}>
+                <button ref={openNextPageRef} onClick={() => openNextPage()}>
                     {t("chapterNav.nextHidden")}
                 </button>
                 <button ref={navToPageButtonRef} onClick={() => pageNumberInputRef.current?.focus()}>
@@ -1253,7 +954,7 @@ const Reader: React.FC = () => {
                             label: t("contextMenu.bookmark"),
                             disabled: false,
                             action() {
-                                addToBookmarkRef.current?.click();
+                                runtime.executeCommand("bookmark", MANGA_BOOKMARK_OWNER_ID);
                             },
                         },
                         window.contextMenu.template.divider(),
@@ -1326,23 +1027,23 @@ const Reader: React.FC = () => {
                     const abc = prevNextDeciderLogic();
                     if (abc === 1) {
                         const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
-                        if (clickPos <= 20) openPrevChapterRef.current?.click();
-                        if (clickPos > 80) openNextChapterRef.current?.click();
+                        if (clickPos <= 20) openSiblingChapter("prev");
+                        if (clickPos > 80) openSiblingChapter("next");
                     } else if (abc === 2) {
                         const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                        if (clickPos <= 20) openPrevChapterRef.current?.click();
-                        if (clickPos > 80) openNextChapterRef.current?.click();
+                        if (clickPos <= 20) openSiblingChapter("prev");
+                        if (clickPos > 80) openSiblingChapter("next");
                     } else if (abc === 3) {
                         const clickPos =
                             ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
                             100;
                         if (readerSettings.readerTypeSelected === 1) {
-                            if (clickPos <= 40) openPrevPageRef.current?.click();
-                            if (clickPos > 60) openNextPageRef.current?.click();
+                            if (clickPos <= 40) openPrevPage();
+                            if (clickPos > 60) openNextPage();
                         }
                         if (readerSettings.readerTypeSelected === 2) {
-                            if (clickPos <= 40) openNextPageRef.current?.click();
-                            if (clickPos > 60) openPrevPageRef.current?.click();
+                            if (clickPos <= 40) openNextPage();
+                            if (clickPos > 60) openPrevPage();
                         }
                     }
                 }}

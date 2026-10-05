@@ -1,197 +1,326 @@
-import { faClose } from "@fortawesome/free-solid-svg-icons";
+import {
+    type BindingDiagnostic,
+    type BindingTrigger,
+    COMMAND_CATALOG,
+    COMMAND_GROUPS,
+    type CommandGroup,
+    type CommandId,
+    compileKeymap,
+    effectiveBindingsFor,
+    formatTriggerForDisplay,
+    projectBindingDiagnostics,
+    serializeTrigger,
+    triggerFromLive,
+} from "@common/keybindings";
+import { useKeybindingRuntime } from "@features/keybindings";
+import { faClose, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { removeShortcuts, setShortcuts } from "@store/shortcuts";
-import { dialogUtils } from "@utils/dialog";
-import { keyFormatter, mouseEventFormatter, SHORTCUT_COMMAND_MAP } from "@utils/keybindings";
+import { addKeymapBinding, removeKeymapBinding, resetKeymapCommand } from "@store/shortcuts";
 import { createRendererLogger } from "@utils/logger";
-import type { ReactElement } from "react";
-import { useTranslation } from "react-i18next";
-import { reservedKeys, SHORTCUT_LIMIT } from "../utils/constants";
+import { type ReactElement, useEffect, useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { navigateToSetting } from "../utils/navigateToSetting";
 
 const log = createRendererLogger("settings/Shortcuts");
 
-const ShortcutInput = ({ command }: { command: ShortcutCommands }) => {
-    const { t } = useTranslation("settings");
-    const { t: tReader } = useTranslation("reader");
-    const shortcuts = useAppSelector((store) => store.shortcuts);
-    const dispatch = useAppDispatch();
-    const shortcut = shortcuts.find((e) => e.command === command);
-    if (!shortcut) return <p>{t("shortcuts.commandNotFound", { command })}</p>;
+const CATALOG_SECTIONS = COMMAND_GROUPS.map((group) => ({
+    group,
+    entries: COMMAND_CATALOG.filter((entry) => entry.group === group),
+}));
 
-    const tryAddShortcut = (newKey: string, inputRef?: HTMLInputElement) => {
-        const dupIndex = shortcuts.findIndex((s) => s.keys.includes(newKey));
-        if (dupIndex >= 0) {
-            const nameKey =
-                SHORTCUT_COMMAND_MAP.find((s) => s.command === shortcuts[dupIndex].command)?.name || command;
-            const name = nameKey.startsWith("shortcutNames.") ? tReader(nameKey) : nameKey;
-            log.warn(`"${newKey}" already bound to "${shortcuts[dupIndex].command}"`);
-            dialogUtils.warn({ message: t("shortcuts.alreadyBound", { key: newKey, name }) });
-            return;
-        }
-        if (reservedKeys.includes(newKey)) {
-            dialogUtils.warn({ message: t("shortcuts.reservedCombo") });
-            log.warn(`"${newKey}" is reserved key combination.`);
-            inputRef?.focus();
-            return;
-        }
-        dispatch(setShortcuts({ command, key: newKey }));
-    };
+/** i18n key for a Shortcuts group heading. */
+const SHORTCUT_GROUP_LABEL_KEY = {
+    readerNavigation: "shortcuts.groups.readerNavigation",
+    readerView: "shortcuts.groups.readerView",
+    readerPresets: "shortcuts.groups.readerPresets",
+    home: "shortcuts.groups.home",
+    lists: "shortcuts.groups.lists",
+    window: "shortcuts.groups.window",
+    settings: "shortcuts.groups.settings",
+} as const satisfies Record<CommandGroup, `shortcuts.groups.${CommandGroup}`>;
+
+/**
+ * String leaves of a nested `t(..., { returnObjects: true })` bag.
+ */
+const hintLinesFromCopy = (value: unknown): [string, string][] => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+    return Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === "string");
+};
+
+/** Usage targets for commands whose Settings row has a More Info link. */
+const MORE_INFO_TARGET: Partial<Record<CommandId, string>> = {
+    dirUp: "usage:search-shortcut-keys",
+    contextMenu: "usage:search-shortcut-keys",
+    deleteSelected: "usage:multi-select",
+};
+
+type ShortcutAddControlProps = {
+    isRecording: boolean;
+    onStartRecording: () => void;
+    onStopRecording: () => void;
+};
+
+/**
+ * Idle Add button, or a same-size capture field while recording. The field is
+ * a text input so Space chords are not treated as native button activation.
+ */
+const ShortcutAddControl = ({
+    isRecording,
+    onStartRecording,
+    onStopRecording,
+}: ShortcutAddControlProps): ReactElement => {
+    const { t } = useTranslation("settings");
+    const fieldRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isRecording) fieldRef.current?.focus();
+    }, [isRecording]);
+
+    if (isRecording) {
+        return (
+            <input
+                ref={fieldRef}
+                className="addNewKey recording"
+                type="text"
+                value=""
+                readOnly
+                spellCheck={false}
+                placeholder={t("shortcuts.recording")}
+                aria-label={t("shortcuts.recording")}
+                onBlur={onStopRecording}
+            />
+        );
+    }
 
     return (
-        <>
-            {shortcut.keys.map((key, i) => (
-                <div className="keyDisplay" key={i} title={key}>
-                    <input
-                        type="text"
-                        value={key}
-                        readOnly
-                        spellCheck={false}
-                        onKeyDown={(e) => {
-                            if (e.key === "Backspace") {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                dispatch(removeShortcuts({ command, key }));
-                            }
-                        }}
-                    />
-                    <button
-                        onClick={() => {
-                            dispatch(removeShortcuts({ command, key }));
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faClose} />
-                    </button>
-                </div>
-            ))}
-            {shortcut.keys.length < SHORTCUT_LIMIT && (
-                <input
-                    className="addNewKey"
-                    type="text"
-                    value={""}
-                    onKeyDown={(e) => {
-                        e.stopPropagation();
-                        if (!["Tab", "Escape"].includes(e.key)) e.preventDefault();
-                    }}
-                    onKeyUp={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const newKey = keyFormatter(e.nativeEvent);
-                        if (newKey === "") return;
-                        tryAddShortcut(newKey, e.currentTarget);
-                    }}
-                    onMouseDown={(e) => {
-                        const newKey = mouseEventFormatter(e.nativeEvent);
-                        if (newKey === "") return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        tryAddShortcut(newKey);
-                    }}
-                    placeholder={t("shortcuts.addNew")}
-                    readOnly
-                    spellCheck={false}
-                />
-            )}
-        </>
+        <button type="button" className="addNewKey" onClick={onStartRecording}>
+            <FontAwesomeIcon icon={faPlus} />
+            {t("shortcuts.addNew")}
+        </button>
     );
 };
 
+type ShortcutCommandRowProps = {
+    commandId: CommandId;
+    label: string;
+    moreInfoTarget?: string;
+    bindings: readonly BindingTrigger[];
+    diagnostics: readonly BindingDiagnostic[];
+    isRecording: boolean;
+    onStartRecording: () => void;
+    onStopRecording: () => void;
+};
+
+/**
+ * One catalog command: label, key chips, add/reset, and overlap notes.
+ * Deep-link id is `#settings-shortcut-<commandId>`.
+ */
+const ShortcutCommandRow = ({
+    commandId,
+    label,
+    moreInfoTarget,
+    bindings,
+    diagnostics,
+    isRecording,
+    onStartRecording,
+    onStopRecording,
+}: ShortcutCommandRowProps): ReactElement => {
+    const { t } = useTranslation("settings");
+    const { t: tReader } = useTranslation("reader");
+    const dispatch = useAppDispatch();
+
+    return (
+        <div className="shortcutCommand" id={`settings-shortcut-${commandId}`}>
+            <div className="shortcutCommandMain">
+                <div className="shortcutCommandName">
+                    <span>{label}</span>
+                    {moreInfoTarget && (
+                        <a
+                            onClick={() => {
+                                navigateToSetting(moreInfoTarget, dispatch);
+                            }}
+                        >
+                            {t("shared.moreInfoDot")}
+                        </a>
+                    )}
+                </div>
+                <div className="shortcutCommandBindings">
+                    {bindings.map((trigger) => {
+                        const triggerId = serializeTrigger(trigger);
+                        return (
+                            <div className="shortcutChip" key={triggerId} title={triggerId}>
+                                <span className="shortcutChord">{formatTriggerForDisplay(trigger)}</span>
+                                <button
+                                    type="button"
+                                    className="shortcutChipRemove"
+                                    aria-label={t("shortcuts.removeBinding")}
+                                    onClick={() => {
+                                        void dispatch(removeKeymapBinding({ commandId, trigger }));
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faClose} />
+                                </button>
+                            </div>
+                        );
+                    })}
+                    <ShortcutAddControl
+                        isRecording={isRecording}
+                        onStartRecording={onStartRecording}
+                        onStopRecording={onStopRecording}
+                    />
+                    <button
+                        type="button"
+                        className="shortcutReset"
+                        onClick={() => {
+                            void dispatch(resetKeymapCommand(commandId));
+                        }}
+                    >
+                        {t("shared.reset")}
+                    </button>
+                </div>
+            </div>
+            {diagnostics.length > 0 && (
+                <div className="shortcutCommandAlerts">
+                    {diagnostics.map((diagnostic) => {
+                        const triggerId = serializeTrigger(diagnostic.trigger);
+                        return (
+                            <p
+                                key={triggerId}
+                                className={
+                                    diagnostic.severity === "warning" ? "shortcut-conflict" : "shortcut-reuse"
+                                }
+                            >
+                                <span className="shortcutDiagChord">
+                                    {formatTriggerForDisplay(diagnostic.trigger)}
+                                </span>
+                                {diagnostic.competitors.map((competitor) => {
+                                    const competitorName = tReader(`shortcutNames.${competitor.commandId}`);
+                                    return (
+                                        <span key={competitor.commandId}>
+                                            <Trans
+                                                ns="settings"
+                                                i18nKey={
+                                                    competitor.overlap === "conflict"
+                                                        ? "shortcuts.conflictWith"
+                                                        : "shortcuts.harmlessReuse"
+                                                }
+                                                components={{
+                                                    command: (
+                                                        <a
+                                                            onClick={() => {
+                                                                navigateToSetting(
+                                                                    `shortcut:${competitor.commandId}`,
+                                                                    dispatch,
+                                                                );
+                                                            }}
+                                                        >
+                                                            {competitorName}
+                                                        </a>
+                                                    ),
+                                                }}
+                                            />
+                                        </span>
+                                    );
+                                })}
+                            </p>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+};
+
+/**
+ * Settings Shortcut Keys tab: grouped command rows with add / remove / reset,
+ * capture-on-click recording, and live overlap notes.
+ */
 const Shortcuts = (): ReactElement => {
     const { t } = useTranslation("settings");
     const { t: tReader } = useTranslation("reader");
     const dispatch = useAppDispatch();
+    const runtime = useKeybindingRuntime();
+    const keymapDocument = useAppSelector((store) => store.shortcuts.document);
+    const platform = useAppSelector((store) => store.shortcuts.platform);
+    const saveState = useAppSelector((store) => store.shortcuts.saveState);
+    const staleCommandId = useAppSelector((store) => store.shortcuts.staleCommandId);
+    const [recordingCommandId, setRecordingCommandId] = useState<CommandId | null>(null);
+
+    const compiled = compileKeymap(keymapDocument.overrides, platform);
+    // index overlap notes by command so each row does not rescan the full list
+    const diagnosticsByCommandId = new Map<CommandId, BindingDiagnostic[]>();
+    for (const diagnostic of projectBindingDiagnostics(compiled)) {
+        const rows = diagnosticsByCommandId.get(diagnostic.commandId);
+        if (rows) rows.push(diagnostic);
+        else diagnosticsByCommandId.set(diagnostic.commandId, [diagnostic]);
+    }
+
+    useEffect(() => {
+        return () => {
+            runtime.cancelRecording();
+        };
+    }, [runtime]);
+
+    const startRecording = (commandId: CommandId) => {
+        runtime.beginRecording(
+            (live) => {
+                void dispatch(addKeymapBinding({ commandId, trigger: triggerFromLive(live) }));
+                runtime.cancelRecording();
+            },
+            () => {
+                setRecordingCommandId(null);
+            },
+        );
+        setRecordingCommandId(commandId);
+        log.info("recording binding", { commandId });
+    };
+
     return (
-        <div className="shortcutKey">
-            <ul>
-                <li>{t("shortcuts.hintRestart")}</li>
-                <li>{t("shortcuts.hintMiddleMouse")}</li>
-                <li>{t("shortcuts.hintMouse45")}</li>
-                <li>
-                    {t("shortcuts.hintBackspaceBefore")}
-                    <code>{t("shortcuts.backspace")}</code>
-                    {t("shortcuts.hintBackspaceAfter")}
-                </li>
-                <li>
-                    {t("shortcuts.reservedKeys")}
-                    {reservedKeys.map((e) => (
-                        <span key={e}>
-                            <code>{e}</code>{" "}
-                        </span>
-                    ))}
-                    .
-                </li>
-            </ul>
-            <table>
-                <tbody>
-                    <tr>
-                        <th>{t("shortcuts.function")}</th>
-                        <th>{t("shortcuts.key")}</th>
-                    </tr>
-                    {SHORTCUT_COMMAND_MAP.map((e) => (
-                        <tr key={e.command} id={`settings-shortcut-${e.command}`}>
-                            <td>
-                                {tReader(e.name)}
-                                {(["dirUp", "contextMenu", "deleteSelected"] as ShortcutCommands[]).includes(
-                                    e.command,
-                                ) && (
-                                    <a
-                                        onClick={() => {
-                                            navigateToSetting(
-                                                e.command === "deleteSelected"
-                                                    ? "usage:multi-select"
-                                                    : "usage:search-shortcut-keys",
-                                                dispatch,
-                                            );
-                                        }}
-                                    >
-                                        {t("shared.moreInfoDot")}
-                                    </a>
-                                )}
-                            </td>
-                            <td>
-                                <ShortcutInput command={e.command} />
-                            </td>
-                        </tr>
-                    ))}
-                    <tr>
-                        <td>{t("shortcuts.newWindow")}</td>
-                        <td>
-                            <code>ctrl+n</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{t("shortcuts.closeWindow")}</td>
-                        <td>
-                            <code>ctrl+w</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{t("shortcuts.readerWidth")}</td>
-                        <td>
-                            <code>ctrl+scroll</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{t("shortcuts.reloadUi")}</td>
-                        <td>
-                            <code>ctrl+r</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{t("shortcuts.reloadUiClearCache")}</td>
-                        <td>
-                            <code>ctrl+shift+r</code>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>{t("shortcuts.devTool")}</td>
-                        <td>
-                            <code>ctrl+shift+i</code>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div className="content2 shortcutKey">
+            <div className="settingItem2" id="settings-shortcuts-help">
+                <h3>{t("shortcuts.helpTitle")}</h3>
+                <div className="desc">
+                    <ul className="shortcutHints">
+                        {hintLinesFromCopy(t("shortcuts.hints", { returnObjects: true })).map(
+                            ([hintKey, line]) => (
+                                <li key={hintKey}>{line}</li>
+                            ),
+                        )}
+                    </ul>
+                    {saveState === "failed" && <p className="shortcut-save-status">{t("shortcuts.saveFailed")}</p>}
+                    {saveState === "stale" && (
+                        <p className="shortcut-save-status">
+                            {staleCommandId
+                                ? t("shortcuts.saveStaleCommand", {
+                                      name: tReader(`shortcutNames.${staleCommandId}`),
+                                  })
+                                : t("shortcuts.saveStale")}
+                        </p>
+                    )}
+                </div>
+            </div>
+            {CATALOG_SECTIONS.map(({ group, entries }) => (
+                <div className="settingItem2" key={group}>
+                    <h3>{t(SHORTCUT_GROUP_LABEL_KEY[group])}</h3>
+                    {entries.map((entry) => {
+                        const commandId = entry.id;
+                        return (
+                            <ShortcutCommandRow
+                                key={commandId}
+                                commandId={commandId}
+                                label={tReader(entry.labelKey)}
+                                moreInfoTarget={MORE_INFO_TARGET[commandId]}
+                                bindings={effectiveBindingsFor(keymapDocument, commandId, platform)}
+                                diagnostics={diagnosticsByCommandId.get(commandId) ?? []}
+                                isRecording={recordingCommandId === commandId}
+                                onStartRecording={() => startRecording(commandId)}
+                                onStopRecording={() => runtime.cancelRecording()}
+                            />
+                        );
+                    })}
+                </div>
+            ))}
         </div>
     );
 };

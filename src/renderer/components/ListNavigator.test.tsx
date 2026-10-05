@@ -1,6 +1,5 @@
 import { renderWithProviders } from "@test/renderWithProviders";
 import { act, fireEvent, waitFor } from "@testing-library/react";
-import { healShortcutEntries } from "@utils/keybindings";
 import { useRef, useState } from "react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import ListNavigator, {
@@ -332,8 +331,6 @@ describe("ListNavigator.SearchInput", () => {
 });
 
 describe("ListNavigator keyboard on focused rows", () => {
-    const defaultShortcuts = { shortcuts: healShortcutEntries([]) };
-
     it("fires contextMenu for a focused row that has no inner a", () => {
         const onContextMenu = vi.fn();
         renderWithProviders(
@@ -345,7 +342,6 @@ describe("ListNavigator keyboard on focused rows", () => {
                 <ListNavigator.SearchInput />
                 <ListNavigator.List />
             </ListNavigator.Provider>,
-            { preloadedState: defaultShortcuts },
         );
 
         const input = document.querySelector("input.search-input") as HTMLInputElement;
@@ -371,7 +367,6 @@ describe("ListNavigator keyboard on focused rows", () => {
                 <ListNavigator.SearchInput />
                 <ListNavigator.List />
             </ListNavigator.Provider>,
-            { preloadedState: defaultShortcuts },
         );
 
         const input = document.querySelector("input.search-input") as HTMLInputElement;
@@ -379,6 +374,71 @@ describe("ListNavigator keyboard on focused rows", () => {
         fireEvent.keyDown(input, { key: "/", code: "Slash", ctrlKey: true });
         expect(onContextMenu).toHaveBeenCalledTimes(1);
         expect((onContextMenu.mock.calls[0][0] as HTMLElement).tagName).toBe("A");
+    });
+
+    it("opens contextMenu from the Menu key when code is Unidentified", () => {
+        const onContextMenu = vi.fn();
+        renderWithProviders(
+            <ListNavigator.Provider
+                items={ITEMS}
+                renderItem={(item, _i, selected) => <div data-focused={selected}>{item}</div>}
+                onContextMenu={onContextMenu}
+            >
+                <ListNavigator.SearchInput />
+                <ListNavigator.List />
+            </ListNavigator.Provider>,
+        );
+
+        const input = document.querySelector("input.search-input") as HTMLInputElement;
+        fireEvent.keyDown(input, { key: "ArrowDown", code: "ArrowDown" });
+        fireEvent.keyDown(input, { key: "ContextMenu", code: "Unidentified" });
+        expect(onContextMenu).toHaveBeenCalledTimes(1);
+        expect((onContextMenu.mock.calls[0][0] as HTMLElement).textContent).toBe("alpha");
+    });
+
+    it("moves and opens contextMenu when a row is focused but document body has focus", () => {
+        const onContextMenu = vi.fn();
+        renderWithProviders(
+            <ListNavigator.Provider
+                items={ITEMS}
+                renderItem={(item, _i, selected) => <div data-focused={selected}>{item}</div>}
+                onContextMenu={onContextMenu}
+            >
+                <ListNavigator.SearchInput />
+                <ListNavigator.List />
+            </ListNavigator.Provider>,
+        );
+
+        const input = document.querySelector("input.search-input") as HTMLInputElement;
+        fireEvent.keyDown(input, { key: "ArrowDown", code: "ArrowDown" });
+        /* Fire on body without blurring the field: SearchInput onBlur clears the
+         * focused row. Production idle keys use document.activeElement as target
+         * after a row is highlighted from the list itself. */
+        fireEvent.keyDown(document.body, { key: "ArrowDown", code: "ArrowDown" });
+        fireEvent.keyDown(document.body, { key: "ContextMenu", code: "ContextMenu" });
+        expect(onContextMenu).toHaveBeenCalledTimes(1);
+        expect((onContextMenu.mock.calls[0][0] as HTMLElement).textContent).toBe("beta");
+    });
+
+    it("does not handle idle body keys for a display-none list", () => {
+        const onContextMenu = vi.fn();
+        renderWithProviders(
+            <div style={{ display: "none" }}>
+                <ListNavigator.Provider
+                    items={ITEMS}
+                    renderItem={(item, _i, selected) => <div data-focused={selected}>{item}</div>}
+                    onContextMenu={onContextMenu}
+                >
+                    <ListNavigator.SearchInput />
+                    <ListNavigator.List />
+                </ListNavigator.Provider>
+            </div>,
+        );
+
+        const input = document.querySelector("input.search-input") as HTMLInputElement;
+        fireEvent.keyDown(input, { key: "ArrowDown", code: "ArrowDown" });
+        fireEvent.keyDown(document.body, { key: "ContextMenu", code: "ContextMenu" });
+        expect(onContextMenu).not.toHaveBeenCalled();
     });
 
     /**
@@ -401,7 +461,7 @@ describe("ListNavigator keyboard on focused rows", () => {
                 </ListNavigator.Provider>
             );
         };
-        renderWithProviders(<Harness />, { preloadedState: defaultShortcuts });
+        renderWithProviders(<Harness />);
         const input = document.querySelector("input.search-input") as HTMLInputElement;
         fireEvent.keyDown(input, { key: "ArrowDown", code: "ArrowDown" });
         expect(scrollChildInContainer).toHaveBeenCalled();
@@ -415,7 +475,6 @@ describe("ListNavigator keyboard on focused rows", () => {
 });
 
 describe("ListNavigator.VirtualList hostRowElement=false", () => {
-    const defaultShortcuts = { shortcuts: healShortcutEntries([]) };
     const MANY = Array.from({ length: 40 }, (_, i) => `row-${i}`);
 
     /**
@@ -566,7 +625,7 @@ describe("ListNavigator.VirtualList hostRowElement=false", () => {
     };
 
     it("does not mount far-off rows until scrolled", async () => {
-        renderWithProviders(<VirtualHarness />, { preloadedState: defaultShortcuts });
+        renderWithProviders(<VirtualHarness />);
         await waitFor(() => {
             expect(document.querySelector('[data-testid="item-row-0"]')).not.toBeNull();
         });
@@ -574,7 +633,7 @@ describe("ListNavigator.VirtualList hostRowElement=false", () => {
     });
 
     it("mounts a far row after the scroller offset changes", async () => {
-        renderWithProviders(<VirtualHarness />, { preloadedState: defaultShortcuts });
+        renderWithProviders(<VirtualHarness />);
         await waitFor(() => {
             expect(document.querySelector('[data-testid="item-row-0"]')).not.toBeNull();
         });
@@ -617,7 +676,7 @@ describe("ListNavigator.VirtualList hostRowElement=false", () => {
                 </ListNavigator.Provider>
             );
         };
-        renderWithProviders(<Harness />, { preloadedState: defaultShortcuts });
+        renderWithProviders(<Harness />);
         await waitFor(() => {
             expect(document.querySelector("ol.is-virtual")).not.toBeNull();
             expect(document.querySelector('[data-testid="item-short"]')).not.toBeNull();
@@ -660,7 +719,7 @@ describe("ListNavigator.VirtualList hostRowElement=false", () => {
                 </ListNavigator.Provider>
             );
         };
-        renderWithProviders(<Harness />, { preloadedState: defaultShortcuts });
+        renderWithProviders(<Harness />);
         await waitFor(() => {
             expect(document.querySelector('[data-testid="item-a"]')).not.toBeNull();
         });
@@ -696,7 +755,7 @@ describe("ListNavigator.VirtualList hostRowElement=false", () => {
                 </ListNavigator.Provider>
             );
         };
-        renderWithProviders(<Harness />, { preloadedState: defaultShortcuts });
+        renderWithProviders(<Harness />);
         await waitFor(() => {
             expect(document.querySelector('[data-testid="item-short"]')).not.toBeNull();
             expect(document.querySelector('[data-testid="item-tall"]')).not.toBeNull();
