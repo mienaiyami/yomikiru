@@ -39,6 +39,12 @@ const SCROLLBAR_THRESHOLD = 20;
 
 const log = createRendererLogger("manga/Reader");
 
+/**
+ * Quiet window after a zen toggle while fullscreen resize is still changing page height.
+ * Upgrade: drop the timer once one window resize is guaranteed to be the last layout.
+ */
+const ZEN_SCROLL_RESTORE_MS = 300;
+
 const Reader: React.FC = () => {
     const { pageNumberInputRef, validateDirectory, setContextMenuData } = useAppContext();
 
@@ -115,7 +121,8 @@ const Reader: React.FC = () => {
     const pendingChapterOpenScrollRef = useRef(true);
 
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
-    const [wasMaximized, setWasMaximized] = useState(false);
+    /** Mount applies zen chrome only; the first real toggle is what restores scroll. */
+    const zenScrollReadyRef = useRef(false);
     // display this text then shortcuts clicked
     const { t } = useTranslation("reader");
     const [shortcutText, setShortcutText] = useState("");
@@ -203,22 +210,70 @@ const Reader: React.FC = () => {
     useEffect(() => {
         readerRef.current?.focus();
     }, [isReaderOpen]);
-    useEffect(() => {
-        if ((zenMode && !window.electron.currentWindow.isMaximized()) || (!zenMode && !wasMaximized)) {
-            setTimeout(() => {
-                scrollToPage(currentPageNumber, "auto");
-            }, 100);
+    /*
+     * Zen chrome changes column width (side-list inset, scrollbar, fullscreen), so
+     * width-sized pages change height. Reapply the pre-toggle scroll fraction.
+     * Scroll anchoring would also shift a tall page, so it stays off until resize settles.
+     * Fixed row gaps do not scale; that error stays small next to page height.
+     */
+    useLayoutEffect(() => {
+        const restoreScroll = zenScrollReadyRef.current;
+        zenScrollReadyRef.current = true;
+
+        const currentScroller =
+            readerRef.current?.classList.contains("sideListPinned") && imgContRef.current
+                ? imgContRef.current
+                : readerRef.current;
+        const ratio =
+            restoreScroll && currentScroller && currentScroller.scrollHeight > 0
+                ? {
+                      x: currentScroller.scrollWidth
+                          ? currentScroller.scrollLeft / currentScroller.scrollWidth
+                          : 0,
+                      y: currentScroller.scrollTop / currentScroller.scrollHeight,
+                  }
+                : null;
+
+        if (ratio) {
+            setScrollPosPercent(ratio);
+            if (readerRef.current) readerRef.current.style.overflowAnchor = "none";
+            if (imgContRef.current) imgContRef.current.style.overflowAnchor = "none";
         }
+
         if (zenMode) {
             setSideListPinned(false);
-            setWasMaximized(window.electron.currentWindow.isMaximized());
             document.body.classList.add("zenMode");
             window.electron.currentWindow.setFullScreen(true);
         } else {
             document.body.classList.remove("zenMode");
-            setWasMaximized(false);
             if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
         }
+
+        if (!ratio) return;
+
+        const applyScrollRatio = () => {
+            const el =
+                readerRef.current?.classList.contains("sideListPinned") && imgContRef.current
+                    ? imgContRef.current
+                    : readerRef.current;
+            if (!el) return;
+            el.scrollLeft = ratio.x * el.scrollWidth;
+            el.scrollTop = ratio.y * el.scrollHeight;
+        };
+        applyScrollRatio();
+        window.addEventListener("resize", applyScrollRatio);
+        const timeoutId = window.setTimeout(() => {
+            applyScrollRatio();
+            window.removeEventListener("resize", applyScrollRatio);
+            if (readerRef.current) readerRef.current.style.overflowAnchor = "";
+            if (imgContRef.current) imgContRef.current.style.overflowAnchor = "";
+        }, ZEN_SCROLL_RESTORE_MS);
+        return () => {
+            window.clearTimeout(timeoutId);
+            window.removeEventListener("resize", applyScrollRatio);
+            if (readerRef.current) readerRef.current.style.overflowAnchor = "";
+            if (imgContRef.current) imgContRef.current.style.overflowAnchor = "";
+        };
     }, [zenMode]);
     /**
      * * readerType === 0 and on first/last page
