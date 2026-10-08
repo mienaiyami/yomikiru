@@ -5,13 +5,13 @@ Feel free to ask any questions regarding building using issues.
 ## Prerequisites
 
 - **Git**: Version control system
-- **Node.js**: `v21` (recommended)
+- **Node.js**: `v22` or newer (the release workflow uses 22; Electron 44 itself runs Node 24)
 - **pnpm**: Package manager - Install with `npm install -g pnpm` or `corepack enable`
 
 ### Platform-Specific Requirements
 
 - **Windows**: Windows 10+ (Windows 11 recommended)
-- **macOS**: macOS 10.15+ (Catalina or later)
+- **macOS**: macOS 13+ (Ventura or later), if you build a macOS package
 - **Linux**: Ubuntu 20.04+, Debian 11+, or equivalent
 
 ## Quick Start
@@ -124,11 +124,8 @@ pnpm tslint
 ### Windows
 
 ```bash
-# 64-bit (recommended)
+# 64-bit setup and portable zip
 pnpm make:win64
-
-# 32-bit (legacy systems)
-pnpm make:win32
 
 # Installer only
 pnpm make:exe64

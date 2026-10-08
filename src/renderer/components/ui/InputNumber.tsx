@@ -60,7 +60,7 @@ const InputNumber = ({
     };
 
     const [valueProxy, setValueProxy] = useState(value);
-    const repeater = useRef<NodeJS.Timer | null>(null);
+    const repeater = useRef<ReturnType<typeof setInterval> | null>(null);
     const mouseDownRef = useRef(false);
     // const [lastEvent, setLastEvent] = useState<React.ChangeEvent<HTMLInputElement> | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);

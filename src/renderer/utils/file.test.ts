@@ -6,10 +6,20 @@ import {
     formatByteSize,
     formatUtils,
     makeFileSafe,
+    pathFromDroppedFile,
     promptSelectDir,
     toDialogExtensions,
     unzip,
 } from "./file";
+
+describe("pathFromDroppedFile", () => {
+    it("returns the path from the preload bridge", () => {
+        const droppedPath = path.join("library", "chapter");
+        window.electron.getPathForFile = () => droppedPath;
+        const droppedFile = new File(["x"], "page.jpg");
+        expect(pathFromDroppedFile(droppedFile)).toBe(droppedPath);
+    });
+});
 
 describe("formatUtils", () => {
     it("detects image / packed manga / pdf / book / archive extensions", () => {

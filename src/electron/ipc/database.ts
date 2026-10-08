@@ -446,10 +446,12 @@ const handlers: {
             }
         }
         try {
-            await db.db.transaction(async (tx) => {
-                await tx.delete(libraryItemTags).where(eq(libraryItemTags.itemLink, itemLink));
+            db.db.transaction((tx) => {
+                tx.delete(libraryItemTags).where(eq(libraryItemTags.itemLink, itemLink)).run();
                 if (uniqueIds.length > 0) {
-                    await tx.insert(libraryItemTags).values(uniqueIds.map((tagId) => ({ itemLink, tagId })));
+                    tx.insert(libraryItemTags)
+                        .values(uniqueIds.map((tagId) => ({ itemLink, tagId })))
+                        .run();
                 }
             });
         } catch (error) {
@@ -483,11 +485,11 @@ const handlers: {
             return null;
         }
         try {
-            await db.db.transaction(async (tx) => {
-                await tx
-                    .insert(libraryItemTags)
+            db.db.transaction((tx) => {
+                tx.insert(libraryItemTags)
                     .values(uniqueLinks.flatMap((itemLink) => uniqueIds.map((tagId) => ({ itemLink, tagId }))))
-                    .onConflictDoNothing();
+                    .onConflictDoNothing()
+                    .run();
             });
         } catch (error) {
             if (isSqliteConstraintError(error)) {

@@ -246,11 +246,11 @@ describe("MangaDetailsPanel", () => {
 
     it("swaps Copy Path to Copied after writing the library path", async () => {
         stubMangaOnDisk();
-        const writeText = vi.spyOn(window.electron, "writeText");
+        const writeText = vi.spyOn(window.electron.clipboard, "writeText");
         const { item } = renderMangaPanel();
         fireEvent.click(screen.getByRole("button", { name: common.contextMenu.copyPath }));
         expect(writeText).toHaveBeenCalledWith(item.link);
-        expect(screen.getByRole("button", { name: settings.shared.copied })).toBeInTheDocument();
+        expect(await screen.findByRole("button", { name: settings.shared.copied })).toBeInTheDocument();
         writeText.mockRestore();
         await waitForEmptyChapterList();
     });

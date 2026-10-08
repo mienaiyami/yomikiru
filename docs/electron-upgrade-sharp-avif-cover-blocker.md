@@ -1,7 +1,7 @@
 # Electron upgrade blocker: Sharp AVIF library covers
 
-> Last updated: 2026-08-25. **Read this when bumping Electron or Sharp.**  
-> Status: **known limitation, not yet fixed** — blocked on Electron upgrade policy (Windows 7 / legacy OS support).
+> Last updated: 2026-10-08. **Read this when bumping Electron or Sharp.**  
+> Status: **stack unblocked** — Electron 44.7.0 and Sharp 0.35 are the current dependencies. Windows 7 / 8 / 8.1 and 32-bit Windows builds are no longer shipped. A packaged 10-bit AVIF cover still needs a smoke test; this note is the history of why those versions moved together.
 
 ---
 
@@ -55,17 +55,17 @@ There is **no runtime flag** on Sharp 0.34.x to enable high-bitdepth AVIF decode
 
 ---
 
-## Why this is not fixed yet
+## Why the versions moved together
 
-### Electron pinned for legacy OS support
+### Electron was pinned for legacy OS support
 
-| Pin | Value | Reason |
+| Pin | Value at the time | Reason |
 | --- | --- | --- |
-| Electron | **22.3.25** | Last line that supports **Windows 7** and other old OS targets the project still ships for |
+| Electron | **22.3.25** | Last line that supports **Windows 7** and other old OS targets the project shipped |
 | Bundled Node (Electron 22) | **16.x** | ABI / runtime shipped with Electron 22 |
 | Sharp 0.35+ `engines.node` | **>= 20.9.0** | Declared in [Sharp v0.35.0 changelog](https://sharp.pixelplumbing.com/changelog/v0.35.0) |
 
-**Policy:** Electron cannot be upgraded until legacy-OS support is dropped. Sharp **0.35+** (the upstream fix for 10-bit AVIF decode in prebuilts) should be bumped **together with** the Electron upgrade, not on the current Electron 22 stack.
+That pin is lifted. The app is on Electron **44.7.0** (Node 24 inside Electron) and Sharp **0.35**. Do not move Sharp back to 0.34.
 
 ### Packaging today
 
@@ -73,7 +73,7 @@ Sharp is loaded from an explicit Forge external runtime (`resources/sharp/`), no
 
 ---
 
-## Current user impact
+## User impact before Sharp 0.35
 
 - Library **scan** and **thumbnail regenerate** add the row but leave no WebP cache when the cover source is an unsupported AVIF.
 - **Custom cover pick** or a sidecar `cover.jpg` / `cover.png` still works.
@@ -105,18 +105,18 @@ Options evaluated for fixing cover materialize without upgrading Electron + Shar
 | External CLI (`avifdec`, ImageMagick) | Heavy per-platform ship; avoid |
 | Build Sharp/libvips from source with high bitdepth on 0.34.x | Poor fit for Windows Electron releases |
 
-**Decision:** Document and defer until Electron upgrade. No code change on the current stack.
+**Decision at the time:** Document and defer until the Electron upgrade. The dependency bump has since landed (Electron 44.7.0, Sharp 0.35). The verification boxes below are still open until a packaged 10-bit AVIF cover is smoked.
 
 ---
 
-## Fix checklist (when Electron is upgraded)
+## Fix checklist
 
-Apply in the **same change** (or tightly coupled PR) as the Electron bump:
+Dependency bump landed with Electron 44. Runtime and packaging boxes stay open until a real 10-bit AVIF cover is smoked.
 
 ### 1. Dependencies
 
-- [ ] Bump `sharp` to **>= 0.35.x** (verify latest patch on npm)
-- [ ] Bump Electron to a version whose bundled Node satisfies Sharp's `engines` (>= 20.9.0 for 0.35.0)
+- [x] Bump `sharp` to **>= 0.35.x** (0.35.5)
+- [x] Bump Electron to a version whose bundled Node satisfies Sharp's `engines` (Electron 44.7.0, Node 24)
 - [ ] Re-run install; confirm `@img/sharp-<platform>` and `@img/sharp-libvips-<platform>` versions updated under `node_modules`
 
 ### 2. Sharp 0.35 breaking changes (regression surface)

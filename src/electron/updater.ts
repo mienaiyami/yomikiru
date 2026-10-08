@@ -349,7 +349,6 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             webPreferences: {
                 nodeIntegration: true,
                 contextIsolation: false,
-                // enableRemoteModule: true,
                 webSecurity: app.isPackaged,
                 safeDialogs: true,
             },

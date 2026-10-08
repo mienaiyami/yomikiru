@@ -51,7 +51,7 @@ const DetailedInfoModal = memo(({ open, onClose }: DetailedInfoModalProps) => {
                 {
                     label: t("detailedInfo.copy"),
                     onClick: () => {
-                        window.electron.writeText(text);
+                        void window.electron.clipboard.writeText(text);
                         onClose();
                     },
                 },

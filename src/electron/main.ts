@@ -15,6 +15,7 @@ import { DatabaseService } from "./db";
 import { DRIZZLE_TAG_LIBRARY_ITEM_IDS } from "./db/migrations";
 import { registerI18nHandlers, setApplicationMenuRebuild } from "./i18n/ipc";
 import { initMainI18n, mainT } from "./i18n/mainI18n";
+import { registerClipboardHandlers } from "./ipc/clipboard";
 import { noteLibraryItemIdMigrationAppliedThisLaunch, registerCoverHandlers } from "./ipc/covers";
 import { setupDatabaseHandlers } from "./ipc/database";
 import { registerDbBackupHandlers, runDbBackupStartupBeforeOpen } from "./ipc/dbBackup";
@@ -151,7 +152,11 @@ const rebuildApplicationMenu = (): void => {
                     label: t("close", { ns: "menu" }),
                     registerAccelerator: false,
                     accelerator: nativeMenuAccelerator("closeWindow") || undefined,
-                    click: (_, window) => runNativeKeymapAction("closeWindow", window ?? null),
+                    click: (_, menuWindow) =>
+                        runNativeKeymapAction(
+                            "closeWindow",
+                            menuWindow instanceof BrowserWindow ? menuWindow : null,
+                        ),
                 },
                 {
                     label: t("reportIssue", { ns: "menu" }),
@@ -212,6 +217,7 @@ app.on("ready", async () => {
         await registerKeymapHandlers();
         rebuildApplicationMenu();
         registerLibraryScanHandlers(db);
+        registerClipboardHandlers();
         registerDialogHandlers();
         registerErrorReportingHandlers();
 

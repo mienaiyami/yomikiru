@@ -134,7 +134,6 @@ Beta versions are available for users who want to try the latest features before
 
 ### Future Plans
 
-- **Windows 7 Deprecation**: Moving to newer Electron version (post-gallery view)
 - **Enhanced Performance**: Optimization for large collections
 - **Additional Formats**: Expand supported file types
 

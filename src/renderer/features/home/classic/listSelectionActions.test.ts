@@ -141,9 +141,9 @@ describe("getBookmarkSelectionKey / getBookmarksBySelectionKeys", () => {
 });
 
 describe("copyPathsToClipboard / removeBookmarksGrouped", () => {
-    it("writes newline-joined paths", () => {
+    it("writes newline-joined paths", async () => {
         copyPathsToClipboard(["a", "", "b"]);
-        expect(window.electron.readText()).toBe("a\nb");
+        expect(await window.electron.clipboard.readText()).toBe("a\nb");
     });
 
     it("groups bookmark removals by type+itemLink", () => {

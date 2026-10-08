@@ -31,6 +31,38 @@ const SHARP_RUNTIME_RESOURCE_DIRECTORY = "sharp";
 /** Resolves package paths the same way Node/pnpm would from this config file. */
 const requireFromConfig = createRequire(__filename);
 
+type MoveWebpackOutput = (
+    sourcePath: string,
+    destinationPath: string,
+    options?: { overwrite?: boolean },
+) => Promise<void>;
+
+const filesystemExtra = requireFromConfig("fs-extra") as {
+    move: MoveWebpackOutput;
+    copy: (sourcePath: string, destinationPath: string) => Promise<void>;
+    remove: (sourcePath: string) => Promise<void>;
+};
+const movePath = filesystemExtra.move.bind(filesystemExtra);
+
+/*
+ * Forge renames `.webpack/<bundle>` into `.webpack/<arch>` after compile.
+ * Windows refuses that rename while the directory is open. Copying and then
+ * deleting the source still succeeds.
+ */
+filesystemExtra.move = async (sourcePath, destinationPath, options) => {
+    try {
+        await movePath(sourcePath, destinationPath, options);
+    } catch (moveError: unknown) {
+        const errorCode = moveError instanceof Error ? (moveError as NodeJS.ErrnoException).code : undefined;
+        const webpackOutput = sourcePath.includes(`${path.sep}.webpack${path.sep}`);
+        if (errorCode !== "EPERM" || !webpackOutput) {
+            throw moveError;
+        }
+        await filesystemExtra.copy(sourcePath, destinationPath);
+        await filesystemExtra.remove(sourcePath);
+    }
+};
+
 /** Runtime files required by each packaged operating system. */
 const ARCHIVE_RUNTIME_FILES: Record<string, readonly string[]> = {
     darwin: ["7zz", "License.txt"],
@@ -53,7 +85,7 @@ const archivePackagePlatform = (platform: string): string => {
 /** Maps package targets to the architecture names used by the archive dependency. */
 const archivePackageArchitectures = (arch: string): string[] => {
     if (arch === "universal") return ["x64", "arm64"];
-    return [arch === "armv7l" ? "arm" : arch];
+    return [arch];
 };
 
 /** Resolves Electron's resources directory inside the packager staging tree. */
@@ -181,6 +213,13 @@ const config: ForgeConfig = {
             },
             mainConfig,
             renderer: {
+                /*
+                 * Forge 7 reads this flag when choosing the preload webpack target.
+                 * Leave it unset and the preload bundle is target web, so Node
+                 * built-ins such as node:path do not resolve. The page config
+                 * still sets target web, and that override is what the page bundle uses.
+                 */
+                nodeIntegration: true,
                 config: rendererConfig,
                 entryPoints: [
                     {

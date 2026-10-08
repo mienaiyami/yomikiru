@@ -174,6 +174,16 @@ export type WindowManagementChannels = {
     "window:statusCheck:response": ChannelDefinition<void, void, "r2m">;
 };
 
+export type ClipboardChannels = {
+    "clipboard:readText": ChannelDefinition<void, string>;
+    "clipboard:writeText": ChannelDefinition<{ text: string }, void>;
+    /**
+     * Writes one PNG to the clipboard. `imagePath` is a filesystem image.
+     * `pngBytes` is already-encoded PNG data, such as a canvas export.
+     */
+    "clipboard:copyImage": ChannelDefinition<{ imagePath: string } | { pngBytes: Uint8Array }, void>;
+};
+
 export type FileSystemChannels = {
     "fs:unzip": ChannelDefinition<
         { source: string; destination: string },
@@ -344,6 +354,7 @@ export type KeymapChannels = {
 export type IPCChannels = DatabaseChannels &
     DatabaseChangeChannels &
     WindowManagementChannels &
+    ClipboardChannels &
     FileSystemChannels &
     UpdateChannels &
     ExplorerMenuChannels &

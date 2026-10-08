@@ -237,8 +237,12 @@ export const DetailsCopyPathButton = ({ path }: DetailsCopyPathButtonProps) => {
         return () => window.clearTimeout(copiedTimerRef.current);
     }, []);
 
-    const handleClick = () => {
-        window.electron.writeText(path);
+    const handleClick = async () => {
+        try {
+            await window.electron.clipboard.writeText(path);
+        } catch {
+            return;
+        }
         setCopied(true);
         window.clearTimeout(copiedTimerRef.current);
         copiedTimerRef.current = window.setTimeout(() => setCopied(false), 3000);

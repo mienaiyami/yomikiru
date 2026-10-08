@@ -184,57 +184,57 @@ const GeneralThemeSettings: React.FC = () => {
                 </div>
                 <div className="main row">
                     <button
-                        onClick={() => {
-                            const theme = window.electron.readText("clipboard");
-                            if (theme) {
-                                try {
-                                    const themeJSON = JSON.parse(theme);
-                                    if (themeJSON) {
-                                        if ("name" in themeJSON && "main" in themeJSON) {
-                                            if (allThemes.map((e) => e.name).includes(themeJSON.name)) {
-                                                dialogUtils.warn({
-                                                    message: t("theme.sameName", { name: themeJSON.name }),
-                                                });
-                                            } else {
-                                                dispatch(newTheme(themeJSON));
-                                            }
-                                        } else
-                                            dialogUtils.customError({
-                                                title: t("theme.failedTitle"),
-                                                message: t("theme.invalidThemeData"),
+                        onClick={async () => {
+                            const themeText = await window.electron.clipboard.readText();
+                            if (!themeText) return;
+                            try {
+                                const themeJSON = JSON.parse(themeText);
+                                if (themeJSON) {
+                                    if ("name" in themeJSON && "main" in themeJSON) {
+                                        if (allThemes.map((themeRow) => themeRow.name).includes(themeJSON.name)) {
+                                            dialogUtils.warn({
+                                                message: t("theme.sameName", { name: themeJSON.name }),
                                             });
-                                    }
-                                } catch (reason) {
-                                    log.error("Theme import: file read or parse failed", reason);
-                                    dialogUtils.customError({
-                                        title: t("theme.failedTitle"),
-                                        message: t("theme.invalidThemeData"),
-                                    });
+                                        } else {
+                                            dispatch(newTheme(themeJSON));
+                                        }
+                                    } else
+                                        dialogUtils.customError({
+                                            title: t("theme.failedTitle"),
+                                            message: t("theme.invalidThemeData"),
+                                        });
                                 }
+                            } catch (reason) {
+                                log.error("Theme import: file read or parse failed", reason);
+                                dialogUtils.customError({
+                                    title: t("theme.failedTitle"),
+                                    message: t("theme.invalidThemeData"),
+                                });
                             }
                         }}
                     >
                         {t("theme.saveFromClipboard")}
                     </button>
                     <button
-                        onClick={(e) => {
-                            const currentTheme = allThemes.find((e) => e.name === theme);
-                            if (currentTheme) {
-                                try {
-                                    window.electron.writeText(JSON.stringify(currentTheme, null, "\t"));
-                                    const target = e.currentTarget;
-                                    const oldText = target.innerText;
-                                    target.innerText = `${"\u00a0".repeat(23)}${t("shared.copied")}${"\u00a0".repeat(23)}`;
-                                    target.disabled = true;
-                                    setTimeout(() => {
-                                        target.disabled = false;
-                                        target.innerText = oldText;
-                                    }, 3000);
-                                } catch (reason) {
-                                    dialogUtils.customError({
-                                        message: t("theme.failedToCopy", { reason }),
-                                    });
-                                }
+                        onClick={async (e) => {
+                            const currentTheme = allThemes.find((themeRow) => themeRow.name === theme);
+                            if (!currentTheme) return;
+                            const target = e.currentTarget;
+                            try {
+                                await window.electron.clipboard.writeText(
+                                    JSON.stringify(currentTheme, null, "\t"),
+                                );
+                                const oldText = target.innerText;
+                                target.innerText = `${"\u00a0".repeat(23)}${t("shared.copied")}${"\u00a0".repeat(23)}`;
+                                target.disabled = true;
+                                setTimeout(() => {
+                                    target.disabled = false;
+                                    target.innerText = oldText;
+                                }, 3000);
+                            } catch (reason) {
+                                dialogUtils.customError({
+                                    message: t("theme.failedToCopy", { reason }),
+                                });
                             }
                         }}
                     >

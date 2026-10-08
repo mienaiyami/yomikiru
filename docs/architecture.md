@@ -30,7 +30,7 @@ No server component; all data lives on the user's machine.
 
 | Layer | Technology |
 | --- | --- |
-| Desktop shell | Electron 22 (Chromium 108) |
+| Desktop shell | Electron 44 (Chromium 152) |
 | UI framework | React 17, Redux Toolkit 1.9 |
 | Styling | SCSS modules + CSS custom properties (themes) |
 | Database | SQLite via `better-sqlite3`, ORM via `drizzle-orm` |

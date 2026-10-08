@@ -2,10 +2,10 @@ import type { KeyboardCode } from "@common/keybindings";
 import { KeybindingProvider } from "@features/keybindings";
 import { configureStore } from "@reduxjs/toolkit";
 import { rootReducer } from "@store/index";
-import { act, renderHook } from "@testing-library/react-hooks/dom";
+import { act, cleanup, renderHook } from "@testing-library/react-hooks/dom";
 import type { ReactNode } from "react";
 import { Provider } from "react-redux";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cycleWrappedValue, useCycleShortcutGroups } from "./useCycleShortcutGroups";
 
 /** Store + keymap provider so cycle owners receive window capture ingress. */
@@ -60,6 +60,10 @@ describe("cycleWrappedValue", () => {
 });
 
 describe("useCycleShortcutGroups", () => {
+    afterEach(() => {
+        cleanup();
+    });
+
     it("runs previous and next commands for the first group", () => {
         const onChange = vi.fn();
         const Wrapper = createWrapper();
@@ -195,10 +199,12 @@ describe("useCycleShortcutGroups", () => {
             { wrapper: Wrapper },
         );
 
-        act(() => pressAltKey(input, "]", "BracketRight"));
-
-        expect(document.activeElement).toBe(input);
-        expect(onChange).toHaveBeenCalledWith("b");
-        input.remove();
+        try {
+            act(() => pressAltKey(input, "]", "BracketRight"));
+            expect(document.activeElement).toBe(input);
+            expect(onChange).toHaveBeenCalledWith("b");
+        } finally {
+            input.remove();
+        }
     });
 });

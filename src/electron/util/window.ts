@@ -80,6 +80,8 @@ export class WindowManager {
             },
             webPreferences: {
                 nodeIntegration: true,
+                // preload uses Node (fs, chokidar, font-list); sandbox must stay off
+                sandbox: false,
                 webSecurity: app.isPackaged,
                 safeDialogs: true,
                 preload: HOME_PRELOAD_WEBPACK_ENTRY,

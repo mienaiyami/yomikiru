@@ -536,7 +536,7 @@ ${errorInfo}
     private async copyErrorInfoToClipboard(): Promise<void> {
         const { clipboard } = await import("electron");
         const errorInfo = this.exportErrorReports();
-        clipboard.writeText(errorInfo);
+        await clipboard.writeText(errorInfo);
     }
 }
 

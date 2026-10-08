@@ -129,8 +129,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          # serialize-javascript@7 (pnpm override) needs Node 20+ global crypto; docs/build.md recommends v21
-          node-version: 21
+          # serialize-javascript@7 (pnpm override) needs Node 20+ global crypto; toolchain is Node 22+
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -183,8 +183,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          # serialize-javascript@7 (pnpm override) needs Node 20+ global crypto; docs/build.md recommends v21
-          node-version: 21
+          # serialize-javascript@7 (pnpm override) needs Node 20+ global crypto; toolchain is Node 22+
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -211,7 +211,6 @@ jobs:
 
       - name: Build for windows
         run: |
-          pnpm make:win32
           pnpm make:win64
 
       - name: Generate release artifacts

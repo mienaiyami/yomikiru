@@ -51,7 +51,11 @@ const About: React.FC = () => {
                 >
                     {window.electron.app.getVersion()}
                     {" | "}
-                    {process.arch === "x64" ? t("about.bit64") : t("about.bit32")}
+                    {process.arch === "x64"
+                        ? t("about.bit64")
+                        : process.arch === "ia32"
+                          ? t("about.bit32")
+                          : process.arch}
                     {window.process.isPortable ? t("about.portable") : ""}
                 </div>
                 <div className="main col">
@@ -183,7 +187,7 @@ const About: React.FC = () => {
                         onClick={(e) => {
                             const target = e.currentTarget;
                             target.innerText = `${"\u00a0".repeat(16)}${t("shared.copied")}${"\u00a0".repeat(16)}`;
-                            window.electron.writeText("mienaiyami0@gmail.com");
+                            void window.electron.clipboard.writeText("mienaiyami0@gmail.com");
                             target.disabled = true;
                             setTimeout(() => {
                                 target.disabled = false;

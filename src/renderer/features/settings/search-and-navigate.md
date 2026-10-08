@@ -17,7 +17,7 @@ navigateToSetting(id)
 - Same id while already open still works: `requestId` bumps so the apply effect re-runs.
 - Unknown ids: log and no-op (do not open settings).
 
-Highlight uses `outline` plus a light yellow background (Chrome 108 has no `color-mix`). Rules are placed after `.settingItem2` / `.toggleItem` so their `box-shadow` dividers cannot override the highlight. Do not use `--highlight-color` here; that variable is only set inline for epub note highlights.
+Highlight uses `outline` plus a light yellow background. Rules are placed after `.settingItem2` / `.toggleItem` so their `box-shadow` dividers cannot override the highlight. Do not use `--highlight-color` here; that variable is only set inline for epub note highlights.
 
 ## Catalog (`settingsTargets.ts`)
 

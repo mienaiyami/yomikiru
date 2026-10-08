@@ -155,27 +155,27 @@ const PresetActionsRowView = ({ type, title, presets, currentPresetId }: PresetA
                     {t("shared.import")}
                 </button>
                 <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                         const current = currentPresetId ? presets.find((p) => p.id === currentPresetId) : null;
-                        if (current) {
-                            try {
-                                window.electron.writeText(JSON.stringify(current, null, "\t"));
-                                const target = e.currentTarget as HTMLButtonElement;
-                                const old = target.innerText;
-                                target.innerText = t("shared.copied");
-                                target.disabled = true;
-                                setTimeout(() => {
-                                    target.disabled = false;
-                                    target.innerText = old;
-                                }, 3000);
-                            } catch (reason) {
-                                dialogUtils.customError({
-                                    message: t("readerPresets.failedToCopy", { reason }),
-                                });
-                            }
-                        } else {
+                        if (!current) {
                             dialogUtils.warn({
                                 message: t("readerPresets.noPresetSelected"),
+                            });
+                            return;
+                        }
+                        const target = e.currentTarget;
+                        try {
+                            await window.electron.clipboard.writeText(JSON.stringify(current, null, "\t"));
+                            const old = target.innerText;
+                            target.innerText = t("shared.copied");
+                            target.disabled = true;
+                            setTimeout(() => {
+                                target.disabled = false;
+                                target.innerText = old;
+                            }, 3000);
+                        } catch (reason) {
+                            dialogUtils.customError({
+                                message: t("readerPresets.failedToCopy", { reason }),
                             });
                         }
                     }}
@@ -210,8 +210,8 @@ const GeneralReaderPresetsSettings: React.FC = () => {
     const presets = useAppSelector((s) => s.readerPresets.presets);
     const rememberReaderPresetPerItem = useAppSelector((s) => s.appSettings.rememberReaderPresetPerItem);
 
-    const handleSavePresetFromClipboard = () => {
-        const text = window.electron.readText("clipboard");
+    const handleSavePresetFromClipboard = async () => {
+        const text = await window.electron.clipboard.readText();
         try {
             if (!text) throw new Error("No preset data in clipboard.");
             const parsed = JSON.parse(text) as unknown;

@@ -26,6 +26,8 @@ type ArtifactMetadata = {
     platform: string;
     arch: string;
     type: string;
+    /** When false, the file is still uploaded and listed in artifacts.json, but not in the release-notes table. */
+    listInReleaseNotes?: boolean;
 };
 
 const {
@@ -34,23 +36,17 @@ const {
     author: { url: baseUrl },
 } = packageJSON;
 
+/** Filenames the 32-bit updater still requests. Each file is a copy of the matching 64-bit build. */
+const LEGACY_WIN32_PORTABLE_NAME = `${appName}-win32-v${appVersion}-Portable.zip`;
+const LEGACY_WIN32_SETUP_NAME = `${appName}-v${appVersion}-Setup.exe`;
+
 /**
  * Creates artifact mapping for different platform/arch combinations
  */
 const createArtifactMap = (appNameParam: string, appVersionParam: string) => ({
-    "win32+zip+ia32": {
-        name: `${appNameParam}-win32-v${appVersionParam}-Portable.zip`,
-        text: "32-bit Portable (windows zip)",
-        icon: "windows&logoColor=blue",
-    },
     "win32+zip+x64": {
         name: `${appNameParam}-win32-v${appVersionParam}-Portable-x64.zip`,
         text: "64-bit Portable (windows zip)",
-        icon: "windows&logoColor=blue",
-    },
-    "win32+exe+ia32": {
-        name: `${appNameParam}-v${appVersionParam}-Setup.exe`,
-        text: "32-bit Setup (windows exe)",
         icon: "windows&logoColor=blue",
     },
     "win32+exe+x64": {
@@ -127,6 +123,47 @@ const makeDownloadLink = ({ name, url, version }: DownloadButtonParams): string 
     return `[${name}](${url}/releases/download/v${version}/${name})`;
 };
 
+/*
+ * TODO: remove publishLegacyWindowsAliases and the 32-bit paragraph in the Downloads
+ * section once most installs are on the 64-bit build. The copies exist only so an old
+ * 32-bit updater still resolves a file.
+ */
+/**
+ * Copies each 64-bit Windows build onto the filename a 32-bit updater still requests.
+ * The copies are release assets and artifacts.json rows. They are omitted from the release-notes table.
+ */
+const publishLegacyWindowsAliases = (artifacts: ArtifactMetadata[], checksums: string[]): void => {
+    const aliases = [
+        { type: "portable", legacyName: LEGACY_WIN32_PORTABLE_NAME },
+        { type: "installer", legacyName: LEGACY_WIN32_SETUP_NAME },
+    ] as const;
+    for (const alias of aliases) {
+        const source = artifacts.find(
+            (artifact) => artifact.platform === "win32" && artifact.arch === "x64" && artifact.type === alias.type,
+        );
+        if (!source) continue;
+        const sourcePath = path.join(MAIN_OUT_DIR, source.name);
+        if (!fs.existsSync(sourcePath)) {
+            console.warn(`Legacy Windows alias skipped; missing ${source.name}`);
+            continue;
+        }
+        const destPath = path.join(MAIN_OUT_DIR, alias.legacyName);
+        fs.copyFileSync(sourcePath, destPath);
+        const sha256 = calculateSHA256(destPath);
+        artifacts.push({
+            name: alias.legacyName,
+            sha256,
+            size: getFileSize(destPath),
+            description: `${source.description} (legacy 32-bit filename; file is the 64-bit build)`,
+            platform: "win32",
+            arch: "ia32",
+            type: alias.type,
+            listInReleaseNotes: false,
+        });
+        checksums.push(`${sha256}  ${alias.legacyName}`);
+    }
+};
+
 /**
  * Main function to generate release artifacts
  */
@@ -174,7 +211,7 @@ const generateRelease = () => {
         return path.resolve(process.cwd(), artifactPath);
     };
 
-    // normalize arch for Linux (amd64/x86_64 -> x64), Windows uses ia32/x64 directly
+    // normalize arch for Linux (amd64/x86_64 -> x64); Windows arch is already x64 or arm64
     const normalizeArchForLinux = (arch: string): string => {
         if (arch === "amd64" || arch === "x86_64") return "x64";
         return arch;
@@ -193,7 +230,7 @@ const generateRelease = () => {
             let artifactKey: ArtifactKey | null = null;
 
             if (res.platform === "win32") {
-                // Windows uses arch as-is: ia32 or x64
+                // Windows arch is already the make target (x64 or arm64)
                 const winArch = res.arch;
                 if (ext === "exe") {
                     artifactKey = `win32+exe+${winArch}` as ArtifactKey;
@@ -258,7 +295,7 @@ const generateRelease = () => {
             if (artifactKey === "linux+pkg.tar.zst+x64") {
                 finalArch = "x86_64";
             } else if (res.platform === "win32") {
-                // Windows arch stays as-is (ia32 or x64)
+                // Windows arch stays as the make target reported it
                 finalArch = res.arch;
             } else if (res.platform === "linux" && res.arch === "amd64") {
                 finalArch = "amd64";
@@ -281,6 +318,8 @@ const generateRelease = () => {
         }
     }
 
+    publishLegacyWindowsAliases(artifacts, checksums);
+
     // const downloadButtons: string[] = [];
     // for (const artifact of artifacts) {
     //     const artifactInfo = Object.values(artifactMap).find((info) => info.name === artifact.name);
@@ -296,7 +335,15 @@ const generateRelease = () => {
     //     }
     // }
     // const downloadSection = `## Downloads\n\n${downloadButtons.join(" ")}\n`;
-    const downloadSection = `## Downloads\n`;
+    const downloadSection = `## Downloads
+
+32-bit Windows builds are no longer produced. The Windows files in the table below are 64-bit (portable zip and setup). Windows 7, 8, and 8.1 are not supported. Details: https://github.com/mienaiyami/yomikiru/discussions/556
+
+The last stable release that still supports those systems and 32-bit Windows is **2.24.0**. The last beta is **2.25.0-beta.7**.
+
+A 32-bit install that checks for updates will download a file that still uses the old 32-bit filename. That file is the 64-bit app, so the update only runs on 64-bit Windows. A 32-bit PC should stay on 2.24.0 (stable) or 2.25.0-beta.7 (beta).
+
+`;
     fs.writeFileSync(DOWNLOAD_BTNS_TXT, downloadSection, "utf-8");
 
     const sortedArtifacts = [...artifacts].sort((a, b) => {
@@ -317,7 +364,12 @@ const generateRelease = () => {
         return a.type.localeCompare(b.type);
     });
 
-    fs.writeFileSync(ARTIFACTS_JSON, JSON.stringify(sortedArtifacts, null, 2), "utf-8");
+    const catalogArtifacts = sortedArtifacts.map((artifact) => {
+        const { listInReleaseNotes, ...catalogRow } = artifact;
+        void listInReleaseNotes;
+        return catalogRow;
+    });
+    fs.writeFileSync(ARTIFACTS_JSON, JSON.stringify(catalogArtifacts, null, 2), "utf-8");
 
     const sortedChecksums = [...checksums].sort();
     const checksumsContent = `${sortedChecksums.join("\n")}\n`;
@@ -329,6 +381,7 @@ const generateRelease = () => {
     tableRows.push("|-------------|------|-------------|");
 
     for (const artifact of sortedArtifacts) {
+        if (artifact.listInReleaseNotes === false) continue;
         // const artifactInfo = Object.values(artifactMap).find((info) => info.name === artifact.name);
         // const badge = artifactInfo
         //     ? makeDownloadButton({

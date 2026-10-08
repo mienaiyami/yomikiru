@@ -1,4 +1,4 @@
-import { renderWithI18n } from "@test/renderWithProviders";
+import { renderWithProviders } from "@test/renderWithProviders";
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import Popover from "./Popover";
@@ -24,7 +24,7 @@ describe("Popover", () => {
     });
 
     it("traps focus inside the panel while open", async () => {
-        renderWithI18n(<PopoverWithField />);
+        renderWithProviders(<PopoverWithField />);
         fireEvent.click(screen.getByRole("button", { name: "open" }));
         const dialog = screen.getByRole("dialog", { name: "Grid size" });
         expect(dialog).toHaveAttribute("aria-modal", "true");

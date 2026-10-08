@@ -46,7 +46,7 @@ const InputCheckboxNumber = ({
 }) => {
     if (!onChangeNum && !timeout) throw new Error("InputCheckboxNumber: onChangeNum or timeout must be defined");
     const [valueProxy, setValueProxy] = useState(value);
-    const repeater = useRef<NodeJS.Timer | null>(null);
+    const repeater = useRef<ReturnType<typeof setInterval> | null>(null);
     const mouseDownRef = useRef(false);
     const inputRef = useRef<HTMLInputElement | null>(null);
     useLayoutEffect(() => {

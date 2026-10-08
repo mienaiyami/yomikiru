@@ -214,7 +214,7 @@
         border: 1px solid var(--error-color);
         border-radius: 6px;
         background-color: var(--body-bg-color);
-        /* Electron 22 has no color-mix; tint with opacity on a themed overlay */
+        /* tint with opacity on a themed overlay */
         &::before {
             content: "";
             position: absolute;

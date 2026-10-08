@@ -108,7 +108,7 @@ export const focusSettingsTargetElement = (root: HTMLElement): void => {
  * the highlight timeout (call on unmount or next navigate).
  */
 export const highlightSettingsTargetElement = (elem: HTMLElement): (() => void) => {
-    // chrome 108 ScrollBehavior is only auto|smooth (instant is newer)
+    // auto keeps the jump immediate; smooth would animate a settings search hit
     elem.scrollIntoView({ block: "start", behavior: "auto" });
     elem.classList.add(SETTINGS_TARGET_HIGHLIGHT_CLASS);
     focusSettingsTargetElement(elem);

@@ -109,6 +109,7 @@ describe("SettingsSearch", () => {
         });
         const input = screen.getByPlaceholderText(settings.search.placeholder);
         fireEvent.change(input, { target: { value: "library" } });
+        input.focus();
         fireEvent.keyDown(input, { key: "Escape", code: "Escape" });
         expect(input).toHaveValue("");
         expect(store.getState().ui.isOpen.settings).toBe(true);
@@ -118,7 +119,9 @@ describe("SettingsSearch", () => {
         const { store } = renderWithProviders(<SettingsSearch inputRef={{ current: null }} />, {
             preloadedState: openSettingsState,
         });
-        fireEvent.keyDown(screen.getByPlaceholderText(settings.search.placeholder), {
+        const input = screen.getByPlaceholderText(settings.search.placeholder);
+        input.focus();
+        fireEvent.keyDown(input, {
             key: "Escape",
             code: "Escape",
         });

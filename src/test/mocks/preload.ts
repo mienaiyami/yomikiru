@@ -200,11 +200,17 @@ export const installPreloadMocks = (): void => {
             getName: () => "Yomikiru",
             isPackaged: false,
         },
-        readText: () => clipboardText,
-        writeText: (text: string) => {
-            clipboardText = text;
+        clipboard: {
+            readText: async () => clipboardText,
+            writeText: async (text: string) => {
+                clipboardText = text;
+            },
+            copyImage: throwStub("electron.clipboard", "copyImage"),
         },
-        copyImage: throwStub("electron", "copyImage"),
+        getPathForFile: (file: File) => {
+            const withNativePath = file as File & { path?: string };
+            return withNativePath.path ?? "";
+        },
         openExternal: vi.fn(async () => undefined),
         showItemInFolder: vi.fn(),
         webFrame: {

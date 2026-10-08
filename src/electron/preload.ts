@@ -1,11 +1,25 @@
+/*
+ * Unsandboxed preload. contextBridge keeps require off the page, and this file
+ * still runs Node: filesystem, path, watchers, fonts, and window controls.
+ * Clipboard reads and writes are IPC to the main process; that module is not
+ * available here. Electron's default preload is a sandboxed bridge: contextBridge
+ * and ipcRenderer only. The main process owns the disk and the window, and
+ * Forge compiles that default as a web bundle so Node imports fail the build.
+ *
+ * A move to that model keeps the same names on window. The preload method
+ * becomes an IPC invoke, and the body runs in the main process. Synchronous
+ * filesystem calls cannot make that trip, so those call sites become async.
+ * Handlers should perform one app operation. A general delete or write on
+ * window is reachable by any script in this page.
+ */
 import { accessSync, existsSync, lstatSync, readFileSync, realpathSync, statSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { IPCChannels } from "@common/types/ipc";
-import { app, clipboard, getCurrentWindow, nativeImage } from "@electron/remote";
+import { app, getCurrentWindow } from "@electron/remote";
 import * as chokidar from "chokidar";
-import { contextBridge, ipcRenderer, shell, webFrame } from "electron";
+import { contextBridge, ipcRenderer, shell, webFrame, webUtils } from "electron";
 import { getFonts } from "font-list";
 import { createRendererLogSink, setupPreloadLogging } from "./util/logger";
 
@@ -103,9 +117,21 @@ const electronAPI = {
         getName: app.getName,
         isPackaged: app.isPackaged,
     },
-    readText: clipboard.readText,
-    writeText: clipboard.writeText,
-    copyImage: (imagePath: string) => clipboard.writeImage(nativeImage.createFromPath(imagePath)),
+    clipboard: {
+        readText: () => ipcRenderer.invoke("clipboard:readText"),
+        writeText: (text: string) => ipcRenderer.invoke("clipboard:writeText", { text }),
+        /**
+         * Copies a PNG to the clipboard. A string is a filesystem path. A byte
+         * array is already-encoded PNG data, such as a canvas export.
+         */
+        copyImage: (imageSource: string | Uint8Array) =>
+            ipcRenderer.invoke(
+                "clipboard:copyImage",
+                typeof imageSource === "string" ? { imagePath: imageSource } : { pngBytes: imageSource },
+            ),
+    },
+    /** Native path for a dropped or picked File. File.path is not on the page. */
+    getPathForFile: (file: File) => webUtils.getPathForFile(file),
     openExternal: (url: string) => shell.openExternal(url),
     showItemInFolder: (path: string) => shell.showItemInFolder(path),
     webFrame: {
@@ -144,7 +170,7 @@ const electronAPI = {
             const handler = () => callback();
             const window = getCurrentWindow();
             window.on(event as any, handler);
-            return () => window.off(event, handler);
+            return () => window.off(event as any, handler);
         },
         /** BrowserWindow id - used to ignore own `fs:fileChanged` echoes when needed */
         id: () => getCurrentWindow().id,

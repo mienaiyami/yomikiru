@@ -104,13 +104,13 @@ describe("BookDetailsPanel", () => {
         expect(screen.getByRole("button", { name: home.shared.continueReading })).toHaveFocus();
     });
 
-    it("swaps Copy Path to Copied after writing the library path", () => {
+    it("swaps Copy Path to Copied after writing the library path", async () => {
         stubBookOnDisk();
-        const writeText = vi.spyOn(window.electron, "writeText");
+        const writeText = vi.spyOn(window.electron.clipboard, "writeText");
         const { item } = renderBookPanel();
         fireEvent.click(screen.getByRole("button", { name: common.contextMenu.copyPath }));
         expect(writeText).toHaveBeenCalledWith(item.link);
-        expect(screen.getByRole("button", { name: settings.shared.copied })).toBeInTheDocument();
+        expect(await screen.findByRole("button", { name: settings.shared.copied })).toBeInTheDocument();
         writeText.mockRestore();
     });
 

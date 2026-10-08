@@ -61,6 +61,12 @@ export const formatByteSize = (bytes: number, units: { bytes: string; kb: string
 };
 
 /**
+ * Native filesystem path for a file the page received from drag-and-drop or a file input.
+ * The path comes from the preload bridge, not from the File object.
+ */
+export const pathFromDroppedFile = (file: File): string => window.electron.getPathForFile(file);
+
+/**
  * Opens the shared file/directory picker, normalizes directory results, and optionally invokes `cb`.
  * Multi-file mode returns every selected file; cancellation returns `null` without invoking `cb`.
  */

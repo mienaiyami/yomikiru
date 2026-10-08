@@ -104,7 +104,9 @@ describe("Combobox", () => {
                 placeholder="Find"
             />,
         );
-        fireEvent.keyDown(screen.getByPlaceholderText("Find"), { key: "Escape", code: "Escape" });
+        const input = screen.getByPlaceholderText("Find");
+        input.focus();
+        fireEvent.keyDown(input, { key: "Escape", code: "Escape" });
         expect(onChange).toHaveBeenCalledWith("");
         expect(onDismiss).not.toHaveBeenCalled();
     });
@@ -121,7 +123,9 @@ describe("Combobox", () => {
                 placeholder="Find"
             />,
         );
-        fireEvent.keyDown(screen.getByPlaceholderText("Find"), { key: "Escape", code: "Escape" });
+        const input = screen.getByPlaceholderText("Find");
+        input.focus();
+        fireEvent.keyDown(input, { key: "Escape", code: "Escape" });
         expect(onDismiss).toHaveBeenCalled();
     });
 

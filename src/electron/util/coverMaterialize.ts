@@ -5,6 +5,7 @@ import type { Readable } from "node:stream";
 import { type ManagedCoverSlot, managedCoverFileName } from "@common/library/covers";
 import type { CoverOpResult } from "@common/types/ipc";
 import { app } from "electron";
+import type sharpFactory from "sharp";
 import { createMainLogger } from "./logger";
 
 const logger = createMainLogger("util/coverMaterialize");
@@ -15,12 +16,18 @@ const MAX_EDGE = 650;
 const WEBP_QUALITY = 90;
 const SHARP_RUNTIME_RESOURCE_DIRECTORY = "sharp";
 
-/** Loads Sharp from its explicit external runtime in packages and the dependency tree in development. */
-const loadSharp = (): typeof import("sharp") => {
+/** Callable Sharp factory, including static helpers such as cache. */
+type SharpFactory = typeof sharpFactory;
+
+/**
+ * Loads Sharp from its explicit external runtime in packages and the dependency tree in development.
+ * The package export is a factory function; `typeof import("sharp")` is the module namespace, not that factory.
+ */
+const loadSharp = (): SharpFactory => {
     const runtimeRequire = app?.isPackaged
         ? createRequire(path.join(process.resourcesPath, SHARP_RUNTIME_RESOURCE_DIRECTORY, "package.json"))
         : createRequire(__filename);
-    return runtimeRequire("sharp") as typeof import("sharp");
+    return runtimeRequire("sharp") as SharpFactory;
 };
 
 const sharp = loadSharp();

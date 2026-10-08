@@ -47,7 +47,14 @@ import UiBlockOverlay from "./components/UiBlockOverlay";
 import i18n from "./i18n";
 import Main from "./Main";
 import TopBar from "./TopBar";
-import { formatUtils, promptSelectDir, readerPresetsPath, settingsPath, themesPath } from "./utils/file";
+import {
+    formatUtils,
+    pathFromDroppedFile,
+    promptSelectDir,
+    readerPresetsPath,
+    settingsPath,
+    themesPath,
+} from "./utils/file";
 import { createRendererLogger } from "./utils/logger";
 
 const log = createRendererLogger("App");
@@ -416,7 +423,7 @@ const App = (): ReactElement => {
                     label: i18n.t("contextMenu.copyPath", { ns: "common" }),
                     disabled: !url,
                     action() {
-                        window.electron.writeText(url);
+                        void window.electron.clipboard.writeText(url);
                     },
                 };
             },
@@ -425,7 +432,7 @@ const App = (): ReactElement => {
                     label: i18n.t("contextMenu.copyImage", { ns: "common" }),
                     disabled: !url,
                     action() {
-                        window.electron.copyImage(url.replace("file://", ""));
+                        void window.electron.clipboard.copyImage(url.replace("file://", ""));
                     },
                 };
             },
@@ -609,22 +616,23 @@ const App = (): ReactElement => {
                     if (e.dataTransfer) {
                         const data = e.dataTransfer.files;
                         if (data.length > 0) {
-                            if (!window.fs.existsSync(data[0].path)) return;
-                            if (linkInReader === data[0].path) return;
+                            const droppedPath = pathFromDroppedFile(data[0]);
+                            if (!droppedPath || !window.fs.existsSync(droppedPath)) return;
+                            if (linkInReader === droppedPath) return;
                             if (data.length > 1)
                                 dialogUtils.customError({
                                     message: i18n.t("app.dropMultipleOnlyFirst", { ns: "common" }),
                                 });
-                            await window.fs.access(data[0].path);
-                            if (window.fs.isDir(data[0].path)) {
+                            await window.fs.access(droppedPath);
+                            if (window.fs.isDir(droppedPath)) {
                                 await closeReader();
-                                await openInReaderIfValid(data[0].path);
-                            } else if (formatUtils.files.test(data[0].path)) {
+                                await openInReaderIfValid(droppedPath);
+                            } else if (formatUtils.files.test(droppedPath)) {
                                 await closeReader();
-                                await openInReaderIfValid(data[0].path);
-                            } else if (formatUtils.image.test(data[0].path.toLowerCase())) {
+                                await openInReaderIfValid(droppedPath);
+                            } else if (formatUtils.image.test(droppedPath.toLowerCase())) {
                                 await closeReader();
-                                await openInReaderIfValid(window.path.dirname(data[0].path));
+                                await openInReaderIfValid(window.path.dirname(droppedPath));
                             }
                         }
                     }

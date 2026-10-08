@@ -143,7 +143,7 @@ export const getBookmarkItemPath = (bookmark: LibraryBookmark): string => {
 export const copyPathsToClipboard = (paths: readonly string[]): void => {
     const cleaned = paths.filter(Boolean);
     if (cleaned.length === 0) return;
-    window.electron.writeText(cleaned.join("\n"));
+    void window.electron.clipboard.writeText(cleaned.join("\n"));
 };
 
 /**
