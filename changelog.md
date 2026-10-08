@@ -13,7 +13,11 @@
 > Issue is only present to users using "Setup" version.
 > For more information, see [Announcement #451](https://github.com/mienaiyami/yomikiru/discussions/451) -->
 
-# unreleased
+# 2.25.0-beta
+
+### 2.25.0-beta.8
+
+Electron 44 and reader/gallery follow-ups since beta.7: 64-bit builds on Windows 10 or later, high-bitdepth AVIF covers, catalog shortcuts, virtualized long lists, and fixes for zen scroll, EPUB extract races, and gallery layout.
 
 - feat: The desktop shell is Electron 44 (Chromium 152). Builds are 64-bit only and need Windows 10 or later (macOS 13 or later if you build a Mac package). The 32-bit setup and the 32-bit portable zip are no longer real 32-bit builds. The 64-bit portable zip and the 64-bit setup stay, and copies of those files are also uploaded under the old 32-bit filenames so an existing 32-bit install can update on 64-bit Windows. Those extra files are release assets only; the release-notes download table does not list them. Windows 7, 8, and 8.1 are not supported. The last stable that still supports them is 2.24.0, and the last beta is 2.25.0-beta.7. Library covers can decode high-bitdepth AVIF images that previously failed to materialize. Dragging a folder or file onto the window still opens it. Copying a path, theme, or preset still waits until the clipboard write finishes before the control shows Copied. `better-sqlite3` is 12. Its transactions must stay synchronous, so library writes that used to `await` inside a transaction now run synchronously.
 - feat: The Shortcuts settings tab is driven by the command catalog. Commands sit in grouped Settings-style sections with compact key chips (remove is always visible), an Add control that records after you click it, and Reset per command — including window actions that used to be fixed. You can assign the same key to more than one command; the row notes a same-screen competition or a key reused on another screen, and does not block the assignment. Changes apply immediately without a restart. Bindings use physical keyboard codes; Settings, Usage, and the application menu show those chords (the menu does not register a second accelerator). Ctrl+scroll reader width stays a pointer gesture. Enter, Shift+Enter, and Space on chrome (submit, click, toggle) are not Shortcuts commands. List Select stays Enter.
@@ -24,8 +28,6 @@
 - fix: AniList search results use the full result-row height again (covers and titles were clipped into the row above). Closing gallery details no longer flashes a cover across the window: the cover grid stays laid out while details are open, and a hidden width of 0 is not treated as a one-column gallery.
 - fix: Opening an EPUB no longer fails with `ENOTEMPTY` when a second open deletes the extract folder while 7-Zip is still writing. The destination wipe retries that Windows race, overlapping unzips of the same folder share one extract, and invalid locators with apostrophes in ids no longer throw from `querySelector`. Incomplete leftover extracts (`SOURCE` present but `container.xml` missing) are extracted again instead of reused.
 - fix: Entering or leaving zen mode keeps the same place on a tall page. The reading column changes width with the side-list peek, scrollbar, and fullscreen, so fit-to-width pages change height; the view stays on the same point in the page instead of sliding ahead. This was most noticeable on long manhwa strips.
-
-# 2.25.0-beta
 
 ### 2.25.0-beta.7
 
