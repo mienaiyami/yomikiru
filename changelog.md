@@ -15,7 +15,7 @@
 
 # 2.25.0-beta
 
-### 2.25.0-beta.11
+### 2.25.0-beta.12
 
 Electron 44 and reader/gallery follow-ups since beta.7: 64-bit builds on Windows 10 or later, high-bitdepth AVIF covers, catalog shortcuts, virtualized long lists, and fixes for zen scroll, EPUB extract races, and gallery layout.
 
