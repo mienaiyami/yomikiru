@@ -3,8 +3,14 @@ import { librarySettingsSchema } from "@common/library/folders";
 import { z } from "zod";
 
 /**
+ * Directory name under the app data folder for the default extract and render cache.
+ * The OS temp directory is not the default, because the system may delete it.
+ */
+export const APP_TEMP_DIR_NAME = "temp";
+
+/**
  * Main-process settings persisted in `main-settings.json`.
- * `tempPath` has no schema default: callers pass the OS temp via {@link parseMainSettings}.
+ * `tempPath` has no schema default: callers pass the app-data temp directory via {@link parseMainSettings}.
  */
 export const mainSettingsSchema = z
     .object({
@@ -52,8 +58,7 @@ export const mainSettingsSchema = z
 export type MainSettingsType = z.infer<typeof mainSettingsSchema>;
 
 /**
- * Parses stored or partial main settings. `fallbackTempPath` is used when `tempPath` is
- * missing or blank (OS temp from Electron `app.getPath("temp")`).
+ * Parses stored or partial main settings. `fallbackTempPath` is used when `tempPath` is missing or blank.
  */
 export const parseMainSettings = (raw: unknown, fallbackTempPath: string): MainSettingsType => {
     const obj = raw !== null && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
@@ -65,3 +70,10 @@ export const parseMainSettings = (raw: unknown, fallbackTempPath: string): MainS
  * Schema defaults plus `tempPath`. Renderer Redux uses this before `mainSettings:get` returns.
  */
 export const defaultMainSettings = (tempPath: string): MainSettingsType => parseMainSettings({}, tempPath);
+
+/**
+ * Temp directory to persist. A stored path equal to the OS temp directory becomes `appDataTempPath`.
+ * Any other stored path is returned unchanged.
+ */
+export const replaceOsTempPath = (storedTempPath: string, osTempPath: string, appDataTempPath: string): string =>
+    storedTempPath === osTempPath && osTempPath !== appDataTempPath ? appDataTempPath : storedTempPath;

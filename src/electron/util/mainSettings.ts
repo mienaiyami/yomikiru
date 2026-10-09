@@ -2,9 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { libraryFoldersNeedHeal } from "@common/library/folders";
 import {
+    APP_TEMP_DIR_NAME,
     type MainSettingsType,
     mainSettingsSchema,
     parseMainSettings as parseMainSettingsJson,
+    replaceOsTempPath,
 } from "@common/mainSettings";
 import { ipc } from "@electron/ipc/utils";
 import { app } from "electron";
@@ -35,12 +37,24 @@ export class MainSettings {
         MainSettings.afterUpdate = fn;
     }
 
+    /**
+     * Default extract/render directory under the app data folder.
+     * The OS temp directory is not used, because the system may delete it.
+     */
+    private static appDataTempPath(): string {
+        return path.join(app.getPath("userData"), APP_TEMP_DIR_NAME);
+    }
+
     private static makeMainSettingsJson(): MainSettingsType {
-        const defaultSettings = parseMainSettingsJson({}, app.getPath("temp"));
+        const defaultSettings = parseMainSettingsJson({}, MainSettings.appDataTempPath());
         fs.writeFileSync(MainSettings.settingsPath, JSON.stringify(defaultSettings, null, 2));
         return defaultSettings;
     }
 
+    /**
+     * Loads `main-settings.json`, creating it when missing.
+     * Replaces a stored temp path equal to the OS temp directory with the app-data folder and writes that back.
+     */
     private static parseMainSettings(): MainSettingsType {
         try {
             if (!fs.existsSync(MainSettings.settingsPath)) {
@@ -50,9 +64,21 @@ export class MainSettings {
             const parsedJSON = JSON.parse(fs.readFileSync(MainSettings.settingsPath, "utf-8")) as {
                 library?: { folders?: unknown };
             };
-            const parsed = parseMainSettingsJson(parsedJSON, app.getPath("temp"));
-            /* persist when the loader restored the one-flagged-row invariant */
-            if (libraryFoldersNeedHeal(parsedJSON?.library?.folders)) {
+            const appDataTempPath = MainSettings.appDataTempPath();
+            let parsed = parseMainSettingsJson(parsedJSON, appDataTempPath);
+            /*
+             * getPath("temp") is still the OS directory here. applySettings calls setPath
+             * afterward. A stored path equal to that directory is the old default.
+             */
+            const osTempPath = app.getPath("temp");
+            const tempPath = replaceOsTempPath(parsed.tempPath, osTempPath, appDataTempPath);
+            const movedOffOsTemp = tempPath !== parsed.tempPath;
+            if (movedOffOsTemp) {
+                parsed = { ...parsed, tempPath };
+                logger.info("temp folder now uses app data", { tempPath });
+            }
+            /* persist when the temp default moved, or the loader restored the one-flagged-row invariant */
+            if (movedOffOsTemp || libraryFoldersNeedHeal(parsedJSON?.library?.folders)) {
                 fs.writeFileSync(MainSettings.settingsPath, JSON.stringify(parsed, null, 2));
             }
             return parsed;
@@ -62,15 +88,25 @@ export class MainSettings {
         }
     }
 
+    /**
+     * Applies hardware acceleration and points Electron's temp directory at `tempPath`.
+     * Creates that directory first, because `setPath` throws when it is missing.
+     * On failure, logs and leaves the process temp directory unchanged so startup can continue.
+     */
     private static applySettings(currentSettings: MainSettingsType): void {
         if (!currentSettings.hardwareAcceleration && !app.isReady()) {
             app.disableHardwareAcceleration();
         }
 
         if (currentSettings.tempPath !== app.getPath("temp")) {
-            app.setPath("temp", currentSettings.tempPath);
-            if (!fs.existsSync(currentSettings.tempPath)) {
-                fs.mkdirSync(currentSettings.tempPath, { recursive: true });
+            try {
+                // setPath throws when the directory does not exist yet
+                if (!fs.existsSync(currentSettings.tempPath)) {
+                    fs.mkdirSync(currentSettings.tempPath, { recursive: true });
+                }
+                app.setPath("temp", currentSettings.tempPath);
+            } catch (err) {
+                logger.error("failed to use configured temp folder", { tempPath: currentSettings.tempPath }, err);
             }
         }
     }
@@ -111,8 +147,6 @@ export class MainSettings {
             if (fs.existsSync(oldTempPath)) {
                 newSettings.tempPath = fs.readFileSync(oldTempPath, "utf-8");
                 fs.rmSync(oldTempPath, { force: true });
-            } else {
-                newSettings.tempPath = app.getPath("temp");
             }
 
             if (fs.existsSync(oldOpenInExistingWindowPath)) {

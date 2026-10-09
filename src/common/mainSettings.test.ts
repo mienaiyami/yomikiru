@@ -1,6 +1,6 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { defaultMainSettings, parseMainSettings } from "./mainSettings";
+import { defaultMainSettings, parseMainSettings, replaceOsTempPath } from "./mainSettings";
 
 describe("parseMainSettings", () => {
     it("fills fallback tempPath when raw omits it", () => {
@@ -24,5 +24,23 @@ describe("parseMainSettings", () => {
         expect(parsed.library.folders).toHaveLength(1);
         expect(parsed.library.folders[0]?.isDefaultLocation).toBe(true);
         expect(parsed.library.folders[0]?.path).toBe("");
+    });
+});
+
+describe("replaceOsTempPath", () => {
+    const osTempPath = path.join("Users", "reader", "AppData", "Local", "Temp");
+    const appDataTempPath = path.join("Users", "reader", "AppData", "Roaming", "yomikiru", "temp");
+
+    it("replaces a stored OS temp path with the app data folder", () => {
+        expect(replaceOsTempPath(osTempPath, osTempPath, appDataTempPath)).toBe(appDataTempPath);
+    });
+
+    it("keeps a custom folder", () => {
+        const customTempPath = path.join("fast", "cache");
+        expect(replaceOsTempPath(customTempPath, osTempPath, appDataTempPath)).toBe(customTempPath);
+    });
+
+    it("keeps the path when the OS temp directory is already the app data folder", () => {
+        expect(replaceOsTempPath(appDataTempPath, appDataTempPath, appDataTempPath)).toBe(appDataTempPath);
     });
 });

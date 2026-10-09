@@ -1,3 +1,4 @@
+import { APP_TEMP_DIR_NAME } from "@common/mainSettings";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { updateMainSettings } from "@store/mainSettings";
@@ -16,15 +17,14 @@ const CustomTempLocation: React.FC = () => {
     const appSettings = useAppSelector((state) => state.appSettings);
     const { tempPath } = useAppSelector((state) => state.mainSettings);
 
-    const updateTempPath = async (newPath?: string) => {
+    const updateTempPath = async (newPath: string) => {
         try {
-            if (newPath === undefined || window.fs.existsSync(newPath)) {
-                dispatch(updateMainSettings({ tempPath: newPath }));
-            } else {
-                throw new Error(`Folder does not exist : ${newPath}`);
+            if (!window.fs.existsSync(newPath)) {
+                await window.fs.mkdir(newPath, { recursive: true });
             }
+            dispatch(updateMainSettings({ tempPath: newPath }));
         } catch (reason) {
-            log.error("temp path update failed (IPC)", reason);
+            log.error("temp path update failed", { tempPath: newPath }, reason);
         }
     };
 
@@ -51,7 +51,9 @@ const CustomTempLocation: React.FC = () => {
             <div className="main row">
                 <button
                     onClick={() => {
-                        updateTempPath();
+                        void updateTempPath(
+                            window.path.join(window.electron.app.getPath("userData"), APP_TEMP_DIR_NAME),
+                        );
                     }}
                 >
                     {t("tempFolder.useDefault")}

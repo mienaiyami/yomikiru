@@ -13,6 +13,10 @@
 > Issue is only present to users using "Setup" version.
 > For more information, see [Announcement #451](https://github.com/mienaiyami/yomikiru/discussions/451) -->
 
+# unreleased
+
+- fix: Extracted archives, EPUBs, and rendered PDFs use a temp folder inside the app data directory by default, so a system temp cleanup does not delete that cache. A saved path that is still the system temp directory is replaced with that folder. Any other folder you set is kept.
+
 # 2.25.0-beta
 
 ### 2.25.0-beta.13

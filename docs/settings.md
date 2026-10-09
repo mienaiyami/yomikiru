@@ -70,7 +70,7 @@ These live in the main process and affect Electron-level behaviour. They are mir
 The Zod schema inside `mainSettings.ts` documents every key inline. Key areas:
 
 - **Window behaviour** — `askBeforeClosing`, `openInExistingWindow` (single-instance reuse), `minimizeToTray`
-- **Performance** — `hardwareAcceleration` (disable GPU; requires restart), `tempPath` (custom temp dir)
+- **Performance** — `hardwareAcceleration` (disable GPU; requires restart), `tempPath` (extract/render directory; default is a folder under userData). A stored path equal to the OS temp directory is replaced with that folder.
 - **Updates** — `checkForUpdates`, `autoDownload`, `skipPatch`, `channel` (`"stable"` or `"beta"`)
 
 Changes take effect immediately for tray and tempPath; HWA requires restarting the app. IPC `mainSettings:update` broadcasts the new value to all windows via `mainSettings:sync`.

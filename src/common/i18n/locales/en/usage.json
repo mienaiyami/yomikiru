@@ -172,7 +172,8 @@
     "pdfScale": {
         "link": "PDF Scale:",
         "body": "Set the quality of the images. Higher number means higher quality but also high initial cpu and storage usage.",
-        "warning": "Do not use high scale with pdf which have high page count."
+        "warning": "Do not use high scale with pdf which have high page count.",
+        "temp": "Extracted archives, EPUBs, and rendered PDFs go in the <link>temp folder</link>. The default is inside the app data directory so the system does not delete that cache."
     },
     "anilist": {
         "title": "AniList Tracking : ",

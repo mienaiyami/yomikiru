@@ -639,6 +639,14 @@ const Usage = (): ReactElement => {
                     </SettingsLink>{" "}
                     {t("pdfScale.body")} <br />
                     <b>{t("pdfScale.warning")}</b>
+                    <br />
+                    <Trans
+                        i18nKey="pdfScale.temp"
+                        ns="usage"
+                        components={{
+                            link: <SettingsLink targetId="setting:custom-temp" />,
+                        }}
+                    />
                 </li>
                 <li id="settings-usage-anilist">
                     <SettingsLink targetId="setting:anilist">
