@@ -13,7 +13,8 @@ import { MainSettings } from "./mainSettings";
 import { TrayManager } from "./tray";
 
 declare const HOME_WEBPACK_ENTRY: string;
-declare const HOME_PRELOAD_WEBPACK_ENTRY: string;
+/** Forge define for the `home_preload` entry. Dev is a file path; production resolves next to the main bundle. */
+declare const HOME_PRELOAD_PRELOAD_WEBPACK_ENTRY: string;
 
 export class WindowManager {
     private static windows: (BrowserWindow | null)[] = [];
@@ -84,7 +85,7 @@ export class WindowManager {
                 sandbox: false,
                 webSecurity: app.isPackaged,
                 safeDialogs: true,
-                preload: HOME_PRELOAD_WEBPACK_ENTRY,
+                preload: HOME_PRELOAD_PRELOAD_WEBPACK_ENTRY,
             },
         });
 

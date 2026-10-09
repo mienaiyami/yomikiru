@@ -136,6 +136,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # Ubuntu 22.04's unversioned clang is Clang 14. Electron 44's V8 headers
+      # use std::source_location, which Clang 14 does not provide. Clang 15 does.
+      # https://github.com/arcboxlabs/linkcode/pull/343
+      - name: Use Clang 15 for native modules
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-15
+          echo "CC=clang-15" >> "$GITHUB_ENV"
+          echo "CXX=clang++-15" >> "$GITHUB_ENV"
+
       - name: forge make
         run: pnpm make:deb
 

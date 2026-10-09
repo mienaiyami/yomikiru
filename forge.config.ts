@@ -213,19 +213,21 @@ const config: ForgeConfig = {
             },
             mainConfig,
             renderer: {
-                /*
-                 * Forge 7 reads this flag when choosing the preload webpack target.
-                 * Leave it unset and the preload bundle is target web, so Node
-                 * built-ins such as node:path do not resolve. The page config
-                 * still sets target web, and that override is what the page bundle uses.
-                 */
-                nodeIntegration: true,
                 config: rendererConfig,
                 entryPoints: [
                     {
                         html: "./public/index.html",
                         js: "./src/renderer/index.tsx",
                         name: "home",
+                    },
+                    /*
+                     * Preload-only so the page stays a web bundle. A window entry
+                     * with nodeIntegration makes Forge inject require("path") into
+                     * the production page, and the page has no require.
+                     */
+                    {
+                        name: "home_preload",
+                        nodeIntegration: true,
                         preload: {
                             js: "./src/electron/preload.ts",
                             config: preloadConfig,
