@@ -11,14 +11,31 @@ export type VisibleNcxRow = {
 };
 
 /**
- * Resolves the TOC {@link EpubTocElement.navId} whose href matches `chapterHref`.
- * Returns null when no TOC entry points at that href.
+ * Path of a TOC or spine href with the fragment removed.
+ * Separators are unified so package paths compare equal across platforms.
+ */
+const tocHrefPath = (href: string): string => href.split("#")[0]?.replaceAll("\\", "/") ?? "";
+
+/**
+ * TOC {@link EpubTocElement.navId} for the spine href open in the reader.
+ * An exact href wins; when several rows share it, the deepest row is the
+ * nested chapter (a parent often repeats the same file). Otherwise the
+ * shallowest row whose path matches once the fragment is removed.
+ * Returns null when no row points at that file.
  */
 export const findNavIdByHref = (toc: EpubToc, chapterHref: string): string | null => {
+    const chapterPath = tocHrefPath(chapterHref);
+    let exactMatch: { navId: string; level: number } | null = null;
+    let pathMatch: { navId: string; level: number } | null = null;
     for (const [navId, entry] of toc) {
-        if (entry.href === chapterHref) return navId;
+        if (entry.href === chapterHref) {
+            if (!exactMatch || entry.level > exactMatch.level) exactMatch = { navId, level: entry.level };
+            continue;
+        }
+        if (!chapterPath || tocHrefPath(entry.href) !== chapterPath) continue;
+        if (!pathMatch || entry.level < pathMatch.level) pathMatch = { navId, level: entry.level };
     }
-    return null;
+    return exactMatch?.navId ?? pathMatch?.navId ?? null;
 };
 
 /**

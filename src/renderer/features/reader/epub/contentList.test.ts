@@ -104,6 +104,36 @@ describe("findNavIdByHref", () => {
         expect(findNavIdByHref(toc, "chap/c.xhtml")).toBe("c");
         expect(findNavIdByHref(toc, "missing")).toBeNull();
     });
+
+    it("prefers the deepest row when several entries share the chapter href", () => {
+        const toc: EpubToc = new Map([
+            ["part", { navId: "part", title: "Part", href: "chap/c.xhtml", level: 0 }],
+            ["nested", { navId: "nested", title: "Nested", href: "chap/c.xhtml", level: 2 }],
+        ]);
+        expect(findNavIdByHref(toc, "chap/c.xhtml")).toBe("nested");
+    });
+
+    it("matches a nested fragment href to the spine path and keeps the shallower row", () => {
+        const toc: EpubToc = new Map([
+            ["part", { navId: "part", title: "Part", href: "chap/part.xhtml", level: 0 }],
+            ["scene", { navId: "scene", title: "Scene", href: "chap/c.xhtml#a/b", level: 3 }],
+            ["deeper", { navId: "deeper", title: "Deeper", href: "chap/c.xhtml#a/b/c", level: 4 }],
+        ]);
+        expect(findNavIdByHref(toc, "chap/c.xhtml")).toBe("scene");
+    });
+
+    it("keeps an exact file href ahead of a deeper fragment on the same path", () => {
+        const toc: EpubToc = new Map([
+            ["chapter", { navId: "chapter", title: "Chapter", href: "chap/c.xhtml", level: 1 }],
+            ["scene", { navId: "scene", title: "Scene", href: "chap/c.xhtml#scene", level: 3 }],
+        ]);
+        expect(findNavIdByHref(toc, "chap/c.xhtml")).toBe("chapter");
+    });
+
+    it("matches when only the separators differ", () => {
+        const toc: EpubToc = new Map([["c", { navId: "c", title: "C", href: "chap\\c.xhtml#id", level: 2 }]]);
+        expect(findNavIdByHref(toc, "chap/c.xhtml")).toBe("c");
+    });
 });
 
 describe("visibleRowIndexForNavId", () => {

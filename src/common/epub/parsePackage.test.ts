@@ -156,4 +156,86 @@ describe("parseExtractedEpubDir", () => {
         expect(pkg.spine).toEqual([{ id: chapterId, href: chapter }]);
         expect(pkg.manifest.get(chapterId)?.href).toBe(chapter);
     });
+
+    it("keeps nested NCX fragments and attaches deep navPoints to their parent", async () => {
+        const root = path.join("epub-nested-ncx");
+        const container = path.join(root, "META-INF", "container.xml");
+        const opf = path.join(root, "OEBPS", "content.opf");
+        const ncx = path.join(root, "OEBPS", "toc.ncx");
+        const part = path.join(root, "OEBPS", "Text", "part.xhtml");
+        const chapter = path.join(root, "OEBPS", "Text", "ch.xhtml");
+        const files: Record<string, string> = {
+            [root]: "",
+            [container]: `<container><rootfile full-path="OEBPS/content.opf"/></container>`,
+            [opf]: `<package>
+                  <metadata><dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">Nested</dc:title></metadata>
+                  <manifest>
+                    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+                    <item id="part" href="Text/part.xhtml" media-type="application/xhtml+xml"/>
+                    <item id="ch" href="Text/ch.xhtml" media-type="application/xhtml+xml"/>
+                  </manifest>
+                  <spine toc="ncx">
+                    <itemref idref="part"/>
+                    <itemref idref="ch"/>
+                  </spine>
+                </package>`,
+            [ncx]: `<ncx><navMap>
+                  <navPoint id="part">
+                    <navLabel><text>Part</text></navLabel>
+                    <content src="Text/part.xhtml"/>
+                    <navPoint id="ch">
+                      <navLabel><text>Chapter</text></navLabel>
+                      <content src="Text/ch.xhtml#a/b"/>
+                      <navPoint id="scene">
+                        <navLabel><text>Scene</text></navLabel>
+                        <content src="Text/ch.xhtml#a/b/c"/>
+                      </navPoint>
+                    </navPoint>
+                  </navPoint>
+                </navMap></ncx>`,
+            [part]: "<html/>",
+            [chapter]: "<html/>",
+        };
+        const pkg = await parseExtractedEpubDir(root, ioForFiles(files));
+        expect(pkg.ncx[0]?.navId).toBe("part");
+        expect(pkg.ncx[0]?.sub[0]?.navId).toBe("ch");
+        expect(pkg.ncx[0]?.sub[0]?.sub[0]?.navId).toBe("scene");
+        expect(pkg.metadata.ncx_depth).toBe(2);
+        expect(pkg.toc.get("ch")).toMatchObject({ href: `${chapter}#a/b`, chapterId: "ch", level: 1 });
+        expect(pkg.toc.get("scene")?.href).toBe(`${chapter}#a/b/c`);
+    });
+
+    it("keeps nested EPUB3 nav fragments on the spine path", async () => {
+        const root = path.join("epub-nested-nav");
+        const container = path.join(root, "META-INF", "container.xml");
+        const opf = path.join(root, "content.opf");
+        const nav = path.join(root, "nav.xhtml");
+        const chapter = path.join(root, "c.xhtml");
+        const files: Record<string, string> = {
+            [root]: "",
+            [container]: `<container><rootfile full-path="content.opf"/></container>`,
+            [opf]: `<package>
+                  <metadata><dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">Nav</dc:title></metadata>
+                  <manifest>
+                    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+                    <item id="c1" href="c.xhtml" media-type="application/xhtml+xml"/>
+                  </manifest>
+                  <spine><itemref idref="c1"/></spine>
+                </package>`,
+            [nav]: `<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+                <nav epub:type="toc"><ol>
+                  <li><a href="c.xhtml">Part</a>
+                    <ol><li><a href="c.xhtml#a/b">Chapter</a>
+                      <ol><li><a href="c.xhtml#a/b/c">Scene</a></li></ol>
+                    </li></ol>
+                  </li>
+                </ol></nav>
+              </html>`,
+            [chapter]: "<html/>",
+        };
+        const pkg = await parseExtractedEpubDir(root, ioForFiles(files));
+        expect(pkg.ncx[0]?.sub[0]?.sub[0]?.navId).toBe("toc-2");
+        expect(pkg.toc.get("toc-1")?.href).toBe(`${chapter}#a/b`);
+        expect(pkg.toc.get("toc-2")).toMatchObject({ href: `${chapter}#a/b/c`, chapterId: "c1", level: 2 });
+    });
 });

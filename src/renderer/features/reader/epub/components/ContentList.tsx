@@ -55,6 +55,14 @@ const ContentListInner = forwardRef<ContentListHandle, ContentListProps>(
         const [listShow, setListShow] = useState(() => new Array(epubTOC.size).fill(false) as boolean[]);
         /* pending scroll after expand; applied once the flattened row exists */
         const pendingScrollRef = useRef<{ navId: string; align: "start" | "center" } | null>(null);
+        /*
+         * The virtualizer rerenders this list on scroll. The match walks every TOC
+         * entry and only changes with the TOC or the open chapter href.
+         */
+        const currentNavId = useMemo(
+            () => findNavIdByHref(epubTOC, currentChapterHref),
+            [epubTOC, currentChapterHref],
+        );
 
         const visibleRows = useMemo(() => flattenVisibleNcxRows(epubNCX, listShow), [epubNCX, listShow]);
 
@@ -79,20 +87,17 @@ const ContentListInner = forwardRef<ContentListHandle, ContentListProps>(
             contentListRef,
             () => ({
                 locateCurrent: (align = "center") => {
-                    const navId = findNavIdByHref(epubTOC, currentChapterHref);
-                    if (!navId) return;
-                    revealAndScroll(navId, align);
+                    if (!currentNavId) return;
+                    revealAndScroll(currentNavId, align);
                 },
             }),
-            [contentListRef, currentChapterHref, epubTOC, revealAndScroll],
+            [currentNavId, revealAndScroll],
         );
 
         useEffect(() => {
-            if (!focusChapterInList) return;
-            const navId = findNavIdByHref(epubTOC, currentChapterHref);
-            if (!navId) return;
-            revealAndScroll(navId, "start");
-        }, [currentChapterHref, epubTOC, focusChapterInList, revealAndScroll]);
+            if (!focusChapterInList || !currentNavId) return;
+            revealAndScroll(currentNavId, "start");
+        }, [currentNavId, focusChapterInList, revealAndScroll]);
 
         useLayoutEffect(() => {
             const pending = pendingScrollRef.current;
@@ -133,7 +138,7 @@ const ContentListInner = forwardRef<ContentListHandle, ContentListProps>(
                     const row = visibleRows[virtualRow.index];
                     if (!row) return null;
                     const tocEntry = epubTOC.get(row.navId);
-                    const isCurrent = tocEntry?.href === currentChapterHref;
+                    const isCurrent = row.navId === currentNavId;
                     const isExpanded = listShow[row.ncx_index2];
                     return (
                         <li

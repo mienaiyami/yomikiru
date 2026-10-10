@@ -46,6 +46,20 @@ const readUtf8 = async (io: LibraryIo, filePath: string): Promise<string> => {
     return (await io.fs.readFile(filePath, "utf-8")).trim();
 };
 
+/**
+ * Resolves a TOC reference against the directory that contains the nav or NCX.
+ * The fragment is kept as authored. Passing it through path.join rewrites
+ * separators inside the fragment on Windows and breaks chapter matching.
+ */
+const resolveTocHref = (baseDir: string, rawHref: string, libraryPath: LibraryIo["path"]): string => {
+    if (!rawHref || rawHref.startsWith("#") || rawHref.startsWith("http")) return rawHref;
+    const hashAt = rawHref.indexOf("#");
+    const pathPart = hashAt >= 0 ? rawHref.slice(0, hashAt) : rawHref;
+    const fragment = hashAt >= 0 ? rawHref.slice(hashAt) : "";
+    if (!pathPart) return fragment;
+    return `${libraryPath.join(baseDir, pathPart)}${fragment}`;
+};
+
 /** Returns the most recent nested TOC parent at `level`. */
 const nthDeepParent = (tree: EpubParsedToc["ncx"], level: number): EpubParsedToc["ncx"][number] => {
     if (level === 0) return tree[tree.length - 1] as EpubParsedToc["ncx"][number];
@@ -90,7 +104,7 @@ const parseNcx = (
             if (!navId || !src) return;
             // tolerate a duplicated Text prefix emitted by some generated EPUB packages
             src = src.replace("Text/Text/", "Text/");
-            src = io.path.join(ncxDir, src);
+            src = resolveTocHref(ncxDir, src, io.path);
             const id = spineIdsByHref.get(src.split("#")[0]);
             toc.set(navId, { navId, title, href: src, level, chapterId: id });
             if (id) {
@@ -152,10 +166,7 @@ const parseNav = (
         let href = "";
         if (anchor) {
             title = (anchor.text || "~").trim() || "~";
-            href = xmlAttr(anchor, "href");
-            if (href && !href.startsWith("http") && !href.startsWith("#")) {
-                href = io.path.join(tocDir, href);
-            }
+            href = resolveTocHref(tocDir, xmlAttr(anchor, "href"), io.path);
         } else if (span) {
             title = (span.text || "~").trim() || "~";
         }
