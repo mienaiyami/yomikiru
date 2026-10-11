@@ -1,4 +1,5 @@
 import type { BookNote } from "@common/types/db";
+import { useAppContext } from "@renderer/App";
 import ListItem from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { removeNote, updateNote } from "@store/bookNotes";
@@ -14,9 +15,15 @@ import { createRendererLogger } from "@utils/logger";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { shallowEqual } from "react-redux";
-import { useAppContext } from "src/renderer/App";
 
 const log = createRendererLogger("epub/NotesList");
+
+/**
+ * Virtual row height for a reader side-list note row.
+ * Chapter, quote, and date stack in the row, with an optional note body.
+ * Fixed-size virtualization uses this as the row box so those lines are not clipped.
+ */
+const NOTE_LIST_ROW_PX = 80;
 
 /** Stable fallback keeps an absent note map from invalidating the selector result. */
 const EMPTY_BOOK_NOTES: readonly BookNote[] = [];
@@ -292,7 +299,7 @@ const NotesList: React.FC<{
                 >
                     <ListNavigator.VirtualList
                         scrollContainerRef={scrollRef}
-                        estimatedItemSize={72}
+                        estimatedItemSize={NOTE_LIST_ROW_PX}
                         hostRowElement={false}
                         rowGapPx={0}
                     />

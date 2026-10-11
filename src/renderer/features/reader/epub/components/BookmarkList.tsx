@@ -1,5 +1,6 @@
 import type { BookBookmark } from "@common/types/db";
-import ListItem, { LIST_ITEM_ROW_PX } from "@renderer/components/ListItem";
+import { useAppContext } from "@renderer/App";
+import ListItem from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
 import { useAppSelector } from "@store/hooks";
 import { getReaderBook } from "@store/reader";
@@ -11,7 +12,12 @@ import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("epub/BookmarkList");
 
-import { useAppContext } from "src/renderer/App";
+/**
+ * Virtual row height for a reader side-list bookmark row (title line plus date).
+ * Fixed-size virtualization uses this as the row box so the date is not clipped.
+ * Manga and book bookmark lists share this layout and must use the same height.
+ */
+const BOOKMARK_LIST_ROW_PX = 48;
 
 /** Stable fallback keeps an absent bookmark map from invalidating the selector result. */
 const EMPTY_BOOK_BOOKMARKS: readonly BookBookmark[] = [];
@@ -105,7 +111,7 @@ const BookmarkList: React.FC<{
             >
                 <ListNavigator.VirtualList
                     scrollContainerRef={scrollRef}
-                    estimatedItemSize={LIST_ITEM_ROW_PX}
+                    estimatedItemSize={BOOKMARK_LIST_ROW_PX}
                     hostRowElement={false}
                     rowGapPx={0}
                 />
