@@ -36,6 +36,8 @@ const basename = (filePath: string, ext?: string): string => {
 describe("format testers", () => {
     it("detects image / packed manga / pdf / book / archive extensions via installed io", () => {
         expect(formatUtils.image.test("a.PNG")).toBe(true);
+        expect(formatUtils.image.test("page.jxl")).toBe(true);
+        expect(formatUtils.image.test("page.JXL")).toBe(true);
         expect(formatUtils.image.test("a.txt")).toBe(false);
         expect(formatUtils.packedManga.test("x.cbz")).toBe(true);
         expect(formatUtils.pdf.test("n.pdf")).toBe(true);

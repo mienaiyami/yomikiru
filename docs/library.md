@@ -383,6 +383,8 @@ Library thumbnails are WebP files stored in `userData/covers/<libraryId>.webp`, 
 
 Cover materialize uses Sharp 0.35, whose prebuilts decode high-bitdepth AVIF. History of the Electron 22 / Sharp 0.34 failure is in [electron-upgrade-sharp-avif-cover-blocker.md](electron-upgrade-sharp-avif-cover-blocker.md). A packaged 10-bit AVIF file still needs a smoke test on each OS you ship.
 
+Sharp's prebuilt binaries do not include a JPEG XL decoder, so a `.jxl` page is not written to `covers/<id>.webp`. The manga reader still shows those pages.
+
 ### Flow
 
 ```mermaid

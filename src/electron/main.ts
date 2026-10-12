@@ -5,6 +5,12 @@ import { createMainLogger } from "./util/logger";
 
 const logger = createMainLogger("main");
 
+/*
+ * JPEG XL decoding is a Chromium feature that stays off unless named here.
+ * Manga pages load through img and canvas, so this has to run before app ready.
+ */
+app.commandLine.appendSwitch("enable-features", "JXLImageFormat");
+
 import { getErrorHandler } from "./util/errorHandler";
 
 remote.initialize();

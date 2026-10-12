@@ -7,7 +7,7 @@
 import { libraryIo } from "@common/library/io";
 
 /** Image files the manga reader and one-shot classifier accept. */
-export const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif"] as const;
+export const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".apng", ".gif", ".avif", ".jxl"] as const;
 
 /** Packed manga archives (not PDF). */
 export const PACKED_MANGA_EXTS = [".zip", ".cbz", ".7z", ".cb7", ".rar", ".cbr"] as const;
