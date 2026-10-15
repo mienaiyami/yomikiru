@@ -36,6 +36,7 @@ describe("GalleryTypeFilterBar", () => {
         const buttons = [...container.querySelectorAll("button")];
         const manga = buttons[1];
         const book = buttons[2];
+        expect(manga).toHaveClass("tooltip-bottom-start");
         expect(manga?.getAttribute("data-tooltip")).toMatch(/manhwa/i);
         expect(manga?.getAttribute("data-tooltip")).toMatch(/webtoon/i);
         expect(book?.getAttribute("data-tooltip")).toMatch(/EPUB/);

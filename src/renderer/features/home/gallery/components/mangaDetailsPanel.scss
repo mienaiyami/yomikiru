@@ -377,8 +377,8 @@
     /*
      * Overlay back control. It is a grid peer of the cover so horizontal view can
      * keep this control sticky while the cover itself scrolls. `#app button` sets
-     * padding / overflow that clips the tooltip; match gallery toolbar action buttons
-     * (`--button-width`, tooltip below).
+     * padding / overflow that clips the tooltip; size matches gallery toolbar
+     * action buttons (`--button-width`). Placement is `tooltip-bottom-start`.
      */
     .details-back {
         grid-area: cover;
@@ -401,12 +401,6 @@
         cursor: pointer;
         background: rgb(0 0 0 / 0.6);
         color: #fff;
-
-        &::before {
-            top: 100%;
-            left: 50%;
-            --translate: -50%, 10px;
-        }
 
         &:hover {
             background: rgb(0 0 0 / 0.8);

@@ -81,7 +81,7 @@ export const DetailsTabBar = <T extends string>({
             <button
                 key={tab.id}
                 type="button"
-                className={`galleryTab ${activeId === tab.id ? "active" : ""}`}
+                className={`galleryTab tooltip-bottom-start${activeId === tab.id ? " active" : ""}`}
                 data-tooltip={tab.label}
                 aria-pressed={activeId === tab.id}
                 aria-label={tab.label}
@@ -572,7 +572,7 @@ export const DetailsHero = ({
         <header ref={heroRef} className={`details-hero${showFacts ? "" : " no-facts"}`}>
             <button
                 type="button"
-                className="details-back"
+                className="details-back tooltip-bottom-start"
                 onClick={onBack}
                 aria-label={t("gallery.details.backToGallery")}
                 data-tooltip={t("gallery.details.backToGallery")}

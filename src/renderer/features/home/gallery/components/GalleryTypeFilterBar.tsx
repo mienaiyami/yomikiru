@@ -61,7 +61,7 @@ const GalleryTypeFilterBar: React.FC<GalleryTypeFilterBarProps> = ({ activeFilte
                     <button
                         key={filter.id}
                         type="button"
-                        className={`galleryTab ${activeFilter === filter.id ? "active" : ""}`}
+                        className={`galleryTab tooltip-bottom-start${activeFilter === filter.id ? " active" : ""}`}
                         data-tooltip={title}
                         onClick={() => onFilterChange(filter.id)}
                         aria-pressed={activeFilter === filter.id}

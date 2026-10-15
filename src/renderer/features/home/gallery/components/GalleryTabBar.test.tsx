@@ -52,6 +52,9 @@ describe("GalleryTabBar", () => {
             "data-tooltip",
             home.gallery.tabs.continue.title,
         );
+        expect(getByRole("button", { name: home.gallery.tabs.continue.title })).toHaveClass(
+            "tooltip-bottom-start",
+        );
         expect(getByRole("button", { name: home.gallery.tabs.library.title })).toHaveAttribute(
             "data-tooltip",
             home.gallery.tabs.library.title,

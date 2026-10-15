@@ -53,6 +53,7 @@ describe("DetailsTabBar", () => {
         );
 
         expect(screen.getByRole("button", { name: "Chapters" })).toHaveAttribute("data-tooltip", "Chapters");
+        expect(screen.getByRole("button", { name: "Chapters" })).toHaveClass("tooltip-bottom-start");
         expect(screen.getByRole("button", { name: "Bookmarks" })).toHaveAttribute("data-tooltip", "Bookmarks");
     });
 });
@@ -141,6 +142,15 @@ describe("DetailsLayout", () => {
 });
 
 describe("DetailsHero", () => {
+    it("aligns the back-button tooltip to the start of the control", () => {
+        renderWithI18n(
+            <DetailsHero title="Title" coverSrc="" coverAlt="" onBack={vi.fn()} onCoverContextMenu={vi.fn()} />,
+        );
+        expect(screen.getByRole("button", { name: home.gallery.details.backToGallery })).toHaveClass(
+            "tooltip-bottom-start",
+        );
+    });
+
     it("separates local summary fields from the note and tracker-derived data", () => {
         const { container } = renderWithI18n(
             <DetailsHero

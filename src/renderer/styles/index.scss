@@ -343,11 +343,15 @@ html{
                 pointer-events: none;
             }
 
-            // &.tooltip-top-start::before {
-            //     left: 0%;
-            //     top: 0%;
-            //     --translate: 0% -100%;
-            // }
+            /*
+             * Under the host, flush with its inline start, so the tip grows
+             * away from that edge instead of centering on the control.
+             */
+            &.tooltip-bottom-start::before {
+                top: 100%;
+                left: 0;
+                --translate: 0, 10px;
+            }
             &:hover::before {
                 opacity: 1;
                 visibility: visible;

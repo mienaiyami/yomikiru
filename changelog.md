@@ -19,6 +19,7 @@
 - fix: Reader side-list bookmark and note rows keep their full height. Bookmarks were clipped to the compact chapter-row size, and notes were short of the quote-and-date layout, so those lines looked squashed.
 - fix: Book side-list auto-focus and locate scroll to the current chapter when it is nested in the table of contents. A link that points at the chapter file with a fragment still matches that row, including a fragment that contains a slash, and a parent that repeats the same file link no longer hides the nested row.
 - fix: Extracted archives, EPUBs, and rendered PDFs use a temp folder inside the app data directory by default, so a system temp cleanup does not delete that cache. A saved path that is still the system temp directory is replaced with that folder. Any other folder you set is kept.
+- fix: Gallery section tabs, type filters, details list tabs, and the gallery details back button show their hover tooltip from the start of the control. Those tab labels stay visible until the window is 1650px wide or narrower.
 - **dev**: Biome skips the local notes folder, so scratch research is not linted or formatted.
 
 # 2.25.0-beta

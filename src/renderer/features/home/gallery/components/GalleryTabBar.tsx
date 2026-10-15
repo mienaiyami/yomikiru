@@ -73,7 +73,7 @@ const GalleryTabBar: React.FC<GalleryTabBarProps> = ({ activeTab, onTabChange })
                     <button
                         key={tab.id}
                         type="button"
-                        className={`galleryTab ${activeTab === tab.id ? "active" : ""}`}
+                        className={`galleryTab tooltip-bottom-start${activeTab === tab.id ? " active" : ""}`}
                         data-tooltip={title}
                         onClick={() => onTabChange(tab.id)}
                         aria-pressed={activeTab === tab.id}

@@ -35,8 +35,9 @@
         button,
         .btn {
             overflow: visible;
-            /* same bottom placement as topBar / reader side list - default is right */
-            &::before {
+            /* same bottom placement as topBar / reader side list - default is right.
+             * tooltip-bottom-start keeps the shared start alignment. */
+            &:not(.tooltip-bottom-start)::before {
                 top: 100%;
                 left: 50%;
                 --translate: -50%, 10px;
@@ -91,11 +92,13 @@
             }
 
             /*
-             * Compact: icon-only tabs (label hidden). Keep the max-width and the
-             * complementary min-width tooltip gate in sync so hover tips only appear
+             * Compact: icon-only tabs (label hidden). The label gate and the
+             * complementary tooltip gate share one width so hover tips only appear
              * while `.galleryTabLabel` is not shown.
              */
-            @media (max-width: 1550px) {
+            $gallery-tab-compact-max: 1650px;
+
+            @media (max-width: $gallery-tab-compact-max) {
                 .galleryTab {
                     width: 2.3em;
                     .galleryTabLabel {
@@ -104,7 +107,7 @@
                 }
             }
 
-            @media (min-width: 1551px) {
+            @media (min-width: $gallery-tab-compact-max + 1px) {
                 .galleryTab[data-tooltip]:not(#dummy#dummy)::before {
                     content: none;
                     opacity: 0;
