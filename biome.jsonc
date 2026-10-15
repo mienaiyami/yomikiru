@@ -18,7 +18,8 @@
             "!**/public",
             "!**/coverage",
             "!**/playwright-report",
-            "!**/test-results"
+            "!**/test-results",
+            "!**/doc-local"
         ]
     },
     "formatter": {
