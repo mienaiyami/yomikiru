@@ -520,6 +520,17 @@ const Usage = (): ReactElement => {
                         </li>
                         <li>
                             <Trans
+                                i18nKey="reader.deleteContent"
+                                ns="usage"
+                                components={{ code: <code /> }}
+                                values={{
+                                    deletePage: keysFor(shortcuts, "deleteMangaPage"),
+                                    deleteChapter: keysFor(shortcuts, "deleteMangaChapter"),
+                                }}
+                            />
+                        </li>
+                        <li>
+                            <Trans
                                 i18nKey="reader.zenMode"
                                 ns="usage"
                                 components={{ code: <code /> }}

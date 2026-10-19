@@ -74,6 +74,8 @@ const NEW_CONFIGURABLE_IDS = [
     "toggleDevTools",
     "help",
     "selectAll",
+    "deleteMangaPage",
+    "deleteMangaChapter",
 ] as const;
 
 describe("COMMAND_CATALOG", () => {
@@ -112,6 +114,12 @@ describe("COMMAND_CATALOG", () => {
             { kind: "keyboard", code: "KeyF", ctrl: true, alt: false, shift: true, meta: false },
         ]);
         expect(getCommand("focusSideListSearch")).toBeUndefined();
+    });
+
+    it("defaults deleteMangaPage to Ctrl+Delete", () => {
+        expect(getCommand("deleteMangaPage")?.defaultBindings).toEqual([
+            { kind: "keyboard", code: "Delete", ctrl: true, alt: false, shift: false, meta: false },
+        ]);
     });
 
     it("defaults deleteSelected to Delete and tab-bar cycles to distinct Alt chords", () => {

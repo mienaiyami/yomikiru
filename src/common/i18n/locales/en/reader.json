@@ -13,6 +13,8 @@
         "focusPageSearch": "Focus search",
         "randomChapter": "Open random chapter (Manga Reader)",
         "bookmark": "Bookmark",
+        "deleteMangaPage": "Delete current page",
+        "deleteMangaChapter": "Delete current chapter",
         "sizePlus": "Increase Reader size",
         "sizeMinus": "Decrease Reader size",
         "readerSettings": "Open/Close Reader Settings",
@@ -126,6 +128,12 @@
         "presetUpdated": "Preset updated.",
         "deleteNoteTitle": "Delete Note",
         "deleteNoteMessage": "Only this note will be removed. Continue?",
+        "deletePage": "Delete \"{{name}}\" permanently?",
+        "deletePages": "Delete \"{{first}}\" and \"{{second}}\" permanently?",
+        "deleteReadChaptersAgain": "Delete these read chapters now? This cannot be undone.",
+        "deleteChapter": "Delete chapter \"{{name}}\" permanently?",
+        "deleteReadChapters": "Permanently delete {{count}} read chapters? The open chapter is kept.",
+        "deleteFailed": "Could not delete {{name}}.",
         "home": "Home"
     },
     "contextMenu": {
@@ -134,6 +142,9 @@
         "doubleClickZen": "Double Click Zen Mode",
         "bookmark": "Bookmark",
         "makeCover": "Make Cover",
+        "deletePage": "Delete Page",
+        "deleteChapter": "Delete Chapter",
+        "deleteReadChapters": "Delete Read Chapters",
         "addNote": "Add Note",
         "editNote": "Edit Note",
         "deleteNote": "Delete Note"

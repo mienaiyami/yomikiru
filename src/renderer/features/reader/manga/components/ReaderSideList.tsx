@@ -1,5 +1,6 @@
 import type { MangaBookmark } from "@common/types/db";
 import { useCommandOwner } from "@features/keybindings";
+import { DirectoryValidatorService } from "@features/reader/services/directoryValidator";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import {
     faArrowLeft,
@@ -21,13 +22,18 @@ import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { selectResolvedItemMetadata } from "@store/library";
+import store from "@store/index";
+import { selectResolvedItemMetadata, updateChaptersReadAll } from "@store/library";
 import { selectLiveMangaReaderSettings, selectReaderCommandsActive } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
 import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
-import { normalizeMangaPathSegment, resolveMangaChapterPath } from "@utils/mangaChapterPath";
+import {
+    MANGA_ROOT_CHAPTER_NAME,
+    normalizeMangaPathSegment,
+    resolveMangaChapterPath,
+} from "@utils/mangaChapterPath";
 import {
     CHAPTER_NAV_NONE,
     type ChapterNavDirection,
@@ -152,6 +158,7 @@ const ReaderSideList = memo(
         const [draggingResizer, setDraggingResizer] = useState(false);
 
         const { t } = useTranslation("reader");
+        const { t: tCommon } = useTranslation("common");
         const { t: tDialogs } = useTranslation("dialogs");
         const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks">("content");
 
@@ -281,6 +288,112 @@ const ReaderSideList = memo(
                 return [];
             }
         }, [mangaLink]);
+
+        const readChapterPaths = useCallback(
+            () =>
+                chapterData
+                    .filter(
+                        (chapter) => mangaChaptersRead.includes(chapter.name) && chapter.name !== mangaChapterName,
+                    )
+                    .map((chapter) => chapter.link),
+            [chapterData, mangaChapterName, mangaChaptersRead],
+        );
+
+        /**
+         * Deletes the chapter files for these paths. One chapter asks once; several ask twice.
+         * The history and bookmark key is the path's basename, or the root token when
+         * the path is the series folder. If the open chapter is among them, opens the
+         * next sibling, or the previous when there is no next.
+         */
+        const deleteChapters = useCallback(
+            async (chapterPaths: readonly string[]) => {
+                if (!mangaLink || chapterPaths.length === 0) return;
+                const confirmDelete = (message: string) =>
+                    dialogUtils.confirm({
+                        message,
+                        noOption: false,
+                        buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
+                        defaultId: 0,
+                        cancelId: 0,
+                        type: "warning",
+                    });
+                if (chapterPaths.length === 1) {
+                    const { response } = await confirmDelete(
+                        t("dialogs.deleteChapter", { name: window.path.basename(chapterPaths[0]) }),
+                    );
+                    if (response !== 1) return;
+                } else {
+                    const countConfirm = await confirmDelete(
+                        t("dialogs.deleteReadChapters", { count: chapterPaths.length }),
+                    );
+                    if (countConfirm.response !== 1) return;
+                    const finalConfirm = await confirmDelete(t("dialogs.deleteReadChaptersAgain"));
+                    if (finalConfirm.response !== 1) return;
+                }
+
+                const seriesRoot = normalizeMangaPathSegment(mangaLink);
+                const removed: string[] = [];
+                const failedNames: string[] = [];
+                for (const chapterPath of chapterPaths) {
+                    try {
+                        await window.fs.rm(chapterPath, { recursive: true, force: true });
+                        DirectoryValidatorService.invalidate(chapterPath);
+                        removed.push(
+                            normalizeMangaPathSegment(chapterPath) === seriesRoot
+                                ? MANGA_ROOT_CHAPTER_NAME
+                                : window.path.basename(chapterPath),
+                        );
+                    } catch (err) {
+                        log.error("failed to delete manga chapter", { chapterPath }, err);
+                        failedNames.push(window.path.basename(chapterPath));
+                    }
+                }
+                if (failedNames.length > 0) {
+                    await dialogUtils.customError({
+                        message: t("dialogs.deleteFailed", { name: failedNames.join(", ") }),
+                    });
+                }
+                if (removed.length === 0) return;
+
+                const itemLink = mangaProgressItemLink ?? mangaLink;
+                try {
+                    await dispatch(updateChaptersReadAll({ itemLink, chapters: removed, read: false })).unwrap();
+                } catch (err) {
+                    log.error("could not update read chapters after delete", { itemLink }, err);
+                }
+                const bookmarkIds = (store.getState().bookmarks.manga[itemLink] ?? [])
+                    .filter((bookmark) => removed.includes(bookmark.chapterName))
+                    .map((bookmark) => bookmark.id);
+                if (bookmarkIds.length > 0) {
+                    await dispatch(removeBookmark({ itemLink, type: "manga", ids: bookmarkIds }));
+                }
+                await scanMangaChapters();
+
+                const openPath = normalizeMangaPathSegment(currentChapterPath);
+                const deletedOpen = chapterPaths.some(
+                    (chapterPath) => normalizeMangaPathSegment(chapterPath) === openPath,
+                );
+                if (!deletedOpen) return;
+                const nextPath =
+                    chapterNavSiblings.next !== CHAPTER_NAV_NONE
+                        ? chapterNavSiblings.next
+                        : chapterNavSiblings.prev;
+                if (nextPath === CHAPTER_NAV_NONE) return;
+                await openInReader(nextPath);
+            },
+            [
+                chapterNavSiblings.next,
+                chapterNavSiblings.prev,
+                currentChapterPath,
+                dispatch,
+                mangaLink,
+                mangaProgressItemLink,
+                openInReader,
+                scanMangaChapters,
+                t,
+                tCommon,
+            ],
+        );
 
         /** Manual / watcher refresh: rescan and reset recency; empty shuffle so the list is shuffled again. */
         const makeChapterList = useCallback(async () => {
@@ -521,6 +634,10 @@ const ReaderSideList = memo(
                 nextChapter: handleNextChapterClick,
                 prevChapter: handlePrevChapterClick,
                 randomChapter: handleRandomChapterClick,
+                deleteMangaChapter: () => {
+                    if (!currentChapterPath) return;
+                    void deleteChapters([currentChapterPath]);
+                },
             },
         });
 
@@ -582,6 +699,8 @@ const ReaderSideList = memo(
                     current={currentChapterPath === chapter.link}
                     link={chapter.link}
                     getChapterNames={getChapterNamesForMenu}
+                    onDeleteChapters={deleteChapters}
+                    getReadChapterPaths={readChapterPaths}
                 />
             );
         };

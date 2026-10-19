@@ -1,7 +1,7 @@
 import path from "node:path";
 import { setReaderState } from "@store/reader";
 import { makeMangaItem, SAMPLE_MANGA_LINK } from "@test/fixtures/libraryItem";
-import { stubFs } from "@test/mocks/preload";
+import { onInvoke, stubFs } from "@test/mocks/preload";
 import { renderWithProviders } from "@test/renderWithProviders";
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { CHAPTER_NAV_NONE } from "@utils/mangaChapters";
@@ -105,11 +105,15 @@ const renderSideList = (options?: {
     autoRefresh?: boolean;
     chapterName?: string;
     chapterNames?: readonly string[];
+    chaptersRead?: string[];
 }) => {
     const chapterNames = options?.chapterNames ?? CHAPTER_NAMES;
     const chapterName = options?.chapterName ?? "ch01";
     stubSeriesChapters(chapterNames);
-    const item = makeMangaItem({ link: SERIES, title: "Side List Manga" }, { chapterName, itemLink: SERIES });
+    const item = makeMangaItem(
+        { link: SERIES, title: "Side List Manga" },
+        { chapterName, itemLink: SERIES, chaptersRead: options?.chaptersRead ?? [] },
+    );
     const chapterLink = path.join(SERIES, chapterName);
     const openNextChapterRef = createRef<HTMLButtonElement>();
     const openPrevChapterRef = createRef<HTMLButtonElement>();
@@ -180,6 +184,33 @@ const searchChapters = async (query: string, visibleNames: string[]) => {
     return input;
 };
 
+type ChapterMenuEntry = { label?: string; action?: () => void | Promise<void> };
+
+/**
+ * Context-menu templates the side-list row builds its delete items on top of.
+ */
+const installChapterMenuTemplate = (): void => {
+    const entry = (label: string) => ({ label, action: () => undefined });
+    window.contextMenu.template = {
+        divider: () => entry(""),
+        open: () => entry("Open"),
+        openInNewWindow: () => entry("Open in new window"),
+        readChapter: () => entry("Mark as read"),
+        unreadChapter: () => entry("Mark as unread"),
+        readAllChapter: () => entry("Mark all as read"),
+        unreadAllChapter: () => entry("Mark all as unread"),
+        copyPath: () => entry("Copy path"),
+        showInExplorer: () => entry("Show in explorer"),
+    };
+};
+
+const chapterMenuAction = (label: string): (() => void | Promise<void>) => {
+    const items = (setContextMenuData.mock.calls.at(-1)?.[0] as { items: ChapterMenuEntry[] }).items;
+    const match = items.find((menuEntry) => menuEntry.label === label);
+    if (!match?.action) throw new Error(`missing menu action ${label}`);
+    return match.action;
+};
+
 describe("ReaderSideList chapter search pin", () => {
     beforeEach(() => {
         openInReader.mockReset();
@@ -187,6 +218,94 @@ describe("ReaderSideList chapter search pin", () => {
         closeReader.mockReset();
         /* jsdom has no layout, so current-chapter scrollIntoView would throw */
         HTMLElement.prototype.scrollIntoView = vi.fn();
+    });
+
+    it("offers delete chapter and delete read chapters on a chapter row", async () => {
+        installChapterMenuTemplate();
+        renderSideList();
+        await waitFor(() => expect(screen.getByTitle("ch02")).toBeInTheDocument());
+        fireEvent.contextMenu(screen.getByTitle("ch02"));
+        const menu = setContextMenuData.mock.calls.at(-1)?.[0] as { items: { label?: string }[] };
+        const labels = menu.items.map((item) => item.label);
+        expect(labels).toContain("Delete Chapter");
+        expect(labels).toContain("Delete Read Chapters");
+    });
+
+    it("deletes the open chapter after one confirm and opens the next chapter", async () => {
+        installChapterMenuTemplate();
+        const removedPaths: string[] = [];
+        onInvoke("dialog:confirm", () => ({ response: 1, checkboxChecked: false }));
+        onInvoke("db:manga:updateChaptersReadAll", (request) => request.chapters);
+        renderSideList();
+        await waitFor(() => expect(screen.getByTitle("ch01")).toBeInTheDocument());
+        stubFs({
+            rm: async (chapterPath: string) => {
+                removedPaths.push(chapterPath);
+            },
+        });
+        fireEvent.contextMenu(screen.getByTitle("ch01"));
+        await act(async () => {
+            await chapterMenuAction("Delete Chapter")();
+        });
+        expect(removedPaths).toEqual([CH01]);
+        expect(openInReader).toHaveBeenCalledWith(CH02);
+    });
+
+    it("asks once before deleting a single read chapter", async () => {
+        installChapterMenuTemplate();
+        const steps: string[] = [];
+        onInvoke("dialog:confirm", (request) => {
+            steps.push(request.message);
+            return { response: 1, checkboxChecked: false };
+        });
+        onInvoke("db:manga:updateChaptersReadAll", (request) => request.chapters);
+        renderSideList({ chaptersRead: ["ch02"] });
+        await waitFor(() => expect(screen.getByTitle("ch01")).toBeInTheDocument());
+        stubFs({
+            rm: async (chapterPath: string) => {
+                steps.push(chapterPath);
+            },
+        });
+        fireEvent.contextMenu(screen.getByTitle("ch01"));
+        await act(async () => {
+            await chapterMenuAction("Delete Read Chapters")();
+        });
+        expect(steps).toEqual(['Delete chapter "ch02" permanently?', CH02]);
+        expect(openInReader).not.toHaveBeenCalled();
+    });
+
+    it("asks twice before deleting several read chapters and still removes the one that succeeded", async () => {
+        installChapterMenuTemplate();
+        const errors: string[] = [];
+        const steps: string[] = [];
+        const removedPaths: string[] = [];
+        onInvoke("dialog:confirm", (request) => {
+            steps.push(request.message);
+            return { response: 1, checkboxChecked: false };
+        });
+        onInvoke("dialog:error", (request) => {
+            errors.push(request.message);
+            return { response: 0, checkboxChecked: false };
+        });
+        onInvoke("db:manga:updateChaptersReadAll", (request) => request.chapters);
+        renderSideList({ chaptersRead: ["ch02", "ch03"] });
+        await waitFor(() => expect(screen.getByTitle("ch02")).toBeInTheDocument());
+        stubFs({
+            rm: async (chapterPath: string) => {
+                if (chapterPath === CH03) throw new Error("busy");
+                removedPaths.push(chapterPath);
+            },
+        });
+        fireEvent.contextMenu(screen.getByTitle("ch01"));
+        await act(async () => {
+            await chapterMenuAction("Delete Read Chapters")();
+        });
+        expect(steps).toEqual([
+            "Permanently delete 2 read chapters? The open chapter is kept.",
+            "Delete these read chapters now? This cannot be undone.",
+        ]);
+        expect(removedPaths).toEqual([CH02]);
+        expect(errors).toEqual(["Could not delete ch03."]);
     });
 
     it("lists sibling chapters once the folder scan finishes", async () => {

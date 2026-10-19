@@ -16,6 +16,10 @@ type ReaderSideListItemProps = {
      * each row does not re-render when the filtered list identity changes.
      */
     getChapterNames: () => readonly string[];
+    /** Deletes the given chapter paths. One path asks once; several ask twice. */
+    onDeleteChapters: (chapterPaths: readonly string[]) => Promise<void>;
+    /** Read chapter paths other than the one open. Read when the menu opens. */
+    getReadChapterPaths: () => readonly string[];
     /** Virtualizer absolute layout (injected by {@link ListNavigator.VirtualList}). */
     style?: CSSProperties;
     "data-index"?: number;
@@ -33,6 +37,8 @@ const ReaderSideListItem = memo(
                 current,
                 focused,
                 getChapterNames,
+                onDeleteChapters,
+                getReadChapterPaths,
                 style,
                 "data-index": dataIndex,
                 scrollManagedByParent,
@@ -65,6 +71,20 @@ const ReaderSideListItem = memo(
                 items.push(window.contextMenu.template.divider());
                 items.push(window.contextMenu.template.copyPath(link));
                 items.push(window.contextMenu.template.showInExplorer(link));
+                items.push(window.contextMenu.template.divider());
+                items.push({
+                    label: t("contextMenu.deleteChapter"),
+                    action() {
+                        void onDeleteChapters([link]);
+                    },
+                });
+                items.push({
+                    label: t("contextMenu.deleteReadChapters"),
+                    disabled: getReadChapterPaths().length === 0,
+                    action() {
+                        void onDeleteChapters(getReadChapterPaths());
+                    },
+                });
                 setContextMenuData({
                     clickX: e.clientX,
                     clickY: e.clientY,

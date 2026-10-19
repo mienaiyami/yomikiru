@@ -120,6 +120,7 @@
             "title": "Prev/next chapter:",
             "body": "If the next or previous folder is gone (renamed or deleted), prev/next rescans the series and opens the chapter that now sits in that place instead of leaving the reader on a missing path."
         },
+        "deleteContent": "Right-click a page, or press <code>{{deletePage}}</code>, to permanently delete that image. In two-page mode the key deletes both pages in the current row. Right-click the reader or a side-list chapter, or press <code>{{deleteChapter}}</code>, to delete that chapter; deleting the open chapter opens the next one. Delete read chapters is on the side-list chapter menu and keeps the open chapter. Page delete works for image folders. An archive or PDF can be deleted only as a whole chapter.",
         "zenMode": "Zen Mode (Full Screen Mode): Hides UI, Only shows images and page number if enabled. Can be enabled using the shortcut key defined, <code>{{zen}}</code>",
         "doubleClick": "Double click to toggle zen mode. Working area by reading mode:",
         "zen": {

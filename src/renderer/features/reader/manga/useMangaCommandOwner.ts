@@ -55,6 +55,8 @@ type UseMangaCommandOwnerArgs = {
     makeScrollPos: () => void;
     startHeldScroll: (intensity: number) => void;
     stopHeldScroll: () => void;
+    /** Deletes the pages in the current reader row. */
+    deleteMangaPage: () => void;
 };
 
 /**
@@ -76,6 +78,7 @@ export const useMangaCommandOwner = ({
     makeScrollPos,
     startHeldScroll,
     stopHeldScroll,
+    deleteMangaPage,
 }: UseMangaCommandOwnerArgs): void => {
     const { t } = useTranslation("reader");
     const dispatch = useAppDispatch();
@@ -230,6 +233,7 @@ export const useMangaCommandOwner = ({
             readerSize_250: () => {
                 applyReaderSizePercent(READER_SIZE_PERCENTS[4]);
             },
+            deleteMangaPage,
             contextMenu: () => {
                 if (!imgContRef.current) return;
                 imgContRef.current.dispatchEvent(

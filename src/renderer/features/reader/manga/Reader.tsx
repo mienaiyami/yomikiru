@@ -1,8 +1,11 @@
 import { type InvokeContext, useKeybindingRuntime } from "@features/keybindings";
 import { canCrossChapterEdge } from "@features/reader/readerCommandOps";
+import { DirectoryValidatorService } from "@features/reader/services/directoryValidator";
 import { applyMakeCoverFromPageImage } from "@features/reader/services/readerCoverFlows";
+import i18n from "@renderer/i18n";
 import { setAnilistCurrentListEntry } from "@store/anilist";
 import { setAppSettings } from "@store/appSettings";
+import { removeBookmark, updateMangaBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import store from "@store/index";
 import { selectLibraryItem, updateChaptersRead } from "@store/library";
@@ -17,6 +20,7 @@ import { ensureReaderPresetSession, patchLiveMangaReaderSettings } from "@store/
 import { updateTrackerSnapshot } from "@store/trackers";
 import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
+import { dialogUtils } from "@utils/dialog";
 import { fileSrcToImagePath, formatUtils } from "@utils/file";
 import { syncMangaLibraryOnReaderOpen } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
@@ -385,21 +389,6 @@ const Reader: React.FC = () => {
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
 
-    useMangaCommandOwner({
-        visible: commandsActive,
-        readerRef,
-        imgContRef,
-        pageNumberInputRef,
-        openNextPage,
-        openPrevPage,
-        openSiblingChapter,
-        prevNextDeciderLogic,
-        setZenMode,
-        setShortcutText,
-        makeScrollPos,
-        startHeldScroll,
-        stopHeldScroll,
-    });
     /**
      * Load images for `options.link` when the folder is valid.
      * `options.page` is reader `mangaPageNumber` (chapter-open target). The manga Reader stays
@@ -429,6 +418,118 @@ const Reader: React.FC = () => {
             }
         });
     };
+
+    /**
+     * Page numbers shown together in the current row.
+     * When pagesPerRowSelected is single-image, that is only the current page.
+     * Otherwise every image index in the current row.
+     */
+    const activePageNumbers = (): number[] => {
+        if (readerSettings.pagesPerRowSelected === 0) return [currentPageNumber];
+        const rowIndex =
+            readerSettings.readerTypeSelected === 0
+                ? imageRow.findIndex((row) => row.i.includes(currentPageNumber - 1))
+                : currentImageRow - 1;
+        const row = imageRow[rowIndex];
+        if (!row || row.i.length === 0) return [currentPageNumber];
+        return row.i.map((imageIndex) => imageIndex + 1);
+    };
+
+    /**
+     * Permanently deletes one or two 1-based pages from the open chapter folder.
+     * Bookmarks on those pages are removed; later bookmarks move down once, lowest
+     * page first, so the unique chapter-page key stays free. Then the chapter reloads.
+     */
+    const deleteMangaPages = async (pageNumbers: number[]) => {
+        if (!linkInReader || !window.fs.isDir(linkInReader)) return;
+        const pages = [...new Set(pageNumbers)]
+            .filter((pageNumber) => images[pageNumber - 1])
+            .sort((a, b) => a - b);
+        if (pages.length === 0) return;
+        const pageNames = pages.map((pageNumber) => window.path.basename(images[pageNumber - 1]));
+        const { response } = await dialogUtils.confirm({
+            message:
+                pageNames.length === 1
+                    ? t("dialogs.deletePage", { name: pageNames[0] })
+                    : t("dialogs.deletePages", { first: pageNames[0], second: pageNames[1] }),
+            noOption: false,
+            buttons: [i18n.t("actions.cancel", { ns: "common" }), i18n.t("actions.yes", { ns: "common" })],
+            defaultId: 0,
+            cancelId: 0,
+            type: "warning",
+        });
+        if (response !== 1) return;
+
+        const removed: number[] = [];
+        for (const pageNumber of pages) {
+            const imagePath = images[pageNumber - 1];
+            try {
+                await window.fs.rm(imagePath, { force: true });
+                removed.push(pageNumber);
+            } catch (err) {
+                log.error("failed to delete manga page", { imagePath }, err);
+                await dialogUtils.customError({
+                    message: t("dialogs.deleteFailed", { name: window.path.basename(imagePath) }),
+                });
+            }
+        }
+        if (removed.length === 0) return;
+
+        const itemLink = mangaProgressItemLink ?? libraryItem?.link ?? window.path.dirname(linkInReader);
+        const chapterName = mangaChapterName || window.path.basename(linkInReader);
+        const chapterBookmarks = (store.getState().bookmarks.manga[itemLink] ?? []).filter(
+            (bookmark) => bookmark.chapterName === chapterName,
+        );
+        const removedIds = chapterBookmarks
+            .filter((bookmark) => removed.includes(bookmark.page))
+            .map((bookmark) => bookmark.id);
+        if (removedIds.length > 0) {
+            await dispatch(removeBookmark({ itemLink, type: "manga", ids: removedIds }));
+        }
+        const firstRemoved = Math.min(...removed);
+        const later = chapterBookmarks
+            .filter((bookmark) => bookmark.page > firstRemoved && !removed.includes(bookmark.page))
+            .sort((a, b) => a.page - b.page);
+        for (const bookmark of later) {
+            const shift = removed.filter((pageNumber) => pageNumber < bookmark.page).length;
+            await dispatch(updateMangaBookmark({ id: bookmark.id, page: bookmark.page - shift }));
+        }
+
+        // a page before the hole stays; otherwise show what slides into the first removed page
+        const pagesAtOrBeforeCurrent = removed.filter((pageNumber) => pageNumber <= currentPageNumber).length;
+        const nextPage =
+            currentPageNumber < firstRemoved
+                ? currentPageNumber
+                : Math.max(firstRemoved, currentPageNumber - pagesAtOrBeforeCurrent);
+        DirectoryValidatorService.invalidate(linkInReader);
+        checkForImgsAndLoad({
+            link: linkInReader,
+            page: Math.min(nextPage, Math.max(1, images.length - removed.length)),
+        });
+    };
+
+    /** Delete command: every image in the current row. */
+    const deleteMangaPage = () => {
+        void deleteMangaPages(activePageNumbers());
+    };
+
+    useMangaCommandOwner({
+        visible: commandsActive,
+        readerRef,
+        imgContRef,
+        pageNumberInputRef,
+        openNextPage,
+        openPrevPage,
+        openSiblingChapter,
+        prevNextDeciderLogic,
+        setZenMode,
+        setShortcutText,
+        makeScrollPos,
+        startHeldScroll,
+        stopHeldScroll,
+        deleteMangaPage,
+    });
+
     /**
      * Replace the image list and persist open progress for `page` (chapter-open target).
      */
@@ -1018,7 +1119,7 @@ const Reader: React.FC = () => {
                         let src = e.target.getAttribute("src");
                         if (!src || src?.startsWith("data:") || src?.startsWith("file"))
                             src = e.target.getAttribute("data-src") || src;
-                        if (src)
+                        if (src) {
                             items.push(
                                 window.contextMenu.template.copyImage(src),
                                 window.contextMenu.template.copyPath(src),
@@ -1044,13 +1145,32 @@ const Reader: React.FC = () => {
                                     },
                                 },
                             );
-                        else
+                        } else {
                             items.push(
                                 window.contextMenu.template.copyPath(linkInReader),
                                 window.contextMenu.template.showInExplorer(linkInReader),
                                 window.contextMenu.template.openInNewWindow(linkInReader),
                             );
+                        }
                     }
+                    const pageHost = e.target instanceof Element ? e.target.closest("[data-pagenumber]") : null;
+                    const deletedPage = Number(pageHost?.getAttribute("data-pagenumber"));
+                    const deleteItems: Menu.ListItem[] = [];
+                    if (Number.isInteger(deletedPage) && deletedPage >= 1 && window.fs.isDir(linkInReader)) {
+                        deleteItems.push({
+                            label: t("contextMenu.deletePage"),
+                            action() {
+                                void deleteMangaPages([deletedPage]);
+                            },
+                        });
+                    }
+                    deleteItems.push({
+                        label: t("contextMenu.deleteChapter"),
+                        action() {
+                            runtime.executeCommand("deleteMangaChapter", MANGA_SIDE_LIST_OWNER_ID);
+                        },
+                    });
+                    items.push(window.contextMenu.template.divider(), ...deleteItems);
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,

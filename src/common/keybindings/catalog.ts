@@ -150,6 +150,18 @@ const DRAFTS = [
     { id: "randomChapter", group: "readerNavigation", defaultBindings: [kbd("KeyR")], contextKinds: MANGA },
     { id: "bookmark", group: "readerView", defaultBindings: [kbd("KeyB")], contextKinds: READER },
     {
+        id: "deleteMangaPage",
+        group: "readerView",
+        defaultBindings: [ctrl("Delete")],
+        contextKinds: MANGA,
+    },
+    {
+        id: "deleteMangaChapter",
+        group: "readerView",
+        defaultBindings: [kbd("Delete", { shift: true })],
+        contextKinds: MANGA,
+    },
+    {
         id: "sizePlus",
         group: "readerView",
         defaultBindings: [kbd("Equal"), kbd("NumpadAdd")],

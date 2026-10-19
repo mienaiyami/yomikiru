@@ -55,6 +55,31 @@ describe("DirectoryValidatorService", () => {
         ).resolves.toMatchObject({ isValid: false, error: "Directory is empty" });
     });
 
+    it("invalidate drops a cached image list so the next read sees the folder", async () => {
+        const dir = path.join("testdata", "manga", "cached");
+        let names = ["a.png"];
+        const { service } = makeService(
+            {
+                readdir: async () => names,
+                stat: async () => ({ mtimeMs: 1 }),
+                access: async () => undefined,
+            },
+            { keepExtractedFiles: true },
+        );
+        const options = { useCache: true, errorOnInvalid: false, sendImages: true } as const;
+        await expect(service.validateDirectory(dir, options)).resolves.toMatchObject({
+            images: [path.join(dir, "a.png")],
+        });
+        names = ["b.png"];
+        await expect(service.validateDirectory(dir, options)).resolves.toMatchObject({
+            images: [path.join(dir, "a.png")],
+        });
+        DirectoryValidatorService.invalidate(dir);
+        await expect(service.validateDirectory(dir, options)).resolves.toMatchObject({
+            images: [path.join(dir, "b.png")],
+        });
+    });
+
     it("returns sorted image paths when sendImages is true", async () => {
         const dir = path.join("testdata", "manga", "ch1");
         const { service } = makeService({

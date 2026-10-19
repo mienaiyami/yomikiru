@@ -19,6 +19,16 @@ export class DirectoryValidatorService {
         }
     >();
 
+    /**
+     * Drops a cached image list so the next open reads the folder again.
+     * Directory mtime does not always change when a child file is removed.
+     *
+     * @param link Chapter or archive path used as the validation cache key
+     */
+    public static invalidate(link: string): void {
+        DirectoryValidatorService.cache.delete(link);
+    }
+
     constructor(
         private readonly dependencies: {
             fs: typeof window.fs;
@@ -52,19 +62,19 @@ export class DirectoryValidatorService {
             const currentMtime = stats.mtimeMs;
             if (currentMtime !== cached.mtime) {
                 this.dependencies.logger.log(`Cache invalidated for "${link}" due to mtime change`);
-                DirectoryValidatorService.cache.delete(link);
+                DirectoryValidatorService.invalidate(link);
                 return null;
             }
             const isExpired = Date.now() - cached.timestamp > 5 * 60 * 1000;
             if (isExpired) {
-                DirectoryValidatorService.cache.delete(link);
+                DirectoryValidatorService.invalidate(link);
                 return null;
             }
 
             return cached.result;
         } catch (error) {
             this.dependencies.logger.error(`Validation cache: could not read mtime for "${link}"`, error);
-            DirectoryValidatorService.cache.delete(link);
+            DirectoryValidatorService.invalidate(link);
             return null;
         }
     }
@@ -79,7 +89,7 @@ export class DirectoryValidatorService {
             const oldestKey = [...DirectoryValidatorService.cache.entries()].sort(
                 (a, b) => a[1].timestamp - b[1].timestamp,
             )[0][0];
-            DirectoryValidatorService.cache.delete(oldestKey);
+            DirectoryValidatorService.invalidate(oldestKey);
         }
     }
 
