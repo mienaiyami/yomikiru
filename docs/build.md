@@ -6,7 +6,11 @@ Feel free to ask any questions regarding building using issues.
 
 - **Git**: Version control system
 - **Node.js**: `v22` or newer (the release workflow uses 22; Electron 44 itself runs Node 24)
-- **pnpm**: Package manager - Install with `npm install -g pnpm` or `corepack enable`
+- **pnpm**: Package manager - Install with `npm install -g pnpm@v10` or
+  ```
+  corepack enable
+  corepack prepare pnpm@10 --activate
+  ```
 
 ### Platform-Specific Requirements
 
