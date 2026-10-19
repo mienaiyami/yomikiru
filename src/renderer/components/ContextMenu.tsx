@@ -1,14 +1,12 @@
+import { useCommandOwner, useOwnerId } from "@features/keybindings";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useAppSelector } from "@store/hooks";
-import { getShortcutsMapped } from "@store/shortcuts";
-import { keyFormatter } from "@utils/keybindings";
+import { onWidgetActivateKey } from "@utils/keyboard";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { shallowEqual } from "react-redux";
 import { useAppContext } from "../App";
 
 const ContextMenu = () => {
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
+    const ownerId = useOwnerId("context-menu");
     const { contextMenuData, setContextMenuData } = useAppContext();
     const [pos, setPos] = useState({ x: 0, y: 0 });
     const [focused, setFocused] = useState(-1);
@@ -40,6 +38,45 @@ const ContextMenu = () => {
         };
     }, []);
 
+    const moveFocus = (delta: number) => {
+        if (!contextMenuData) return;
+        setFocused((init) => {
+            let next = init + delta;
+            if (next >= contextMenuData.items.length) next = 0;
+            if (next < 0) next = contextMenuData.items.length - 1;
+            if (ref.current?.querySelectorAll("ul li")[next]?.classList.contains("menu-divider")) {
+                next += delta;
+            }
+            return next;
+        });
+    };
+
+    const activateFocused = () => {
+        const elem = ref.current?.querySelector('[data-focused="true"]') as HTMLLIElement | null;
+        if (elem && !elem.classList.contains("disabled")) elem.click();
+    };
+
+    useCommandOwner({
+        ownerId,
+        /* menu blocks background commands; searchWidget is how list movement is catalogued */
+        contextKinds: ["menu", "searchWidget"],
+        visible: Boolean(contextMenuData && contextMenuData.items.length > 0),
+        ownsEventTarget: (node) => Boolean(node instanceof Node && ref.current?.contains(node)),
+        handlers: {
+            listDown: () => moveFocus(1),
+            listUp: () => moveFocus(-1),
+            listSelect: () => activateFocused(),
+            contextMenu: () => {
+                ref.current?.blur();
+            },
+        },
+        onEscape: () => {
+            if (!ref.current?.contains(document.activeElement)) return false;
+            ref.current.blur();
+            return true;
+        },
+    });
+
     const onClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.stopPropagation();
         if (e.button < 0) return;
@@ -70,48 +107,7 @@ const ContextMenu = () => {
                 }}
                 onKeyDown={(e) => {
                     e.stopPropagation();
-                    const keyStr = keyFormatter(e, false);
-                    if (keyStr === "") return;
-
-                    if (shortcutsMapped.contextMenu.includes(keyStr)) {
-                        e.currentTarget.blur();
-                        return;
-                    }
-                    switch (true) {
-                        case keyStr === "escape":
-                            e.currentTarget.blur();
-                            break;
-                        case shortcutsMapped.listDown.includes(keyStr):
-                        case keyStr === "right":
-                            setFocused((init) => {
-                                let f = init + 1;
-                                if (f >= contextMenuData.items.length) f = 0;
-                                if (ref.current?.querySelectorAll("ul li")[f]?.classList.contains("menu-divider"))
-                                    f++;
-                                return f;
-                            });
-                            break;
-                        case shortcutsMapped.listUp.includes(keyStr):
-                        case keyStr === "left":
-                            setFocused((init) => {
-                                let f = init - 1;
-                                if (f < 0) f = contextMenuData.items.length - 1;
-                                if (ref.current?.querySelectorAll("ul li")[f]?.classList.contains("menu-divider"))
-                                    f--;
-                                return f;
-                            });
-                            break;
-                        case shortcutsMapped.listSelect.includes(keyStr):
-                        case keyStr === "space": {
-                            const elem = ref.current?.querySelector(
-                                '[data-focused="true"]',
-                            ) as HTMLLIElement | null;
-                            if (elem && !elem.classList.contains("disabled")) elem.click();
-                            break;
-                        }
-                        default:
-                            break;
-                    }
+                    onWidgetActivateKey(e, { space: activateFocused });
                 }}
             >
                 <ul className={contextMenuData.padLeft ? "padLeft" : ""}>

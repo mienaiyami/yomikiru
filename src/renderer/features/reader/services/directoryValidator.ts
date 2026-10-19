@@ -1,4 +1,5 @@
 import type { Logger } from "@common/logger";
+import i18n from "@renderer/i18n";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils, unzip } from "@utils/file";
 import { renderPDF } from "@utils/pdf";
@@ -17,6 +18,16 @@ export class DirectoryValidatorService {
             mtime: number;
         }
     >();
+
+    /**
+     * Drops a cached image list so the next open reads the folder again.
+     * Directory mtime does not always change when a child file is removed.
+     *
+     * @param link Chapter or archive path used as the validation cache key
+     */
+    public static invalidate(link: string): void {
+        DirectoryValidatorService.cache.delete(link);
+    }
 
     constructor(
         private readonly dependencies: {
@@ -51,19 +62,19 @@ export class DirectoryValidatorService {
             const currentMtime = stats.mtimeMs;
             if (currentMtime !== cached.mtime) {
                 this.dependencies.logger.log(`Cache invalidated for "${link}" due to mtime change`);
-                DirectoryValidatorService.cache.delete(link);
+                DirectoryValidatorService.invalidate(link);
                 return null;
             }
             const isExpired = Date.now() - cached.timestamp > 5 * 60 * 1000;
             if (isExpired) {
-                DirectoryValidatorService.cache.delete(link);
+                DirectoryValidatorService.invalidate(link);
                 return null;
             }
 
             return cached.result;
         } catch (error) {
             this.dependencies.logger.error(`Validation cache: could not read mtime for "${link}"`, error);
-            DirectoryValidatorService.cache.delete(link);
+            DirectoryValidatorService.invalidate(link);
             return null;
         }
     }
@@ -78,7 +89,7 @@ export class DirectoryValidatorService {
             const oldestKey = [...DirectoryValidatorService.cache.entries()].sort(
                 (a, b) => a[1].timestamp - b[1].timestamp,
             )[0][0];
-            DirectoryValidatorService.cache.delete(oldestKey);
+            DirectoryValidatorService.invalidate(oldestKey);
         }
     }
 
@@ -174,7 +185,7 @@ export class DirectoryValidatorService {
 
             if (formatUtils.packedManga.test(normalizedLink)) {
                 return await this.handlePackedManga(normalizedLink, linkSplitted, options);
-            } else if (path.extname(normalizedLink).toLowerCase() === ".pdf") {
+            } else if (formatUtils.pdf.test(normalizedLink)) {
                 return await this.handlePDF(normalizedLink, linkSplitted, options);
             } else {
                 return await this.processDirectory(normalizedLink, maxSubdirectoryDepth || 0, options);
@@ -238,11 +249,16 @@ export class DirectoryValidatorService {
                     app.deleteDirOnClose = tempExtractPath;
                 }
 
-                onProgress({
-                    message: `EXTRACTING "${linkSplitted.at(-1)?.substring(0, 10)}・・・${formatUtils.files.getExt(
-                        link,
-                    )}"`,
-                });
+                // library scan/cover reuse this path; only the reader overlay should show EXTRACTING
+                if (options.showLoading) {
+                    onProgress({
+                        message: i18n.t("loading.extracting", {
+                            ns: "reader",
+                            prefix: linkSplitted.at(-1)?.substring(0, 10),
+                            ext: formatUtils.files.getExt(link),
+                        }),
+                    });
+                }
 
                 try {
                     const result = await unzip(link, tempExtractPath);
@@ -255,12 +271,12 @@ export class DirectoryValidatorService {
                     if (options.errorOnInvalid) {
                         if (err instanceof Error && err.message?.includes("spawn unzip ENOENT")) {
                             dialogUtils.customError({
-                                message: "Error while extracting.",
-                                detail: '"unzip" not found. Please install by using\n"sudo apt install unzip"',
+                                message: i18n.t("errors.extractError", { ns: "reader" }),
+                                detail: i18n.t("errors.unzipNotFound", { ns: "reader" }),
                             });
                         } else {
                             dialogUtils.customError({
-                                message: "Error while extracting.",
+                                message: i18n.t("errors.extractError", { ns: "reader" }),
                                 detail: err instanceof Error ? err.message : String(err),
                                 log: false,
                             });
@@ -313,15 +329,26 @@ export class DirectoryValidatorService {
                     app.deleteDirOnClose = tempExtractPath;
                 }
 
-                onProgress({
-                    message: `Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
-                });
+                if (options.showLoading) {
+                    onProgress({
+                        message: i18n.t("loading.rendering", {
+                            ns: "reader",
+                            name: linkSplitted.at(-1)?.substring(0, 20),
+                        }),
+                    });
+                }
 
                 try {
                     await renderPDF(link, tempExtractPath, appSettings.pdfScale, (total, done) => {
+                        if (!options.showLoading) return;
                         onProgress({
                             percent: Math.round((done / total) * 100),
-                            message: `[${done}/${total}] Rendering "${linkSplitted.at(-1)?.substring(0, 20)}..."`,
+                            message: i18n.t("loading.renderingProgress", {
+                                ns: "reader",
+                                done,
+                                total,
+                                name: linkSplitted.at(-1)?.substring(0, 20),
+                            }),
                         });
                     });
                     return await this.processDirectory(tempExtractPath, 1, options);
@@ -356,14 +383,14 @@ export class DirectoryValidatorService {
             if (files.length <= 0) {
                 if (options.errorOnInvalid)
                     dialogUtils.customError({
-                        title: "No images found",
-                        message: "Directory is empty.",
+                        title: i18n.t("errors.noImagesFoundTitle", { ns: "reader" }),
+                        message: i18n.t("errors.directoryEmpty", { ns: "reader" }),
                         detail: link,
                     });
                 return { isValid: false, error: "Directory is empty" };
             }
 
-            if (sendImages) {
+            if (sendImages && options.showLoading) {
                 //     loadingTimeout = setTimeout(() => {
                 onProgress({
                     // message: `PROCESSING IMAGES`,
@@ -390,9 +417,11 @@ export class DirectoryValidatorService {
                             return { path: fullPath, isEmpty: true };
                         } finally {
                             processed++;
-                            onProgress({
-                                percent: Math.round((processed / imgs.length) * 100) / 20,
-                            });
+                            if (options.showLoading) {
+                                onProgress({
+                                    percent: Math.round((processed / imgs.length) * 100) / 20,
+                                });
+                            }
                         }
                     });
 
@@ -406,22 +435,27 @@ export class DirectoryValidatorService {
 
                 if (options.errorOnInvalid)
                     dialogUtils.customError({
-                        title: "No images found",
-                        message: "Directory doesn't contain any supported image format.",
+                        title: i18n.t("errors.noImagesFoundTitle", { ns: "reader" }),
+                        message: i18n.t("errors.noSupportedImages", { ns: "reader" }),
                     });
                 return { isValid: false, error: "No supported images found" };
             }
 
-            if (sendImages) {
-                const sortedImages = imgs.sort(window.app.betterSortOrder).map((e) => path.join(link, e));
+            const sortedNames = [...imgs].sort(window.app.betterSortOrder);
 
-                onProgress({
-                    percent: 10,
-                });
+            if (sendImages) {
+                const sortedImages = sortedNames.map((e) => path.join(link, e));
+
+                if (options.showLoading) {
+                    onProgress({
+                        percent: 10,
+                    });
+                }
 
                 return {
                     isValid: true,
                     images: sortedImages,
+                    imageCount: sortedImages.length,
                 };
             }
             return { isValid: true };

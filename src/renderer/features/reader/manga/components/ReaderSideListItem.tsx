@@ -1,8 +1,8 @@
+import { useAppContext } from "@renderer/App";
 import ListItem from "@renderer/components/ListItem";
-import { useAppSelector } from "@store/hooks";
 import { formatUtils } from "@utils/file";
-import { memo, useEffect, useState } from "react";
-import { useAppContext } from "src/renderer/App";
+import { type CSSProperties, forwardRef, memo } from "react";
+import { useTranslation } from "react-i18next";
 
 type ReaderSideListItemProps = {
     name: string;
@@ -11,90 +11,117 @@ type ReaderSideListItemProps = {
     inHistory: boolean;
     current: boolean;
     focused: boolean;
-    onClick?: () => void;
+    /**
+     * Lazy chapter-name list for `readAllChapter`. Parent keeps names in a ref so
+     * each row does not re-render when the filtered list identity changes.
+     */
+    getChapterNames: () => readonly string[];
+    /** Deletes the given chapter paths. One path asks once; several ask twice. */
+    onDeleteChapters: (chapterPaths: readonly string[]) => Promise<void>;
+    /** Read chapter paths other than the one open. Read when the menu opens. */
+    getReadChapterPaths: () => readonly string[];
+    /** Virtualizer absolute layout (injected by {@link ListNavigator.VirtualList}). */
+    style?: CSSProperties;
+    "data-index"?: number;
+    scrollManagedByParent?: boolean;
 };
 
 const ReaderSideListItem = memo(
-    ({ name, pages, link, inHistory, current, focused, onClick }: ReaderSideListItemProps) => {
-        const appSettings = useAppSelector((state) => state.appSettings);
-        const { openInReader, setContextMenuData, contextMenuData } = useAppContext();
-        const [contextMenuFocused, setContextMenuFocused] = useState(false);
+    forwardRef<HTMLLIElement, ReaderSideListItemProps>(
+        (
+            {
+                name,
+                pages,
+                link,
+                inHistory,
+                current,
+                focused,
+                getChapterNames,
+                onDeleteChapters,
+                getReadChapterPaths,
+                style,
+                "data-index": dataIndex,
+                scrollManagedByParent,
+            },
+            forwardedRef,
+        ) => {
+            const { t } = useTranslation("reader");
+            const { openInReader, setContextMenuData } = useAppContext();
 
-        useEffect(() => {
-            if (!contextMenuData && contextMenuFocused) setContextMenuFocused(false);
-        }, [contextMenuData]);
-
-        const handleClick = () => {
-            if (onClick) {
-                onClick();
-            } else {
+            const handleClick = () => {
                 openInReader(link);
-            }
-        };
+            };
 
-        const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-            const items = [
-                window.contextMenu.template.open(link),
-                window.contextMenu.template.openInNewWindow(link),
-                window.contextMenu.template.divider(),
-            ];
-            if (inHistory) {
-                items.push(window.contextMenu.template.unreadChapter(window.path.dirname(link), name));
-            } else {
-                items.push(window.contextMenu.template.readChapter(window.path.dirname(link), name));
-            }
-            if (e.currentTarget.parentElement?.parentElement) {
-                const chapters = [...e.currentTarget.parentElement.parentElement.querySelectorAll("a")].map(
-                    (e) => e.title,
-                );
-                items.push(window.contextMenu.template.readAllChapter(window.path.dirname(link), chapters));
-            }
-            items.push(window.contextMenu.template.unreadAllChapter(window.path.dirname(link)));
-            items.push(window.contextMenu.template.divider());
-            items.push(window.contextMenu.template.copyPath(link));
-            items.push(window.contextMenu.template.showInExplorer(link));
-            setContextMenuFocused(true);
-            setContextMenuData({
-                clickX: e.clientX,
-                clickY: e.clientY,
-                focusBackElem:
-                    e.nativeEvent.relatedTarget ||
-                    e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement,
-                items,
-            });
-        };
-
-        return (
-            <ListItem
-                focused={focused}
-                classNameLi={`${inHistory ? "alreadyRead" : ""} ${current ? "current" : ""}`}
-                onClick={handleClick}
-                onContextMenu={handleContextMenu}
-                title={name}
-                dataAttributes={{
-                    "data-url": link,
-                }}
-                ref={
-                    appSettings.readerSettings?.focusChapterInList
-                        ? (node) => {
-                              if (current && node !== null) node.scrollIntoView({ block: "nearest" });
-                          }
-                        : undefined
+            const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+                const items = [
+                    window.contextMenu.template.open(link),
+                    window.contextMenu.template.openInNewWindow(link),
+                    window.contextMenu.template.divider(),
+                ];
+                if (inHistory) {
+                    items.push(window.contextMenu.template.unreadChapter(window.path.dirname(link), name));
+                } else {
+                    items.push(window.contextMenu.template.readChapter(window.path.dirname(link), name));
                 }
-            >
-                <span className="text">{formatUtils.files.getName(name)}</span>
-                {formatUtils.files.test(name) ? (
-                    <code className="nonFolder" data-type-text={formatUtils.book.test(name)}>
-                        {formatUtils.files.getExt(name)}
-                    </code>
-                ) : (
-                    <span className="pageNum" title="Total Pages">
-                        {pages}
-                    </span>
-                )}
-            </ListItem>
-        );
-    },
+                /* resolve names at click time so rows do not hold the full filtered array */
+                items.push(
+                    window.contextMenu.template.readAllChapter(window.path.dirname(link), [...getChapterNames()]),
+                );
+                items.push(window.contextMenu.template.unreadAllChapter(window.path.dirname(link)));
+                items.push(window.contextMenu.template.divider());
+                items.push(window.contextMenu.template.copyPath(link));
+                items.push(window.contextMenu.template.showInExplorer(link));
+                items.push(window.contextMenu.template.divider());
+                items.push({
+                    label: t("contextMenu.deleteChapter"),
+                    action() {
+                        void onDeleteChapters([link]);
+                    },
+                });
+                items.push({
+                    label: t("contextMenu.deleteReadChapters"),
+                    disabled: getReadChapterPaths().length === 0,
+                    action() {
+                        void onDeleteChapters(getReadChapterPaths());
+                    },
+                });
+                setContextMenuData({
+                    clickX: e.clientX,
+                    clickY: e.clientY,
+                    focusBackElem:
+                        e.nativeEvent.relatedTarget ||
+                        e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement,
+                    items,
+                });
+            };
+
+            return (
+                <ListItem
+                    ref={forwardedRef}
+                    focused={focused}
+                    scrollManagedByParent={scrollManagedByParent}
+                    classNameLi={`${inHistory ? "alreadyRead" : ""} ${current ? "current" : ""}`}
+                    onClick={handleClick}
+                    onContextMenu={handleContextMenu}
+                    title={name}
+                    dataAttributes={{
+                        "data-url": link,
+                    }}
+                    style={style}
+                    data-index={dataIndex}
+                >
+                    <span className="text">{formatUtils.files.getName(name)}</span>
+                    {formatUtils.mangaFile.test(name) ? (
+                        <code className="nonFolder">{formatUtils.files.getExt(name)}</code>
+                    ) : (
+                        <span className="pageNum" title={t("sideList.totalPages")}>
+                            {pages}
+                        </span>
+                    )}
+                </ListItem>
+            );
+        },
+    ),
 );
 ReaderSideListItem.displayName = "ReaderSideListItem";
 

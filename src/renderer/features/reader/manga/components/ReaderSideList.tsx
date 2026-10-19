@@ -1,3 +1,6 @@
+import type { MangaBookmark } from "@common/types/db";
+import { useCommandOwner } from "@features/keybindings";
+import { DirectoryValidatorService } from "@features/reader/services/directoryValidator";
 import { faBookmark as farBookmark } from "@fortawesome/free-regular-svg-icons";
 import {
     faArrowLeft,
@@ -11,25 +14,50 @@ import {
     faThumbtack,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useAppContext } from "@renderer/App";
+import { ItemDisplayTitle } from "@renderer/components/ItemDisplayTitle";
+import { LIST_ITEM_ROW_PX } from "@renderer/components/ListItem";
 import ListNavigator from "@renderer/components/ListNavigator";
+import { PAGE_SEARCH_PRIORITY } from "@renderer/hooks/usePageSearchFocus";
 import { setAppSettings } from "@store/appSettings";
 import { addBookmark, removeBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { getReaderManga, setReaderState } from "@store/reader";
+import store from "@store/index";
+import { selectResolvedItemMetadata, updateChaptersReadAll } from "@store/library";
+import { selectLiveMangaReaderSettings, selectReaderCommandsActive } from "@store/reader";
 import { dialogUtils } from "@utils/dialog";
 import { formatUtils } from "@utils/file";
+import { clickOnWidgetActivateKey } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
+import {
+    MANGA_ROOT_CHAPTER_NAME,
+    normalizeMangaPathSegment,
+    resolveMangaChapterPath,
+} from "@utils/mangaChapterPath";
+import {
+    CHAPTER_NAV_NONE,
+    type ChapterNavDirection,
+    listMangaChapterChildren,
+    type MangaChapterChild,
+    mangaChapterPathExists,
+    orderMangaChapterList,
+    pickChapterNavOpenPath,
+    resolvePrevNextChapter,
+    selectChapterNavList,
+    shuffleArray,
+} from "@utils/mangaChapters";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { MANGA_BOOKMARK_OWNER_ID, MANGA_READER_OWNER_ID, MANGA_SIDE_LIST_OWNER_ID } from "../useMangaCommandOwner";
 
 const log = createRendererLogger("manga/ReaderSideList");
 
 import { shallowEqual } from "react-redux";
-import { useAppContext } from "src/renderer/App";
 import AnilistBar from "../../../anilist/AnilistBar";
 import BookmarkList from "./BookmarkList";
 import ReaderSideListItem from "./ReaderSideListItem";
 
-type ChapterData = { name: string; pages: number; link: string; dateModified: number };
+type ChapterData = MangaChapterChild;
 
 const filterChapter = (filter: string, chapter: ChapterData) => {
     return new RegExp(filter, "ig").test(chapter.name);
@@ -37,15 +65,11 @@ const filterChapter = (filter: string, chapter: ChapterData) => {
 
 const RECENT_CHAPTERS_SIZE = 10;
 
-/** Fisher-Yates shuffle. Returns new shuffled array. */
-function shuffleArray<T>(arr: T[]): T[] {
-    const result = [...arr];
-    for (let i = result.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
-}
+/** Stable fallback keeps an absent bookmark map from invalidating the button selector. */
+const EMPTY_MANGA_BOOKMARKS: readonly MangaBookmark[] = [];
+
+/** Stable fallback prevents an unloaded manga from creating a new chapter history reference. */
+const EMPTY_CHAPTERS_READ: readonly string[] = [];
 
 const handleContextMenu = (elem: HTMLElement) => {
     elem.dispatchEvent(window.contextMenu.fakeEvent(elem));
@@ -67,7 +91,6 @@ const ReaderSideList = memo(
         setSideListPinned,
         setSideListWidth,
         makeScrollPos,
-        prevNextChapter,
         setPrevNextChapter,
     }: {
         openNextChapterRef: React.RefObject<HTMLButtonElement>;
@@ -80,92 +103,134 @@ const ReaderSideList = memo(
         setSideListPinned: React.Dispatch<React.SetStateAction<boolean>>;
         setSideListWidth: React.Dispatch<React.SetStateAction<number>>;
         makeScrollPos: () => void;
-        // todo: temp solution only, improve
-        prevNextChapter: { prev: string; next: string };
+        /**
+         * Pushes derived prev/next into the manga Reader for the chapter-changer labels.
+         * State (not a ref) so those labels re-render; siblings are computed here from the
+         * chapter list and open path, including while content is cleared on a chapter switch.
+         */
         setPrevNextChapter: React.Dispatch<React.SetStateAction<{ prev: string; next: string }>>;
     }) => {
         const { contextMenuData, openInReader, setContextMenuData, closeReader } = useAppContext();
 
-        const contentLink = useAppSelector((store) => store.reader.content?.link);
         const readerLink = useAppSelector((store) => store.reader.link);
         const readerType = useAppSelector((store) => store.reader.type);
+        const commandsActive = useAppSelector(selectReaderCommandsActive);
+        /** Reader content identifies the manga, while readerLink identifies its active chapter. */
+        const mangaContentLink = useAppSelector((store) =>
+            store.reader.type === "manga" ? store.reader.content?.link : undefined,
+        );
         // TODO: temporary solution only, improve
         /** Stable manga folder; content clears during chapter switch, so derive from chapter path when needed */
         const mangaLink =
-            contentLink ?? (readerType === "manga" && readerLink ? window.path.dirname(readerLink) : undefined);
-        /** mangaInReader.link !== linkInReader */
-        const mangaInReader = useAppSelector(getReaderManga);
-        const bookmarks = useAppSelector((store) => store.bookmarks);
+            mangaContentLink ??
+            (readerType === "manga" && readerLink ? window.path.dirname(readerLink) : undefined);
+        const mangaTitle = useAppSelector((store) =>
+            store.reader.type === "manga" ? (store.reader.content?.title ?? "") : "",
+        );
+        const mangaProgressItemLink = useAppSelector((store) =>
+            store.reader.type === "manga" ? store.reader.content?.progress?.itemLink : undefined,
+        );
+        const mangaChapterName = useAppSelector((store) =>
+            store.reader.type === "manga" ? (store.reader.content?.progress?.chapterName ?? "") : "",
+        );
+        const mangaChaptersRead = useAppSelector((store) =>
+            store.reader.type === "manga"
+                ? (store.reader.content?.progress?.chaptersRead ?? EMPTY_CHAPTERS_READ)
+                : EMPTY_CHAPTERS_READ,
+        );
+        const mangaDisplay = useAppSelector((store) =>
+            selectResolvedItemMetadata(store, mangaContentLink ?? mangaLink),
+        );
         const appSettings = useAppSelector((store) => store.appSettings);
+        const hideSideList = useAppSelector((store) => selectLiveMangaReaderSettings(store).hideSideList);
+        const focusChapterInList = useAppSelector(
+            (store) => selectLiveMangaReaderSettings(store).focusChapterInList,
+        );
         const anilistToken = useAppSelector((store) => store.anilist.token);
         const dispatch = useAppDispatch();
 
         const sideListRef = useRef<HTMLDivElement>(null);
+        const contentScrollRef = useRef<HTMLDivElement>(null);
         const [chapterData, setChapterData] = useState<ChapterData[]>([]);
         const [isListOpen, setListOpen] = useState(false);
         const [preventListClose, setPreventListClose] = useState(false);
 
         const [draggingResizer, setDraggingResizer] = useState(false);
 
+        const { t } = useTranslation("reader");
+        const { t: tCommon } = useTranslation("common");
+        const { t: tDialogs } = useTranslation("dialogs");
         const [displayList, setDisplayList] = useState<"" | "content" | "bookmarks">("content");
-
-        const [bookmarkedId, setBookmarkedId] = useState<number | null>(null);
 
         const [isShuffleMode, setShuffleMode] = useState(false);
         const [shuffledLocations, setShuffledLocations] = useState<ChapterData[]>([]);
         const [isSearchFixed, setSearchFixed] = useState(false);
         const [filteredItemsFromList, setFilteredItemsFromList] = useState<ChapterData[]>([]);
         const [filterActive, setFilterActive] = useState(false);
+        const [locateNonce, setLocateNonce] = useState(0);
         const recentChaptersRef = useRef<string[]>([]);
+        const chapterNavInFlightRef = useRef(false);
 
-        const sortedLocations = useMemo(() => {
-            if (chapterData.length === 0) return [];
-            const sorted = [...chapterData].sort((a, b) => {
-                // chapterData is already sorted by name
-                if (appSettings.locationListSortBy === "date") return a.dateModified - b.dateModified;
-                return 0;
-            });
+        const currentChapterPath = useMemo(() => {
+            if (mangaProgressItemLink && mangaChapterName) {
+                return resolveMangaChapterPath(mangaProgressItemLink, mangaChapterName);
+            }
+            // content is null during chapter switch; reader.link is already the target chapter
+            if (readerType === "manga" && readerLink) return normalizeMangaPathSegment(readerLink);
+            return "";
+        }, [mangaChapterName, mangaProgressItemLink, readerLink, readerType]);
 
-            return appSettings.locationListSortType === "inverse" ? sorted.reverse() : sorted;
-        }, [chapterData, appSettings.locationListSortBy, appSettings.locationListSortType]);
+        const sortedLocations = useMemo(
+            () =>
+                orderMangaChapterList(chapterData, {
+                    sortBy: appSettings.locationListSortBy,
+                    inverse: appSettings.locationListSortType === "inverse",
+                }),
+            [appSettings.locationListSortBy, appSettings.locationListSortType, chapterData],
+        );
 
         const locationsToUse = isShuffleMode ? shuffledLocations : sortedLocations;
-        const effectiveListForNav =
-            filterActive && filteredItemsFromList.length > 0 ? filteredItemsFromList : locationsToUse;
+        // unpinned search is display-only; prev/next/random follow the pin
+        const effectiveListForNav = selectChapterNavList(locationsToUse, filteredItemsFromList, {
+            filterPinned: isSearchFixed,
+            filterActive,
+        });
+        const chapterNavSiblings = useMemo(
+            () =>
+                resolvePrevNextChapter(effectiveListForNav, currentChapterPath, {
+                    inverseSort: appSettings.locationListSortType === "inverse",
+                    shuffle: isShuffleMode,
+                    compareNames: (a, b) => window.app.betterSortOrder(a, b),
+                }),
+            [appSettings.locationListSortType, currentChapterPath, effectiveListForNav, isShuffleMode],
+        );
 
         useEffect(() => {
             if (!isShuffleMode) {
                 setShuffledLocations([]);
                 return;
             }
-            if (sortedLocations.length > 0) {
-                setShuffledLocations(shuffleArray(sortedLocations));
-            }
-        }, [isShuffleMode, sortedLocations]);
+            if (sortedLocations.length === 0) return;
+            /* keep session order across a rescan; empty prev means first shuffle or a full refresh */
+            setShuffledLocations((prev) => {
+                if (prev.length === 0) return shuffleArray(sortedLocations);
+                return orderMangaChapterList(sortedLocations, {
+                    sortBy: appSettings.locationListSortBy,
+                    inverse: appSettings.locationListSortType === "inverse",
+                    shuffled: prev,
+                });
+            });
+        }, [appSettings.locationListSortBy, appSettings.locationListSortType, isShuffleMode, sortedLocations]);
 
         useEffect(() => {
-            if (mangaInReader?.progress?.chapterLink) {
-                const link = mangaInReader.progress.chapterLink;
+            if (currentChapterPath) {
+                const link = currentChapterPath;
                 recentChaptersRef.current = [link, ...recentChaptersRef.current.filter((l) => l !== link)].slice(
                     0,
                     RECENT_CHAPTERS_SIZE,
                 );
             }
-        }, [mangaInReader?.progress?.chapterLink]);
-
-        useEffect(() => {
-            if (mangaInReader?.link) {
-                setBookmarkedId(
-                    bookmarks.manga[mangaInReader.link]?.find(
-                        (b) =>
-                            b.link === mangaInReader.progress?.chapterLink &&
-                            b.page === mangaInReader.progress?.currentPage,
-                    )?.id || null,
-                );
-            } else {
-                setBookmarkedId(null);
-            }
-        }, [bookmarks, mangaInReader]);
+        }, [currentChapterPath]);
 
         useEffect(() => {
             if (
@@ -176,7 +241,7 @@ const ReaderSideList = memo(
             )
                 return setListOpen(false);
             setPreventListClose(true);
-        }, [contextMenuData]);
+        }, [contextMenuData, isSideListPinned]);
 
         useLayoutEffect(() => {
             if (isSideListPinned) {
@@ -184,78 +249,35 @@ const ReaderSideList = memo(
             }
         }, [isSideListPinned]);
 
-        useEffect(() => {
-            if (effectiveListForNav.length >= 0 && mangaInReader) {
-                const index = effectiveListForNav.findIndex((e) => e.link === mangaInReader.progress?.chapterLink);
-                const prevCh = index <= 0 ? "~" : effectiveListForNav[index - 1].link;
-                const nextCh = index >= effectiveListForNav.length - 1 ? "~" : effectiveListForNav[index + 1].link;
-                if (appSettings.locationListSortType === "inverse" && !isShuffleMode) {
-                    setPrevNextChapter({ prev: nextCh, next: prevCh });
-                } else {
-                    setPrevNextChapter({ prev: prevCh, next: nextCh });
-                }
-            }
-        }, [effectiveListForNav, appSettings.locationListSortType, isShuffleMode, mangaInReader]);
+        /* chapter-changer labels in Reader read this state; skip set when the pair is unchanged */
+        useLayoutEffect(() => {
+            setPrevNextChapter((init) =>
+                init.prev === chapterNavSiblings.prev && init.next === chapterNavSiblings.next
+                    ? init
+                    : chapterNavSiblings,
+            );
+        }, [chapterNavSiblings, setPrevNextChapter]);
 
-        const makeChapterList = async () => {
-            if (!mangaLink) return;
-            recentChaptersRef.current = [];
+        /**
+         * Scans the series folder and returns the name-sorted chapter list.
+         * Does not clear random-chapter history; callers that mean a full refresh do that.
+         */
+        const scanMangaChapters = useCallback(async (): Promise<ChapterData[]> => {
+            if (!mangaLink || !window.fs.isDir(mangaLink)) {
+                setChapterData([]);
+                return [];
+            }
 
             try {
-                const files = await window.fs.readdir(mangaLink);
-                const chapterPromises = files.map(async (fileName): Promise<ChapterData | null> => {
-                    try {
-                        const filePath = window.path.join(mangaLink, fileName);
-                        const stat = await window.fs.stat(filePath);
-
-                        if (stat.isDir) {
-                            try {
-                                const dirContents = await window.fs.readdir(filePath);
-                                const imageFiles = dirContents.filter((file) => formatUtils.image.test(file));
-
-                                if (imageFiles.length > 0) {
-                                    return {
-                                        name: fileName,
-                                        pages: imageFiles.length,
-                                        link: filePath,
-                                        dateModified: stat.mtimeMs,
-                                    };
-                                }
-                            } catch (err) {
-                                log.error(`readdir failed for "${filePath}"`, err);
-                            }
-                        } else if (formatUtils.files.test(filePath)) {
-                            return {
-                                name: fileName,
-                                pages: 0,
-                                link: filePath,
-                                dateModified: stat.mtimeMs,
-                            };
-                        }
-
-                        return null;
-                    } catch (err) {
-                        log.error(`could not stat or read "${fileName}"`, err);
-                        return null;
-                    }
-                });
-
-                const results = await Promise.allSettled(chapterPromises);
-                const validChapters = results
-                    .filter(
-                        (result): result is PromiseFulfilledResult<ChapterData> =>
-                            result.status === "fulfilled" && result.value !== null,
-                    )
-                    .map((result) => result.value);
-
-                setChapterData(
-                    validChapters.sort((a, b) =>
-                        window.app.betterSortOrder(
-                            formatUtils.files.getName(a.name),
-                            formatUtils.files.getName(b.name),
-                        ),
+                const children = await listMangaChapterChildren(mangaLink);
+                const sorted = [...children].sort((a, b) =>
+                    window.app.betterSortOrder(
+                        formatUtils.files.getName(a.name),
+                        formatUtils.files.getName(b.name),
                     ),
                 );
+                setChapterData(sorted);
+                return sorted;
             } catch (err) {
                 if (err instanceof Error) {
                     dialogUtils.nodeError(err);
@@ -263,51 +285,172 @@ const ReaderSideList = memo(
                     log.error(`chapter list build failed for "${mangaLink}"`, err);
                 }
                 setChapterData([]);
-            }
-        };
-        useLayoutEffect(() => {
-            makeChapterList();
-
-            if (mangaLink && appSettings.autoRefreshSideList && !isShuffleMode) {
-                const refresh = () => {
-                    if (timeout) clearTimeout(timeout);
-                    timeout = setTimeout(() => {
-                        makeChapterList();
-                    }, 1000);
-                };
-                const closeWatcher = window.chokidar.watch({
-                    path: mangaLink,
-                    event: "all",
-                    options: {
-                        depth: 0,
-                        ignoreInitial: true,
-                    },
-                    callback: refresh,
-                });
-                let timeout: NodeJS.Timeout;
-                return () => {
-                    closeWatcher();
-                };
+                return [];
             }
         }, [mangaLink]);
 
-        const handleResizerDrag = (e: MouseEvent) => {
-            if (draggingResizer) {
-                if (isSideListPinned) {
-                    makeScrollPos();
+        const readChapterPaths = useCallback(
+            () =>
+                chapterData
+                    .filter(
+                        (chapter) => mangaChaptersRead.includes(chapter.name) && chapter.name !== mangaChapterName,
+                    )
+                    .map((chapter) => chapter.link),
+            [chapterData, mangaChapterName, mangaChaptersRead],
+        );
+
+        /**
+         * Deletes the chapter files for these paths. One chapter asks once; several ask twice.
+         * The history and bookmark key is the path's basename, or the root token when
+         * the path is the series folder. If the open chapter is among them, opens the
+         * next sibling, or the previous when there is no next.
+         */
+        const deleteChapters = useCallback(
+            async (chapterPaths: readonly string[]) => {
+                if (!mangaLink || chapterPaths.length === 0) return;
+                const confirmDelete = (message: string) =>
+                    dialogUtils.confirm({
+                        message,
+                        noOption: false,
+                        buttons: [tCommon("actions.cancel"), tCommon("actions.yes")],
+                        defaultId: 0,
+                        cancelId: 0,
+                        type: "warning",
+                    });
+                if (chapterPaths.length === 1) {
+                    const { response } = await confirmDelete(
+                        t("dialogs.deleteChapter", { name: window.path.basename(chapterPaths[0]) }),
+                    );
+                    if (response !== 1) return;
+                } else {
+                    const countConfirm = await confirmDelete(
+                        t("dialogs.deleteReadChapters", { count: chapterPaths.length }),
+                    );
+                    if (countConfirm.response !== 1) return;
+                    const finalConfirm = await confirmDelete(t("dialogs.deleteReadChaptersAgain"));
+                    if (finalConfirm.response !== 1) return;
                 }
-                const width =
-                    e.clientX > (window.innerWidth * 90) / 100
-                        ? (window.innerWidth * 90) / 100
-                        : e.clientX < 192
-                          ? 192
-                          : e.clientX;
-                setSideListWidth(width);
-            }
-        };
-        const handleResizerMouseUp = () => {
+
+                const seriesRoot = normalizeMangaPathSegment(mangaLink);
+                const removed: string[] = [];
+                const failedNames: string[] = [];
+                for (const chapterPath of chapterPaths) {
+                    try {
+                        await window.fs.rm(chapterPath, { recursive: true, force: true });
+                        DirectoryValidatorService.invalidate(chapterPath);
+                        removed.push(
+                            normalizeMangaPathSegment(chapterPath) === seriesRoot
+                                ? MANGA_ROOT_CHAPTER_NAME
+                                : window.path.basename(chapterPath),
+                        );
+                    } catch (err) {
+                        log.error("failed to delete manga chapter", { chapterPath }, err);
+                        failedNames.push(window.path.basename(chapterPath));
+                    }
+                }
+                if (failedNames.length > 0) {
+                    await dialogUtils.customError({
+                        message: t("dialogs.deleteFailed", { name: failedNames.join(", ") }),
+                    });
+                }
+                if (removed.length === 0) return;
+
+                const itemLink = mangaProgressItemLink ?? mangaLink;
+                try {
+                    await dispatch(updateChaptersReadAll({ itemLink, chapters: removed, read: false })).unwrap();
+                } catch (err) {
+                    log.error("could not update read chapters after delete", { itemLink }, err);
+                }
+                const bookmarkIds = (store.getState().bookmarks.manga[itemLink] ?? [])
+                    .filter((bookmark) => removed.includes(bookmark.chapterName))
+                    .map((bookmark) => bookmark.id);
+                if (bookmarkIds.length > 0) {
+                    await dispatch(removeBookmark({ itemLink, type: "manga", ids: bookmarkIds }));
+                }
+                await scanMangaChapters();
+
+                const openPath = normalizeMangaPathSegment(currentChapterPath);
+                const deletedOpen = chapterPaths.some(
+                    (chapterPath) => normalizeMangaPathSegment(chapterPath) === openPath,
+                );
+                if (!deletedOpen) return;
+                const nextPath =
+                    chapterNavSiblings.next !== CHAPTER_NAV_NONE
+                        ? chapterNavSiblings.next
+                        : chapterNavSiblings.prev;
+                if (nextPath === CHAPTER_NAV_NONE) return;
+                await openInReader(nextPath);
+            },
+            [
+                chapterNavSiblings.next,
+                chapterNavSiblings.prev,
+                currentChapterPath,
+                dispatch,
+                mangaLink,
+                mangaProgressItemLink,
+                openInReader,
+                scanMangaChapters,
+                t,
+                tCommon,
+            ],
+        );
+
+        /** Manual / watcher refresh: rescan and reset recency; empty shuffle so the list is shuffled again. */
+        const makeChapterList = useCallback(async () => {
+            recentChaptersRef.current = [];
+            setShuffledLocations([]);
+            await scanMangaChapters();
+        }, [scanMangaChapters]);
+
+        useLayoutEffect(() => {
+            void makeChapterList();
+
+            if (!mangaLink || !window.fs.isDir(mangaLink) || !appSettings.autoRefreshSideList || isShuffleMode)
+                return;
+
+            let timeout: NodeJS.Timeout | undefined;
+            const refresh = () => {
+                if (timeout) clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    void makeChapterList();
+                }, 1000);
+            };
+            const closeWatcher = window.chokidar.watch({
+                path: mangaLink,
+                event: "all",
+                options: {
+                    depth: 0,
+                    ignoreInitial: true,
+                },
+                callback: refresh,
+            });
+            return () => {
+                if (timeout) clearTimeout(timeout);
+                closeWatcher();
+            };
+        }, [appSettings.autoRefreshSideList, isShuffleMode, makeChapterList, mangaLink]);
+
+        const handleResizerDrag = useCallback(
+            (e: MouseEvent) => {
+                if (draggingResizer) {
+                    if (isSideListPinned) {
+                        makeScrollPos();
+                    }
+                    const width =
+                        e.clientX > (window.innerWidth * 90) / 100
+                            ? (window.innerWidth * 90) / 100
+                            : e.clientX < 192
+                              ? 192
+                              : e.clientX;
+                    setSideListWidth(width);
+                }
+            },
+            [draggingResizer, isSideListPinned, makeScrollPos, setSideListWidth],
+        );
+
+        const handleResizerMouseUp = useCallback(() => {
             setDraggingResizer(false);
-        };
+        }, []);
 
         const handleIndicatorClick = (e: React.MouseEvent<HTMLDivElement>) => {
             makeScrollPos();
@@ -317,10 +460,6 @@ const ReaderSideList = memo(
             }
             setSideListPinned((init) => !init);
             (e.currentTarget as HTMLElement).blur();
-        };
-
-        const handleIndicatorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-            if ([" ", "Enter"].includes(e.key)) (e.currentTarget as HTMLElement).click();
         };
 
         const handleReSizerMouseDown = () => {
@@ -365,14 +504,14 @@ const ReaderSideList = memo(
         const handleSortClick = (e: React.MouseEvent<HTMLButtonElement>) => {
             const items: Menu.ListItem[] = [
                 {
-                    label: "Name",
+                    label: t("sideList.sortName"),
                     action() {
                         dispatch(setAppSettings({ locationListSortBy: "name" }));
                     },
                     selected: appSettings.locationListSortBy === "name",
                 },
                 {
-                    label: "Date Modified",
+                    label: t("sideList.sortDateModified"),
                     action() {
                         dispatch(
                             setAppSettings({
@@ -385,14 +524,14 @@ const ReaderSideList = memo(
                 },
                 window.contextMenu.template.divider(),
                 {
-                    label: "Ascending",
+                    label: t("sideList.sortAscending"),
                     action() {
                         dispatch(setAppSettings({ locationListSortType: "normal" }));
                     },
                     selected: appSettings.locationListSortType === "normal",
                 },
                 {
-                    label: "Descending",
+                    label: t("sideList.sortDescending"),
                     action() {
                         dispatch(setAppSettings({ locationListSortType: "inverse" }));
                     },
@@ -408,101 +547,72 @@ const ReaderSideList = memo(
             });
         };
 
-        const handlePrevChapterClick = () => {
-            if (prevNextChapter.prev === "~") {
-                dialogUtils
-                    .confirm({
-                        message: "There's no previous chapter.",
-                        buttons: ["Ok", "Home"],
-                        noOption: false,
-                        noLink: true,
-                    })
-                    .then((e) => {
-                        if (e.response === 1) {
-                            closeReader();
-                        }
-                    });
-                return;
-            }
-            dispatch(
-                setReaderState({
-                    link: prevNextChapter.prev,
-                    type: "manga",
-                    content: null,
-                    mangaPageNumber: 1,
-                    epubChapterId: "",
-                    epubElementQueryString: "",
-                }),
-            );
+        /** Confirm when prev/next has no existing sibling after a disk rescan. */
+        const showNoNeighborDialog = (direction: ChapterNavDirection) => {
+            dialogUtils
+                .confirm({
+                    message: direction === "next" ? t("dialogs.noNextChapter") : t("dialogs.noPreviousChapter"),
+                    buttons: [tDialogs("buttons.okAlt"), t("dialogs.home")],
+                    noOption: false,
+                    noLink: true,
+                })
+                .then((e) => {
+                    if (e.response === 1) {
+                        closeReader();
+                    }
+                });
         };
 
-        const handleBookmarkClick = () => {
-            if (!mangaInReader || !mangaInReader.progress) return;
-            const itemLink = mangaInReader.link;
-            if (bookmarkedId !== null) {
-                return dialogUtils
-                    .warn({
-                        title: "Warning",
-                        message: "Remove - Remove Bookmark",
-                        noOption: false,
-                        buttons: ["Cancel", "Remove"],
-                        defaultId: 0,
-                    })
-                    .then(({ response }) => {
-                        if (response === 1 && mangaInReader) {
-                            dispatch(removeBookmark({ itemLink, type: "manga", ids: [bookmarkedId] }));
-                        }
-                    });
-            }
-            dispatch(
-                addBookmark({
-                    type: "manga",
-                    data: {
-                        itemLink,
-                        page: mangaInReader.progress.currentPage || 1,
-                        link: mangaInReader.progress.chapterLink,
-                        chapterName: mangaInReader.progress.chapterName,
+        /**
+         * Opens prev/next after checking the target still exists. If the current chapter
+         * or the planned sibling is gone (rename/delete before auto-refresh), rescans
+         * and opens the name-neighbor instead of setting reader.link to a missing path.
+         */
+        const goToNeighborChapter = async (direction: ChapterNavDirection) => {
+            if (chapterNavInFlightRef.current) return;
+            chapterNavInFlightRef.current = true;
+            try {
+                const target = await pickChapterNavOpenPath({
+                    list: effectiveListForNav,
+                    currentLink: currentChapterPath,
+                    direction,
+                    inverseSort: appSettings.locationListSortType === "inverse",
+                    shuffle: isShuffleMode,
+                    compareNames: (a, b) => window.app.betterSortOrder(a, b),
+                    pathExists: mangaChapterPathExists,
+                    refreshList: async () => {
+                        const scanned = await scanMangaChapters();
+                        const ordered = orderMangaChapterList(scanned, {
+                            sortBy: appSettings.locationListSortBy,
+                            inverse: appSettings.locationListSortType === "inverse",
+                            shuffled: isShuffleMode ? shuffledLocations : undefined,
+                        });
+                        return selectChapterNavList(ordered, filteredItemsFromList, {
+                            filterPinned: isSearchFixed,
+                            filterActive,
+                        });
                     },
-                }),
-            );
-            setShortcutText("Bookmark Added");
+                });
+                if (target === CHAPTER_NAV_NONE) {
+                    showNoNeighborDialog(direction);
+                    return;
+                }
+                await openInReader(target);
+            } finally {
+                chapterNavInFlightRef.current = false;
+            }
+        };
+
+        const handlePrevChapterClick = () => {
+            void goToNeighborChapter("prev");
         };
 
         const handleNextChapterClick = () => {
-            if (prevNextChapter.next === "~") {
-                dialogUtils
-                    .confirm({
-                        message: "There's no next chapter.",
-                        buttons: ["Ok", "Home"],
-                        noOption: false,
-                        noLink: true,
-                    })
-                    .then((e) => {
-                        if (e.response === 1) {
-                            closeReader();
-                        }
-                    });
-                return;
-            }
-            dispatch(
-                setReaderState({
-                    link: prevNextChapter.next,
-                    type: "manga",
-                    content: null,
-                    mangaPageNumber: 1,
-                    epubChapterId: "",
-                    epubElementQueryString: "",
-                }),
-            );
+            void goToNeighborChapter("next");
         };
 
         const handleLocateClick = () => {
-            if (sideListRef.current) {
-                sideListRef.current.querySelectorAll("[data-url]").forEach((elem) => {
-                    if (elem.getAttribute("data-url") === mangaInReader?.progress?.chapterLink)
-                        elem.scrollIntoView({ block: "nearest" });
-                });
-            }
+            setLocateNonce((n) => n + 1);
         };
 
         const handleRandomChapterClick = () => {
@@ -514,6 +624,22 @@ const ReaderSideList = memo(
             const randomChapter = candidates[Math.floor(Math.random() * candidates.length)];
             openInReader(randomChapter.link);
         };
+
+        useCommandOwner({
+            ownerId: MANGA_SIDE_LIST_OWNER_ID,
+            contextKinds: ["mangaReader"],
+            visible: commandsActive,
+            parentOwnerId: MANGA_READER_OWNER_ID,
+            handlers: {
+                nextChapter: handleNextChapterClick,
+                prevChapter: handlePrevChapterClick,
+                randomChapter: handleRandomChapterClick,
+                deleteMangaChapter: () => {
+                    if (!currentChapterPath) return;
+                    void deleteChapters([currentChapterPath]);
+                },
+            },
+        });
 
         const handleContentToggle = () => {
             setDisplayList((init) => (init === "content" ? "" : "content"));
@@ -536,10 +662,6 @@ const ReaderSideList = memo(
             setFilterActive(active);
         }, []);
 
-        const handleChapterItemClick = (link: string) => {
-            openInReader(link);
-        };
-
         useLayoutEffect(() => {
             document.body.style.cursor = "auto";
             if (draggingResizer) {
@@ -551,19 +673,34 @@ const ReaderSideList = memo(
                 window.removeEventListener("mousemove", handleResizerDrag);
                 window.removeEventListener("mouseup", handleResizerMouseUp);
             };
-        }, [draggingResizer]);
+        }, [draggingResizer, handleResizerDrag, handleResizerMouseUp]);
+
+        /*
+         * Context-menu "mark all read" needs the filtered name list, but each row
+         * must not re-render when that array identity changes — keep it on a ref.
+         */
+        const chapterNamesForMenuRef = useRef<readonly string[]>([]);
+        chapterNamesForMenuRef.current = filteredItemsFromList.map((chapter) => chapter.name);
+        const getChapterNamesForMenu = useCallback(() => chapterNamesForMenuRef.current, []);
+
+        const currentChapterListIndex = useMemo(
+            () => filteredItemsFromList.findIndex((chapter) => chapter.link === currentChapterPath),
+            [currentChapterPath, filteredItemsFromList],
+        );
 
         const renderChapterItem = (chapter: ChapterData, _index: number, isSelected: boolean) => {
             return (
                 <ReaderSideListItem
                     name={chapter.name}
-                    inHistory={!!mangaInReader?.progress?.chaptersRead.includes(chapter.name)}
+                    inHistory={mangaChaptersRead.includes(chapter.name)}
                     focused={isSelected}
                     key={chapter.name}
                     pages={chapter.pages}
-                    current={mangaInReader?.progress?.chapterLink === chapter.link}
+                    current={currentChapterPath === chapter.link}
                     link={chapter.link}
-                    onClick={handleChapterItemClick.bind(null, chapter.link)}
+                    getChapterNames={getChapterNamesForMenu}
+                    onDeleteChapters={deleteChapters}
+                    getReadChapterPaths={readChapterPaths}
                 />
             );
         };
@@ -571,8 +708,8 @@ const ReaderSideList = memo(
         return (
             <div
                 className={`readerSideList listCont ${isListOpen ? "open" : ""} ${
-                    !appSettings.showTextFileBadge ? "hideTextFileBadge" : ""
-                } ${!appSettings.showPageCountInSideList ? "hidePageCountInSideList" : ""}`}
+                    !appSettings.showPageCountInSideList ? "hidePageCountInSideList" : ""
+                }`}
                 onMouseEnter={handleListMouseEnter}
                 onMouseLeave={handleListMouseLeave}
                 onFocus={handleListFocus}
@@ -586,7 +723,7 @@ const ReaderSideList = memo(
                     className="indicator"
                     onClick={handleIndicatorClick}
                     tabIndex={0}
-                    onKeyDown={handleIndicatorKeyDown}
+                    onKeyDown={clickOnWidgetActivateKey}
                 >
                     <FontAwesomeIcon
                         icon={faThumbtack}
@@ -602,24 +739,31 @@ const ReaderSideList = memo(
                 <ListNavigator.Provider
                     items={locationsToUse}
                     filterFn={filterChapter}
+                    getItemKey={(chapter) => chapter.link}
                     renderItem={renderChapterItem}
                     onContextMenu={handleContextMenu}
                     onSelect={handleSelect}
-                    emptyMessage="No chapters found"
+                    emptyMessage={t("sideList.noChaptersFound")}
                     inputRef={sideListSearchRef}
                     onFilteredItemsChange={handleFilteredItemsChange}
                     persistFilterOnItemsChange={isSearchFixed}
+                    resetFilterKey={currentChapterPath}
                 >
                     <div className="tools">
                         <div className="row1">
                             <div className="search-with-pin">
-                                <ListNavigator.SearchInput placeholder="Search chapters..." />
+                                <ListNavigator.SearchInput
+                                    placeholder={t("sideList.searchChapters")}
+                                    pageSearch={{
+                                        id: "reader-manga-sidelist",
+                                        contextKinds: ["mangaReader"],
+                                        tieOrder: PAGE_SEARCH_PRIORITY.reader,
+                                    }}
+                                />
                                 <button
                                     className={`pin-filter-toggle ${isSearchFixed ? "selected" : ""}`}
                                     data-tooltip={
-                                        isSearchFixed
-                                            ? "Filter pinned - search persists on list refresh; click to unpin"
-                                            : "Filter unpinned - search clears on list refresh; click to pin"
+                                        isSearchFixed ? t("sideList.filterPinned") : t("sideList.filterUnpinned")
                                     }
                                     onClick={handleSearchFixedToggle}
                                 >
@@ -632,7 +776,9 @@ const ReaderSideList = memo(
 
                             {(isShuffleMode || !appSettings.autoRefreshSideList) && (
                                 <button
-                                    data-tooltip={isShuffleMode ? "Refresh and reshuffle" : "Refresh"}
+                                    data-tooltip={
+                                        isShuffleMode ? t("sideList.refreshAndReshuffle") : t("sideList.refresh")
+                                    }
                                     onClick={makeChapterList}
                                 >
                                     <FontAwesomeIcon icon={faSyncAlt} />
@@ -640,11 +786,10 @@ const ReaderSideList = memo(
                             )}
 
                             <button
-                                data-tooltip={
-                                    "Sort: " +
-                                    (appSettings.locationListSortType === "normal" ? "▲ " : "▼ ") +
-                                    appSettings.locationListSortBy.toUpperCase()
-                                }
+                                data-tooltip={t("sideList.sortTooltip", {
+                                    arrow: appSettings.locationListSortType === "normal" ? "▲ " : "▼ ",
+                                    by: appSettings.locationListSortBy.toUpperCase(),
+                                })}
                                 onClick={handleSortClick}
                             >
                                 <FontAwesomeIcon icon={faSort} />
@@ -655,23 +800,16 @@ const ReaderSideList = memo(
                             <Button
                                 className="ctrl-menu-item"
                                 btnRef={openPrevChapterRef}
-                                tooltip="Open Previous"
+                                tooltip={t("sideList.openPrevious")}
                                 clickAction={handlePrevChapterClick}
                             >
                                 <FontAwesomeIcon icon={faArrowLeft} />
                             </Button>
-                            <Button
-                                className="ctrl-menu-item"
-                                tooltip="Bookmark"
-                                btnRef={addToBookmarkRef}
-                                clickAction={handleBookmarkClick}
-                            >
-                                <FontAwesomeIcon icon={bookmarkedId !== null ? faBookmark : farBookmark} />
-                            </Button>
+                            <MangaBookmarkButton btnRef={addToBookmarkRef} setShortcutText={setShortcutText} />
                             <Button
                                 className="ctrl-menu-item"
                                 btnRef={openNextChapterRef}
-                                tooltip="Open Next"
+                                tooltip={t("sideList.openNext")}
                                 clickAction={handleNextChapterClick}
                             >
                                 <FontAwesomeIcon icon={faArrowRight} />
@@ -681,14 +819,17 @@ const ReaderSideList = memo(
 
                     <div className="in-reader">
                         <div>
-                            <span className="bold">Manga</span>
+                            <span className="bold">{t("sideList.manga")}</span>
                             <span className="bold"> : </span>
-                            <span>{mangaInReader?.title}</span>
+                            <ItemDisplayTitle
+                                primary={mangaDisplay?.title ?? mangaTitle}
+                                original={mangaDisplay?.originalTitle}
+                            />
                         </div>
                         <div>
-                            <span className="bold">Chapter</span>
+                            <span className="bold">{t("sideList.chapter")}</span>
                             <span className="bold"> : </span>
-                            <span>{formatUtils.files.getName(mangaInReader?.progress?.chapterName || "")}</span>
+                            <span>{formatUtils.files.getName(mangaChapterName)}</span>
                         </div>
                     </div>
 
@@ -699,22 +840,22 @@ const ReaderSideList = memo(
                             <button
                                 className={`${displayList === "content" ? "selected" : ""}`}
                                 onClick={handleContentToggle}
-                                data-tooltip="Click again to hide"
+                                data-tooltip={t("sideList.clickAgainToHide")}
                             >
-                                Content
+                                {t("sideList.content")}
                             </button>
                             <button
                                 className={`${displayList === "bookmarks" ? "selected" : ""}`}
                                 onClick={handleBookmarksToggle}
                             >
-                                Bookmarks
+                                {t("sideList.bookmarks")}
                             </button>
                         </div>
                         {displayList === "content" && (
                             <div className="row2">
                                 <button
                                     className="ctrl-menu-item"
-                                    data-tooltip="Locate Current Chapter"
+                                    data-tooltip={t("sideList.locateCurrentChapter")}
                                     onClick={handleLocateClick}
                                 >
                                     <FontAwesomeIcon icon={faLocationDot} />
@@ -723,21 +864,23 @@ const ReaderSideList = memo(
                                 <button
                                     className={`shuffle-mode-toggle ${isShuffleMode ? "selected" : ""}`}
                                     data-tooltip={
-                                        isShuffleMode
-                                            ? "Shuffle ON - list order randomized; click to use sorted"
-                                            : "Shuffle OFF - click to randomize chapter order"
+                                        isShuffleMode ? t("sideList.shuffleOn") : t("sideList.shuffleOff")
                                     }
                                     onClick={handleShuffleToggle}
                                     aria-pressed={isShuffleMode}
                                     type="button"
                                 >
                                     <FontAwesomeIcon icon={faShuffle} />
-                                    <span className="shuffle-label">{isShuffleMode ? "ON" : "Off"}</span>
+                                    <span className="shuffle-label">
+                                        {isShuffleMode
+                                            ? t("sideList.shuffleLabelOn")
+                                            : t("sideList.shuffleLabelOff")}
+                                    </span>
                                 </button>
                                 <Button
                                     className="ctrl-menu-item"
                                     btnRef={openRandomChapterRef}
-                                    tooltip="Open Random Chapter"
+                                    tooltip={t("sideList.openRandomChapter")}
                                     disabled={effectiveListForNav.length === 0}
                                     clickAction={handleRandomChapterClick}
                                 >
@@ -750,11 +893,22 @@ const ReaderSideList = memo(
                     {displayList === "content" && (
                         <div
                             className="location-cont"
+                            ref={contentScrollRef}
                             style={{
-                                display: appSettings.readerSettings.hideSideList ? "none" : "initial",
+                                display: hideSideList ? "none" : "initial",
                             }}
                         >
-                            <ListNavigator.List />
+                            <ListNavigator.VirtualList
+                                scrollContainerRef={contentScrollRef}
+                                estimatedItemSize={LIST_ITEM_ROW_PX}
+                                hostRowElement={false}
+                                rowGapPx={0}
+                                ensureVisibleIndex={
+                                    focusChapterInList || locateNonce > 0 ? currentChapterListIndex : undefined
+                                }
+                                ensureVisibleAlign="auto"
+                                ensureVisibleNonce={locateNonce}
+                            />
                         </div>
                     )}
                     {displayList === "bookmarks" && (
@@ -768,6 +922,95 @@ const ReaderSideList = memo(
     },
     shallowEqual,
 );
+
+/**
+ * Isolates page-sensitive bookmark state so page ticks do not reconcile the chapter navigator.
+ * Owns the bookmark command so keyboard and the reader context menu share this operation.
+ */
+const MangaBookmarkButton = memo(
+    ({
+        btnRef,
+        setShortcutText,
+    }: {
+        btnRef: React.RefObject<HTMLButtonElement>;
+        setShortcutText: React.Dispatch<React.SetStateAction<string>>;
+    }) => {
+        const { t } = useTranslation("reader");
+        const { t: tDialogs } = useTranslation("dialogs");
+        const { t: tCommon } = useTranslation("common");
+        const mangaContentLink = useAppSelector((store) =>
+            store.reader.type === "manga" ? store.reader.content?.link : undefined,
+        );
+        const mangaChapterName = useAppSelector((store) =>
+            store.reader.type === "manga" ? store.reader.content?.progress?.chapterName : undefined,
+        );
+        const currentPage = useAppSelector((store) =>
+            store.reader.type === "manga" ? store.reader.content?.progress?.currentPage : undefined,
+        );
+        const bookmarks = useAppSelector((store) =>
+            mangaContentLink
+                ? (store.bookmarks.manga[mangaContentLink] ?? EMPTY_MANGA_BOOKMARKS)
+                : EMPTY_MANGA_BOOKMARKS,
+        );
+        const commandsActive = useAppSelector(selectReaderCommandsActive);
+        const dispatch = useAppDispatch();
+        const bookmarkedId = bookmarks.find(
+            (bookmark) => bookmark.chapterName === mangaChapterName && bookmark.page === currentPage,
+        )?.id;
+
+        const handleClick = () => {
+            if (!mangaContentLink || !mangaChapterName) return;
+            const itemLink = mangaContentLink;
+            if (bookmarkedId != null) {
+                void dialogUtils
+                    .warn({
+                        title: tDialogs("titles.warning"),
+                        message: t("dialogs.removeBookmarkManga"),
+                        noOption: false,
+                        buttons: [tDialogs("buttons.cancel"), tCommon("actions.remove")],
+                        defaultId: 0,
+                    })
+                    .then(({ response }) => {
+                        if (response === 1) {
+                            dispatch(removeBookmark({ itemLink, type: "manga", ids: [bookmarkedId] }));
+                        }
+                    });
+                return;
+            }
+            dispatch(
+                addBookmark({
+                    type: "manga",
+                    data: {
+                        itemLink,
+                        page: currentPage ?? 1,
+                        chapterName: mangaChapterName,
+                    },
+                }),
+            );
+            setShortcutText(t("hud.bookmarkAdded"));
+        };
+
+        useCommandOwner({
+            ownerId: MANGA_BOOKMARK_OWNER_ID,
+            contextKinds: ["mangaReader"],
+            visible: commandsActive,
+            parentOwnerId: MANGA_READER_OWNER_ID,
+            handlers: { bookmark: handleClick },
+        });
+
+        return (
+            <Button
+                className="ctrl-menu-item"
+                tooltip={t("sideList.bookmark")}
+                btnRef={btnRef}
+                clickAction={handleClick}
+            >
+                <FontAwesomeIcon icon={bookmarkedId != null ? faBookmark : farBookmark} />
+            </Button>
+        );
+    },
+);
+MangaBookmarkButton.displayName = "MangaBookmarkButton";
 
 const Button = (props: {
     className: string;

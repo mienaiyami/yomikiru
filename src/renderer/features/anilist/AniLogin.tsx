@@ -1,13 +1,15 @@
+import { useCommandOwner } from "@features/keybindings";
 import { setAnilistToken } from "@store/anilist";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { setAnilistLoginOpen } from "@store/ui";
-import AniList from "@utils/anilist";
+import { getAnilistViewer } from "@utils/anilist";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-
 import FocusLock from "react-focus-lock";
+import { useTranslation } from "react-i18next";
 
 const AniLogin: React.FC = () => {
+    const { t } = useTranslation("anilist");
     const [proceeded, setProceeded] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -15,6 +17,17 @@ const AniLogin: React.FC = () => {
     const contRef = useRef<HTMLDivElement>(null);
 
     const dispatch = useAppDispatch();
+
+    useCommandOwner({
+        ownerId: "anilist-login",
+        contextKinds: ["modal"],
+        visible: true,
+        onEscape: () => {
+            dispatch(setAnilistLoginOpen(false));
+            return true;
+        },
+    });
+
     useEffect(() => {
         if (isAniLoginOpen) {
             setTimeout(() => {
@@ -43,23 +56,9 @@ const AniLogin: React.FC = () => {
                 }}
             >
                 <div className="clickClose" onClick={() => dispatch(setAnilistLoginOpen(false))}></div>
-                <div
-                    className="overlayCont"
-                    onKeyDown={(e) => {
-                        if (e.key === "Escape") dispatch(setAnilistLoginOpen(false));
-                    }}
-                    tabIndex={-1}
-                    ref={contRef}
-                >
-                    <h1>Link AniList</h1>
-                    <p>
-                        Click &quot;Proceed&quot; to start authorization process. You will be redirected to your
-                        default browser. <br /> <br />
-                        After authorization, anilist will give you a token, copy and paste that below to complete
-                        linking.
-                        <br /> <br />
-                        Check Usage & Features in settings for more info or ask on the github page.
-                    </p>
+                <div className="overlayCont" tabIndex={-1} ref={contRef}>
+                    <h1>{t("login.title")}</h1>
+                    <p className="loginDesc">{t("login.desc")}</p>
                     <div className="btns">
                         {!proceeded && (
                             <button
@@ -70,13 +69,13 @@ const AniLogin: React.FC = () => {
                                     setProceeded(true);
                                 }}
                             >
-                                Proceed
+                                {t("login.proceed")}
                             </button>
                         )}
                         {proceeded && (
                             <>
                                 <input
-                                    placeholder="Paste your token here"
+                                    placeholder={t("login.tokenPlaceholder")}
                                     type="text"
                                     ref={inputRef}
                                     onKeyDown={(e) => {
@@ -89,26 +88,34 @@ const AniLogin: React.FC = () => {
                                         if (inputRef.current) {
                                             const token = inputRef.current.value.trimEnd();
                                             const elem = e.currentTarget;
-                                            elem.innerText = "Checking...";
-                                            AniList.checkToken(token).then((e) => {
-                                                if (e) {
-                                                    elem.innerText = "Linked!";
+                                            elem.innerText = t("login.checking");
+                                            getAnilistViewer(token).then((result) => {
+                                                if (result.ok) {
+                                                    elem.innerText = t("login.linked");
                                                     setTimeout(() => {
                                                         dispatch(setAnilistToken(token));
                                                         dispatch(setAnilistLoginOpen(false));
                                                     }, 1000);
-                                                } else {
-                                                    elem.innerText = "Invalid Token / Error";
-                                                    if (inputRef.current) inputRef.current.value = "";
-                                                    setTimeout(() => {
-                                                        elem.innerText = "Submit";
-                                                    }, 2000);
+                                                    return;
                                                 }
+                                                if (result.reason !== "unauthorized") {
+                                                    // network / 5xx: keep the pasted token so retry is one click
+                                                    elem.innerText = t("login.failed");
+                                                    setTimeout(() => {
+                                                        elem.innerText = t("login.submit");
+                                                    }, 2000);
+                                                    return;
+                                                }
+                                                elem.innerText = t("login.invalidToken");
+                                                if (inputRef.current) inputRef.current.value = "";
+                                                setTimeout(() => {
+                                                    elem.innerText = t("login.submit");
+                                                }, 2000);
                                             });
                                         }
                                     }}
                                 >
-                                    Submit
+                                    {t("login.submit")}
                                 </button>
                             </>
                         )}

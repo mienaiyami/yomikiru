@@ -1,6 +1,7 @@
 export type ValidationResult = {
     isValid: boolean;
     images?: string[];
+    imageCount?: number;
     error?: Error | string;
 };
 

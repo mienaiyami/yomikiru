@@ -1,4 +1,7 @@
-import ReaderPresetSection from "@features/reader/components/ReaderPresetSection";
+import { useCommandOwner } from "@features/keybindings";
+import { MangaReaderPresetSection } from "@features/reader/components/ReaderPresetSection";
+import { MangaReaderSettingSection } from "@features/reader/components/ReaderSettingSection";
+import { maxReaderWidth, stepReaderWidth } from "@features/reader/readerCommandOps";
 import {
     faArrowsAltH,
     faArrowsAltV,
@@ -9,10 +12,9 @@ import {
     faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { setReaderSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { updateMangaPreset } from "@store/readerPresets";
-import { getShortcutsMapped } from "@store/shortcuts";
+import { selectLiveMangaPresetId, selectLiveMangaReaderSettings, selectReaderCommandsActive } from "@store/reader";
+import { getActiveMangaPresetName, patchLiveMangaReaderSettings, updateMangaPreset } from "@store/readerPresets";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
 import InputCheckboxNumber from "@ui/InputCheckboxNumber";
@@ -20,9 +22,14 @@ import InputNumber from "@ui/InputNumber";
 import InputRange from "@ui/InputRange";
 import InputSelect from "@ui/InputSelect";
 import { colorUtils } from "@utils/color";
-import { keyFormatter } from "@utils/keybindings";
 import { defaultMangaReaderSettings } from "@utils/readerSettingsSchema";
 import { memo, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+    MANGA_READER_OWNER_ID,
+    MANGA_READER_PANEL_OWNER_ID,
+    MANGA_READER_SETTINGS_OWNER_ID,
+} from "../useMangaCommandOwner";
 
 const ReaderSettings = memo(
     ({
@@ -30,62 +37,76 @@ const ReaderSettings = memo(
         readerRef,
         readerSettingExtender,
         setShortcutText,
-        sizePlusRef,
-        sizeMinusRef,
     }: {
         makeScrollPos: () => void;
         readerRef: React.RefObject<HTMLDivElement>;
         readerSettingExtender: React.RefObject<HTMLButtonElement>;
         setShortcutText: React.Dispatch<React.SetStateAction<string>>;
-        sizePlusRef: React.RefObject<HTMLButtonElement>;
-        sizeMinusRef: React.RefObject<HTMLButtonElement>;
     }) => {
+        const { t } = useTranslation("reader");
+        const { t: tSettings } = useTranslation("settings");
         const appSettings = useAppSelector((store) => store.appSettings);
-        const shortcutsMapped = useAppSelector(getShortcutsMapped);
-        const currentPresetName = useAppSelector((s) => {
-            const id = s.appSettings.mangaReaderPresetId;
-            return id ? s.readerPresets.presets.find((p) => p.id === id)?.name : null;
-        });
+        const readerSettings = useAppSelector(selectLiveMangaReaderSettings);
+        const mangaPresetId = useAppSelector(selectLiveMangaPresetId);
+        const currentPresetName = useAppSelector(getActiveMangaPresetName);
+        const commandsActive = useAppSelector(selectReaderCommandsActive);
         const dispatch = useAppDispatch();
         const [isReaderSettingsOpen, setReaderSettingOpen] = useState(false);
-        const [maxWidth, setMaxWidth] = useState<number>(appSettings.readerSettings.widthClamped ? 100 : 500);
+        const [maxWidth, setMaxWidth] = useState<number>(maxReaderWidth(readerSettings.widthClamped));
+
+        const applySize = (direction: 1 | -1, fromButton?: HTMLElement) => {
+            if (readerSettings.fitOption !== 0) return;
+            makeScrollPos();
+            const readerWidth = stepReaderWidth(readerSettings.readerWidth, maxWidth, direction);
+            if (!fromButton || document.activeElement !== fromButton) setShortcutText(`${readerWidth}%`);
+            dispatch(patchLiveMangaReaderSettings({ readerWidth }));
+        };
+
+        const savePreset = () => {
+            const presetId = mangaPresetId;
+            if (!presetId) return;
+            dispatch(updateMangaPreset({ id: presetId, data: readerSettings }));
+            setShortcutText(
+                t("hud.savedToPreset", {
+                    name: currentPresetName ?? t("hud.unknownPreset"),
+                }),
+            );
+        };
+
+        useCommandOwner({
+            ownerId: MANGA_READER_SETTINGS_OWNER_ID,
+            contextKinds: ["mangaReader"],
+            visible: commandsActive,
+            parentOwnerId: MANGA_READER_OWNER_ID,
+            handlers: {
+                readerSettings: () => {
+                    setReaderSettingOpen((open) => !open);
+                    readerSettingExtender.current?.focus();
+                },
+                sizePlus: () => applySize(1),
+                sizeMinus: () => applySize(-1),
+                savePreset,
+            },
+        });
+
+        useCommandOwner({
+            ownerId: MANGA_READER_PANEL_OWNER_ID,
+            contextKinds: ["readerPanel"],
+            visible: isReaderSettingsOpen,
+            parentOwnerId: MANGA_READER_OWNER_ID,
+            onEscape: () => {
+                setReaderSettingOpen(false);
+                readerRef.current?.focus();
+                return true;
+            },
+        });
 
         useEffect(() => {
-            const f = (e: KeyboardEvent) => {
-                if (isReaderSettingsOpen && e.key === "Escape") {
-                    setReaderSettingOpen(false);
-                    if (readerRef.current) readerRef.current.focus();
-                    return;
-                }
-                const keyStr = keyFormatter(e);
-                if (keyStr && shortcutsMapped.savePreset?.includes(keyStr)) {
-                    e.preventDefault();
-                    const id = appSettings.mangaReaderPresetId;
-                    if (id) {
-                        dispatch(updateMangaPreset({ id, data: appSettings.readerSettings }));
-                        setShortcutText(`Saved to preset "${currentPresetName ?? "Unknown"}"`);
-                    }
-                }
-            };
-            window.addEventListener("keydown", f);
-            return () => window.removeEventListener("keydown", f);
-        }, [
-            isReaderSettingsOpen,
-            shortcutsMapped,
-            appSettings.mangaReaderPresetId,
-            appSettings.readerSettings,
-            currentPresetName,
-            dispatch,
-            setShortcutText,
-            readerRef,
-        ]);
-        useEffect(() => {
-            setMaxWidth(appSettings.readerSettings.widthClamped ? 100 : 500);
-            if (appSettings.readerSettings.widthClamped) {
-                if (appSettings.readerSettings.readerWidth > 100)
-                    dispatch(setReaderSettings({ readerWidth: 100 }));
+            setMaxWidth(maxReaderWidth(readerSettings.widthClamped));
+            if (readerSettings.widthClamped) {
+                if (readerSettings.readerWidth > 100) dispatch(patchLiveMangaReaderSettings({ readerWidth: 100 }));
             }
-        }, [appSettings.readerSettings.widthClamped]);
+        }, [readerSettings.widthClamped]);
         return (
             <div
                 id="readerSettings"
@@ -94,831 +115,618 @@ const ReaderSettings = memo(
                     (isReaderSettingsOpen ? "" : "closed ") +
                     (appSettings.checkboxReaderSetting ? "checkboxSetting " : "")
                 }
-                onKeyDown={(e) => {
-                    if (e.key === "Escape" || e.key === "q") {
-                        e.stopPropagation();
-                        setReaderSettingOpen(false);
-                        if (readerRef.current) readerRef.current.focus();
-                    }
-                }}
             >
                 <button
                     className="menuExtender"
                     ref={readerSettingExtender}
-                    onClick={() => setReaderSettingOpen((init) => !init)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Escape" || e.key === "q") e.currentTarget.blur();
+                    onClick={() => {
+                        setReaderSettingOpen((init) => !init);
                     }}
-                    {...(!isReaderSettingsOpen ? { "data-tooltip": "Reader Settings" } : {})}
+                    {...(!isReaderSettingsOpen ? { "data-tooltip": t("settings.readerSettingsTooltip") } : {})}
                 >
                     <FontAwesomeIcon icon={isReaderSettingsOpen ? faTimes : faBars} />
                 </button>
                 <div className="main">
-                    <ReaderPresetSection type="manga" />
-                    <div className={"settingItem "}>
-                        <div
-                            className={`name ${!appSettings.readerSettings.settingsCollapsed.size ? "expanded " : ""}`}
-                            onKeyDown={(e) => {
-                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
+                    <MangaReaderPresetSection />
+                    <MangaReaderSettingSection title={t("settings.size")} collapsedKey="size">
+                        <InputNumber
+                            value={readerSettings.readerWidth}
+                            min={1}
+                            max={maxWidth}
+                            onChange={() => {
+                                makeScrollPos();
                             }}
-                            onClick={() => {
-                                dispatch(
-                                    setReaderSettings({
-                                        settingsCollapsed: {
-                                            ...appSettings.readerSettings.settingsCollapsed,
-                                            size: !appSettings.readerSettings.settingsCollapsed.size,
-                                        },
-                                    }),
-                                );
+                            timeout={[
+                                1000,
+                                (value) => dispatch(patchLiveMangaReaderSettings({ readerWidth: value })),
+                            ]}
+                            disabled={readerSettings.fitOption !== 0}
+                            labelAfter={t("settings.percentUnit")}
+                        />
+                        <button
+                            disabled={readerSettings.fitOption !== 0}
+                            onClick={(e) => {
+                                applySize(-1, e.currentTarget);
                             }}
                         >
-                            Size
-                        </div>
-                        <div className="options">
-                            <InputNumber
-                                value={appSettings.readerSettings.readerWidth}
-                                min={1}
-                                max={maxWidth}
-                                onChange={() => {
-                                    makeScrollPos();
-                                }}
-                                timeout={[1000, (value) => dispatch(setReaderSettings({ readerWidth: value }))]}
-                                disabled={appSettings.readerSettings.fitOption !== 0}
-                                labelAfter="%"
+                            <FontAwesomeIcon icon={faMinus} />
+                        </button>
+                        <button
+                            disabled={readerSettings.fitOption !== 0}
+                            onClick={(e) => {
+                                applySize(1, e.currentTarget);
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faPlus} />
+                        </button>
+                        <div className="col">
+                            <InputCheckbox
+                                checked={readerSettings.widthClamped}
+                                onChange={(e) =>
+                                    dispatch(patchLiveMangaReaderSettings({ widthClamped: e.target.checked }))
+                                }
+                                paraAfter={t("settings.clampSize")}
                             />
-                            <button
-                                ref={sizeMinusRef}
-                                disabled={appSettings.readerSettings.fitOption !== 0}
-                                onClick={(e) => {
-                                    makeScrollPos();
-                                    // was 20 before
-                                    const steps = appSettings.readerSettings.readerWidth <= 40 ? 5 : 10;
-                                    const readerWidth =
-                                        appSettings.readerSettings.readerWidth - steps > maxWidth
-                                            ? maxWidth
-                                            : appSettings.readerSettings.readerWidth - steps < 1
-                                              ? 1
-                                              : appSettings.readerSettings.readerWidth - steps;
-                                    if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(`${readerWidth}%`);
-                                    dispatch(setReaderSettings({ readerWidth }));
-                                    // e.currentTarget.dispatchEvent(new MouseEvent(type:"")))
-                                }}
-                            >
-                                <FontAwesomeIcon icon={faMinus} />
-                            </button>
-                            <button
-                                ref={sizePlusRef}
-                                disabled={appSettings.readerSettings.fitOption !== 0}
-                                onClick={(e) => {
-                                    makeScrollPos();
-                                    const steps = appSettings.readerSettings.readerWidth <= 40 ? 5 : 10;
-                                    const readerWidth =
-                                        appSettings.readerSettings.readerWidth + steps > maxWidth
-                                            ? maxWidth
-                                            : appSettings.readerSettings.readerWidth + steps < 1
-                                              ? 1
-                                              : appSettings.readerSettings.readerWidth + steps;
-
-                                    if (document.activeElement !== e.currentTarget)
-                                        setShortcutText(`${readerWidth}%`);
-                                    dispatch(setReaderSettings({ readerWidth }));
-                                }}
-                            >
-                                <FontAwesomeIcon icon={faPlus} />
-                            </button>
-                            <div className="col">
-                                <InputCheckbox
-                                    checked={appSettings.readerSettings.widthClamped}
-                                    onChange={(e) =>
-                                        dispatch(setReaderSettings({ widthClamped: e.target.checked }))
-                                    }
-                                    paraAfter="Clamp size to window width"
-                                />
-                            </div>
                         </div>
-                    </div>
-                    <div className={"settingItem "}>
-                        <div
-                            className={
-                                "name " +
-                                (!appSettings.readerSettings.settingsCollapsed.fitOption ? "expanded " : "")
-                            }
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                            }}
-                            onClick={() => {
-                                dispatch(
-                                    setReaderSettings({
-                                        settingsCollapsed: {
-                                            ...appSettings.readerSettings.settingsCollapsed,
-                                            fitOption: !appSettings.readerSettings.settingsCollapsed.fitOption,
-                                        },
-                                    }),
-                                );
-                            }}
-                        >
-                            Fit Options
-                        </div>
-                        <div className="options">
-                            <div className="row">
-                                <button
-                                    className={
-                                        appSettings.readerSettings.fitOption === 0 ? "optionSelected " : " "
-                                    }
-                                    onClick={() => {
-                                        dispatch(setReaderSettings({ fitOption: 0 }));
-                                    }}
-                                    title="Free"
-                                >
-                                    <FontAwesomeIcon icon={faExpandArrowsAlt} />
-                                </button>
-                                <button
-                                    className={
-                                        appSettings.readerSettings.fitOption === 1 ? "optionSelected " : " "
-                                    }
-                                    onClick={() => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                fitOption: appSettings.readerSettings.fitOption === 1 ? 0 : 1,
-                                            }),
-                                        );
-                                    }}
-                                    title="Fit Vertically"
-                                >
-                                    <FontAwesomeIcon icon={faArrowsAltV} />
-                                </button>
-                                <button
-                                    className={
-                                        appSettings.readerSettings.fitOption === 2 ? "optionSelected " : " "
-                                    }
-                                    onClick={() => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                fitOption: appSettings.readerSettings.fitOption === 2 ? 0 : 2,
-                                            }),
-                                        );
-                                    }}
-                                    title="Fit Horizontally"
-                                >
-                                    <FontAwesomeIcon icon={faArrowsAltH} />
-                                </button>
-                                <button
-                                    className={`${
-                                        appSettings.readerSettings.fitOption === 3 ? "optionSelected " : " "
-                                    }icon`}
-                                    onClick={() => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                fitOption: appSettings.readerSettings.fitOption === 3 ? 0 : 3,
-                                            }),
-                                        );
-                                    }}
-                                    title="Original"
-                                    style={{ fontWeight: "bold" }}
-                                >
-                                    1:1
-                                </button>
-                            </div>
-                            <div className="col">
-                                <InputCheckboxNumber
-                                    checked={appSettings.readerSettings.maxHeightWidthSelector === "width"}
-                                    onChangeCheck={() => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                maxHeightWidthSelector:
-                                                    appSettings.readerSettings.maxHeightWidthSelector !== "width"
-                                                        ? "width"
-                                                        : "none",
-                                            }),
-                                        );
-                                    }}
-                                    min={0}
-                                    max={5000}
-                                    value={appSettings.readerSettings.maxWidth}
-                                    disabled={
-                                        appSettings.readerSettings.widthClamped ||
-                                        appSettings.readerSettings.fitOption !== 0
-                                    }
-                                    timeout={[1000, (value) => dispatch(setReaderSettings({ maxWidth: value }))]}
-                                    paraBefore="Max Image Width&nbsp;&nbsp;:"
-                                    paraAfter="px"
-                                />
-                                <InputCheckboxNumber
-                                    checked={appSettings.readerSettings.maxHeightWidthSelector === "height"}
-                                    onChangeCheck={() => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                maxHeightWidthSelector:
-                                                    appSettings.readerSettings.maxHeightWidthSelector !== "height"
-                                                        ? "height"
-                                                        : "none",
-                                            }),
-                                        );
-                                    }}
-                                    min={0}
-                                    max={5000}
-                                    value={appSettings.readerSettings.maxHeight}
-                                    disabled={
-                                        appSettings.readerSettings.widthClamped ||
-                                        appSettings.readerSettings.fitOption !== 0
-                                    }
-                                    timeout={[1000, (value) => dispatch(setReaderSettings({ maxHeight: value }))]}
-                                    paraBefore="Max Image Height&nbsp;:"
-                                    paraAfter="px"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div className={"settingItem "}>
-                        <div
-                            className={
-                                "name " +
-                                (!appSettings.readerSettings.settingsCollapsed.readingMode ? "expanded " : "")
-                            }
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                            }}
-                            onClick={() => {
-                                dispatch(
-                                    setReaderSettings({
-                                        settingsCollapsed: {
-                                            ...appSettings.readerSettings.settingsCollapsed,
-                                            readingMode: !appSettings.readerSettings.settingsCollapsed.readingMode,
-                                        },
-                                    }),
-                                );
-                            }}
-                        >
-                            Reading Mode
-                        </div>
-                        <div className="options">
+                    </MangaReaderSettingSection>
+                    <MangaReaderSettingSection title={t("settings.fitOptions")} collapsedKey="fitOption">
+                        <div className="row">
                             <button
-                                className={
-                                    appSettings.readerSettings.readerTypeSelected === 0 ? "optionSelected" : ""
-                                }
-                                onClick={() => dispatch(setReaderSettings({ readerTypeSelected: 0 }))}
-                            >
-                                Vertical Scroll
-                            </button>
-                            <button
-                                className={
-                                    appSettings.readerSettings.readerTypeSelected === 1 ? "optionSelected" : ""
-                                }
-                                onClick={() => dispatch(setReaderSettings({ readerTypeSelected: 1 }))}
-                            >
-                                Left to Right
-                            </button>
-                            <button
-                                className={
-                                    appSettings.readerSettings.readerTypeSelected === 2 ? "optionSelected" : ""
-                                }
-                                onClick={() => dispatch(setReaderSettings({ readerTypeSelected: 2 }))}
-                            >
-                                Right to Left
-                            </button>
-                        </div>
-                    </div>
-                    <div className={"settingItem "}>
-                        <div
-                            className={
-                                "name " +
-                                (!appSettings.readerSettings.settingsCollapsed.pagePerRow ? "expanded " : "")
-                            }
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                            }}
-                            onClick={() => {
-                                dispatch(
-                                    setReaderSettings({
-                                        settingsCollapsed: {
-                                            ...appSettings.readerSettings.settingsCollapsed,
-                                            pagePerRow: !appSettings.readerSettings.settingsCollapsed.pagePerRow,
-                                        },
-                                    }),
-                                );
-                            }}
-                        >
-                            Pages Per Row
-                        </div>
-                        <div className="options">
-                            <button
-                                className={
-                                    appSettings.readerSettings.pagesPerRowSelected === 0 ? "optionSelected" : ""
-                                }
+                                className={readerSettings.fitOption === 0 ? "optionSelected " : " "}
                                 onClick={() => {
-                                    if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
-                                        const pagesPerRowSelected = 0;
-
-                                        let readerWidth = appSettings.readerSettings.readerWidth / 2;
-                                        if (readerWidth > maxWidth) readerWidth = maxWidth;
-                                        if (readerWidth < 1) readerWidth = 1;
-                                        dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
-                                    }
+                                    dispatch(patchLiveMangaReaderSettings({ fitOption: 0 }));
                                 }}
+                                title={t("settings.free")}
                             >
-                                1
+                                <FontAwesomeIcon icon={faExpandArrowsAlt} />
                             </button>
                             <button
-                                className={
-                                    appSettings.readerSettings.pagesPerRowSelected === 1 ? "optionSelected" : ""
-                                }
+                                className={readerSettings.fitOption === 1 ? "optionSelected " : " "}
                                 onClick={() => {
-                                    const pagesPerRowSelected = 1;
-                                    let readerWidth = appSettings.readerSettings.readerWidth;
-                                    if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                                        readerWidth *= 2;
-                                        if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
-                                            readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
-                                        if (readerWidth < 1) readerWidth = 1;
-                                    }
-                                    dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
-                                }}
-                            >
-                                2
-                            </button>
-                            <button
-                                className={
-                                    appSettings.readerSettings.pagesPerRowSelected === 2 ? "optionSelected" : ""
-                                }
-                                onClick={() => {
-                                    const pagesPerRowSelected = 2;
-                                    let readerWidth = appSettings.readerSettings.readerWidth;
-                                    if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                                        readerWidth *= 2;
-                                        if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
-                                            readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
-                                        if (readerWidth < 1) readerWidth = 1;
-                                    }
-                                    dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
-                                }}
-                            >
-                                2 odd
-                            </button>
-                        </div>
-                    </div>
-                    <div className={"settingItem "}>
-                        <div
-                            className={
-                                "name " +
-                                (!appSettings.readerSettings.settingsCollapsed.readingSide ? "expanded " : "")
-                            }
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                            }}
-                            onClick={() => {
-                                dispatch(
-                                    setReaderSettings({
-                                        settingsCollapsed: {
-                                            ...appSettings.readerSettings.settingsCollapsed,
-                                            readingSide: !appSettings.readerSettings.settingsCollapsed.readingSide,
-                                        },
-                                    }),
-                                );
-                            }}
-                        >
-                            Reading Side
-                        </div>
-                        <div className="options">
-                            <button
-                                className={appSettings.readerSettings.readingSide === 0 ? "optionSelected" : ""}
-                                disabled={appSettings.readerSettings.pagesPerRowSelected === 0}
-                                onClick={() => {
-                                    dispatch(setReaderSettings({ readingSide: 0 }));
-                                }}
-                            >
-                                LTR
-                            </button>
-                            <button
-                                className={appSettings.readerSettings.readingSide === 1 ? "optionSelected" : ""}
-                                disabled={appSettings.readerSettings.pagesPerRowSelected === 0}
-                                onClick={() => {
-                                    dispatch(setReaderSettings({ readingSide: 1 }));
-                                }}
-                            >
-                                RTL
-                            </button>
-                        </div>
-                    </div>
-                    <div className={"settingItem "}>
-                        <div
-                            className={
-                                "name " +
-                                (!appSettings.readerSettings.settingsCollapsed.scrollSpeed ? "expanded " : "")
-                            }
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                            }}
-                            onClick={() => {
-                                dispatch(
-                                    setReaderSettings({
-                                        settingsCollapsed: {
-                                            ...appSettings.readerSettings.settingsCollapsed,
-                                            scrollSpeed: !appSettings.readerSettings.settingsCollapsed.scrollSpeed,
-                                        },
-                                    }),
-                                );
-                            }}
-                            title={`Scrolling speed with keys.\nCheck Settings->Shortcut for more.`}
-                        >
-                            Scroll Speed
-                        </div>
-                        <div className="options">
-                            <InputNumber
-                                min={1}
-                                max={500}
-                                value={appSettings.readerSettings.scrollSpeedA}
-                                timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedA: value }))]}
-                                labelBefore="Scroll&nbsp;A&nbsp;(key)&nbsp;:"
-                                labelAfter="px"
-                                // tooltip={(() => {
-                                //     const index1 = shortcuts.findIndex((e) => e.command === "scrollDown");
-                                //     const index2 = shortcuts.findIndex((e) => e.command === "scrollUp");
-                                //     return `Keys: "${shortcuts[index1].key1}" "${shortcuts[index1].key2}" / "${shortcuts[index2].key1}" "${shortcuts[index2].key2}"`;
-                                // })()}
-                                // className="tooltip-top-start"
-                            />
-                            <InputNumber
-                                min={1}
-                                max={500}
-                                value={appSettings.readerSettings.scrollSpeedB}
-                                timeout={[1000, (value) => dispatch(setReaderSettings({ scrollSpeedB: value }))]}
-                                labelBefore="Scroll&nbsp;B&nbsp;(key)&nbsp;:"
-                                labelAfter="px"
-                                // tooltip={(() => {
-                                //     const index = shortcuts.findIndex((e) => e.command === "largeScroll");
-                                //     return `Keys: "${shortcuts[index].key1}" "${shortcuts[index].key2}"`;
-                                // })()}
-                                // className="tooltip-top-start"
-                            />
-                            <InputCheckboxNumber
-                                min={0.1}
-                                max={10}
-                                step={0.1}
-                                checked={appSettings.readerSettings.overrideMouseWheelSpeed}
-                                onChangeCheck={(e) => {
                                     dispatch(
-                                        setReaderSettings({
-                                            overrideMouseWheelSpeed: e.target.checked,
+                                        patchLiveMangaReaderSettings({
+                                            fitOption: readerSettings.fitOption === 1 ? 0 : 1,
                                         }),
                                     );
                                 }}
-                                value={appSettings.readerSettings.mouseWheelScrollSpeed}
-                                timeout={[
-                                    1000,
-                                    (value) => dispatch(setReaderSettings({ mouseWheelScrollSpeed: value })),
-                                ]}
-                                paraBefore="Mouse Wheel Speed&nbsp;:"
-                                paraAfter="screen"
-                            />
-                            <InputNumber
+                                title={t("settings.fitVertically")}
+                            >
+                                <FontAwesomeIcon icon={faArrowsAltV} />
+                            </button>
+                            <button
+                                className={readerSettings.fitOption === 2 ? "optionSelected " : " "}
+                                onClick={() => {
+                                    dispatch(
+                                        patchLiveMangaReaderSettings({
+                                            fitOption: readerSettings.fitOption === 2 ? 0 : 2,
+                                        }),
+                                    );
+                                }}
+                                title={t("settings.fitHorizontally")}
+                            >
+                                <FontAwesomeIcon icon={faArrowsAltH} />
+                            </button>
+                            <button
+                                className={`${readerSettings.fitOption === 3 ? "optionSelected " : " "}icon`}
+                                onClick={() => {
+                                    dispatch(
+                                        patchLiveMangaReaderSettings({
+                                            fitOption: readerSettings.fitOption === 3 ? 0 : 3,
+                                        }),
+                                    );
+                                }}
+                                title={t("settings.original")}
+                                style={{ fontWeight: "bold" }}
+                            >
+                                1:1
+                            </button>
+                        </div>
+                        <div className="col">
+                            <InputCheckboxNumber
+                                checked={readerSettings.maxHeightWidthSelector === "width"}
+                                onChangeCheck={() => {
+                                    dispatch(
+                                        patchLiveMangaReaderSettings({
+                                            maxHeightWidthSelector:
+                                                readerSettings.maxHeightWidthSelector !== "width"
+                                                    ? "width"
+                                                    : "none",
+                                        }),
+                                    );
+                                }}
                                 min={0}
-                                max={1000}
-                                disabled={!appSettings.readerSettings.overrideMouseWheelSpeed}
-                                value={appSettings.readerSettings.mouseWheelScrollDuration}
+                                max={5000}
+                                value={readerSettings.maxWidth}
+                                disabled={readerSettings.widthClamped || readerSettings.fitOption !== 0}
                                 timeout={[
                                     1000,
-                                    (value) => dispatch(setReaderSettings({ mouseWheelScrollDuration: value })),
+                                    (value) => dispatch(patchLiveMangaReaderSettings({ maxWidth: value })),
                                 ]}
-                                paraBefore="Mouse Wheel Scroll Duration&nbsp;:"
-                                paraAfter="ms"
+                                paraBefore={t("settings.maxImageWidth")}
+                                paraAfter={t("settings.pxUnit")}
                             />
                             <InputCheckboxNumber
-                                min={0.1}
-                                max={100}
-                                step={0.1}
-                                checked={appSettings.readerSettings.enableTouchScroll}
-                                onChangeCheck={(e) => {
-                                    dispatch(setReaderSettings({ enableTouchScroll: e.target.checked }));
+                                checked={readerSettings.maxHeightWidthSelector === "height"}
+                                onChangeCheck={() => {
+                                    dispatch(
+                                        patchLiveMangaReaderSettings({
+                                            maxHeightWidthSelector:
+                                                readerSettings.maxHeightWidthSelector !== "height"
+                                                    ? "height"
+                                                    : "none",
+                                        }),
+                                    );
                                 }}
-                                value={appSettings.readerSettings.touchScrollMultiplier}
+                                min={0}
+                                max={5000}
+                                value={readerSettings.maxHeight}
+                                disabled={readerSettings.widthClamped || readerSettings.fitOption !== 0}
                                 timeout={[
                                     1000,
-                                    (value) => dispatch(setReaderSettings({ touchScrollMultiplier: value })),
+                                    (value) => dispatch(patchLiveMangaReaderSettings({ maxHeight: value })),
                                 ]}
-                                labelBefore="Drag&nbsp;Multiplier&nbsp;:"
+                                paraBefore={t("settings.maxImageHeight")}
+                                paraAfter={t("settings.pxUnit")}
                             />
                         </div>
-                    </div>
-                    <div className={"settingItem "}>
-                        <div
-                            className={
-                                "name " +
-                                (!appSettings.readerSettings.settingsCollapsed.customColorFilter
-                                    ? "expanded "
-                                    : "")
-                            }
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                            }}
+                    </MangaReaderSettingSection>
+                    <MangaReaderSettingSection title={t("settings.readingMode")} collapsedKey="readingMode">
+                        <button
+                            className={readerSettings.readerTypeSelected === 0 ? "optionSelected" : ""}
+                            onClick={() => dispatch(patchLiveMangaReaderSettings({ readerTypeSelected: 0 }))}
+                        >
+                            {t("settings.verticalScroll")}
+                        </button>
+                        <button
+                            className={readerSettings.readerTypeSelected === 1 ? "optionSelected" : ""}
+                            onClick={() => dispatch(patchLiveMangaReaderSettings({ readerTypeSelected: 1 }))}
+                        >
+                            {t("settings.leftToRight")}
+                        </button>
+                        <button
+                            className={readerSettings.readerTypeSelected === 2 ? "optionSelected" : ""}
+                            onClick={() => dispatch(patchLiveMangaReaderSettings({ readerTypeSelected: 2 }))}
+                        >
+                            {t("settings.rightToLeft")}
+                        </button>
+                    </MangaReaderSettingSection>
+                    <MangaReaderSettingSection title={t("settings.pagesPerRow")} collapsedKey="pagePerRow">
+                        <button
+                            className={readerSettings.pagesPerRowSelected === 0 ? "optionSelected" : ""}
                             onClick={() => {
+                                if (readerSettings.pagesPerRowSelected !== 0) {
+                                    const pagesPerRowSelected = 0;
+
+                                    let readerWidth = readerSettings.readerWidth / 2;
+                                    if (readerWidth > maxWidth) readerWidth = maxWidth;
+                                    if (readerWidth < 1) readerWidth = 1;
+                                    dispatch(patchLiveMangaReaderSettings({ pagesPerRowSelected, readerWidth }));
+                                }
+                            }}
+                        >
+                            1
+                        </button>
+                        <button
+                            className={readerSettings.pagesPerRowSelected === 1 ? "optionSelected" : ""}
+                            onClick={() => {
+                                const pagesPerRowSelected = 1;
+                                let readerWidth = readerSettings.readerWidth;
+                                if (readerSettings.pagesPerRowSelected === 0) {
+                                    readerWidth *= 2;
+                                    if (readerWidth > (readerSettings.widthClamped ? 100 : 500))
+                                        readerWidth = readerSettings.widthClamped ? 100 : 500;
+                                    if (readerWidth < 1) readerWidth = 1;
+                                }
+                                dispatch(patchLiveMangaReaderSettings({ pagesPerRowSelected, readerWidth }));
+                            }}
+                        >
+                            2
+                        </button>
+                        <button
+                            className={readerSettings.pagesPerRowSelected === 2 ? "optionSelected" : ""}
+                            onClick={() => {
+                                const pagesPerRowSelected = 2;
+                                let readerWidth = readerSettings.readerWidth;
+                                if (readerSettings.pagesPerRowSelected === 0) {
+                                    readerWidth *= 2;
+                                    if (readerWidth > (readerSettings.widthClamped ? 100 : 500))
+                                        readerWidth = readerSettings.widthClamped ? 100 : 500;
+                                    if (readerWidth < 1) readerWidth = 1;
+                                }
+                                dispatch(patchLiveMangaReaderSettings({ pagesPerRowSelected, readerWidth }));
+                            }}
+                        >
+                            {t("settings.pagePerRow2odd")}
+                        </button>
+                    </MangaReaderSettingSection>
+                    <MangaReaderSettingSection title={t("settings.readingSide")} collapsedKey="readingSide">
+                        <button
+                            className={readerSettings.readingSide === 0 ? "optionSelected" : ""}
+                            disabled={readerSettings.pagesPerRowSelected === 0}
+                            onClick={() => {
+                                dispatch(patchLiveMangaReaderSettings({ readingSide: 0 }));
+                            }}
+                        >
+                            {t("settings.ltr")}
+                        </button>
+                        <button
+                            className={readerSettings.readingSide === 1 ? "optionSelected" : ""}
+                            disabled={readerSettings.pagesPerRowSelected === 0}
+                            onClick={() => {
+                                dispatch(patchLiveMangaReaderSettings({ readingSide: 1 }));
+                            }}
+                        >
+                            {t("settings.rtl")}
+                        </button>
+                    </MangaReaderSettingSection>
+                    <MangaReaderSettingSection
+                        title={t("settings.scrollSpeed")}
+                        collapsedKey="scrollSpeed"
+                        headerTitle={t("settings.scrollSpeedTitle")}
+                    >
+                        <InputNumber
+                            min={1}
+                            max={500}
+                            value={readerSettings.scrollSpeedA}
+                            timeout={[
+                                1000,
+                                (value) => dispatch(patchLiveMangaReaderSettings({ scrollSpeedA: value })),
+                            ]}
+                            labelBefore={t("settings.scrollAKey")}
+                            labelAfter={t("settings.pxUnit")}
+                            // tooltip={(() => {
+                            //     const index1 = shortcuts.findIndex((e) => e.command === "scrollDown");
+                            //     const index2 = shortcuts.findIndex((e) => e.command === "scrollUp");
+                            //     return `Keys: "${shortcuts[index1].key1}" "${shortcuts[index1].key2}" / "${shortcuts[index2].key1}" "${shortcuts[index2].key2}"`;
+                            // })()}
+                            // className="tooltip-top-start"
+                        />
+                        <InputNumber
+                            min={1}
+                            max={500}
+                            value={readerSettings.scrollSpeedB}
+                            timeout={[
+                                1000,
+                                (value) => dispatch(patchLiveMangaReaderSettings({ scrollSpeedB: value })),
+                            ]}
+                            labelBefore={t("settings.scrollBKey")}
+                            labelAfter={t("settings.pxUnit")}
+                            // tooltip={(() => {
+                            //     const index = shortcuts.findIndex((e) => e.command === "largeScroll");
+                            //     return `Keys: "${shortcuts[index].key1}" "${shortcuts[index].key2}"`;
+                            // })()}
+                            // className="tooltip-top-start"
+                        />
+                        <InputCheckboxNumber
+                            min={0.1}
+                            max={10}
+                            step={0.1}
+                            checked={readerSettings.overrideMouseWheelSpeed}
+                            onChangeCheck={(e) => {
                                 dispatch(
-                                    setReaderSettings({
-                                        settingsCollapsed: {
-                                            ...appSettings.readerSettings.settingsCollapsed,
-                                            customColorFilter:
-                                                !appSettings.readerSettings.settingsCollapsed.customColorFilter,
+                                    patchLiveMangaReaderSettings({
+                                        overrideMouseWheelSpeed: e.target.checked,
+                                    }),
+                                );
+                            }}
+                            value={readerSettings.mouseWheelScrollSpeed}
+                            timeout={[
+                                1000,
+                                (value) =>
+                                    dispatch(patchLiveMangaReaderSettings({ mouseWheelScrollSpeed: value })),
+                            ]}
+                            paraBefore={t("settings.mouseWheelSpeed")}
+                            paraAfter={t("settings.screenUnit")}
+                        />
+                        <InputNumber
+                            min={0}
+                            max={1000}
+                            disabled={!readerSettings.overrideMouseWheelSpeed}
+                            value={readerSettings.mouseWheelScrollDuration}
+                            timeout={[
+                                1000,
+                                (value) =>
+                                    dispatch(patchLiveMangaReaderSettings({ mouseWheelScrollDuration: value })),
+                            ]}
+                            paraBefore={t("settings.mouseWheelDuration")}
+                            paraAfter={t("settings.msUnit")}
+                        />
+                        <InputCheckboxNumber
+                            min={0.1}
+                            max={100}
+                            step={0.1}
+                            checked={readerSettings.enableTouchScroll}
+                            onChangeCheck={(e) => {
+                                dispatch(patchLiveMangaReaderSettings({ enableTouchScroll: e.target.checked }));
+                            }}
+                            value={readerSettings.touchScrollMultiplier}
+                            timeout={[
+                                1000,
+                                (value) =>
+                                    dispatch(patchLiveMangaReaderSettings({ touchScrollMultiplier: value })),
+                            ]}
+                            labelBefore={t("settings.dragMultiplier")}
+                        />
+                    </MangaReaderSettingSection>
+                    <MangaReaderSettingSection
+                        title={t("settings.colorFilters")}
+                        collapsedKey="customColorFilter"
+                        optionsClassName="col"
+                    >
+                        <InputCheckboxColor
+                            checked={readerSettings.customColorFilter.enabled}
+                            onChangeCheck={(e) => {
+                                dispatch(
+                                    patchLiveMangaReaderSettings({
+                                        customColorFilter: {
+                                            ...readerSettings.customColorFilter,
+                                            enabled: e.currentTarget.checked,
                                         },
                                     }),
                                 );
                             }}
-                        >
-                            Color Filters
-                        </div>
-                        <div className="options col">
-                            <InputCheckboxColor
-                                checked={appSettings.readerSettings.customColorFilter.enabled}
-                                onChangeCheck={(e) => {
+                            paraBefore={t("settings.useCustomColorFilter")}
+                            value={colorUtils.new([
+                                readerSettings.customColorFilter.r,
+                                readerSettings.customColorFilter.g,
+                                readerSettings.customColorFilter.b,
+                                readerSettings.customColorFilter.a,
+                            ])}
+                            timeout={[
+                                500,
+                                (value) => {
                                     dispatch(
-                                        setReaderSettings({
+                                        patchLiveMangaReaderSettings({
                                             customColorFilter: {
-                                                ...appSettings.readerSettings.customColorFilter,
-                                                enabled: e.currentTarget.checked,
+                                                ...readerSettings.customColorFilter,
+                                                r: value.red(),
+                                                g: value.green(),
+                                                b: value.blue(),
+                                                a: value.alpha(),
                                             },
                                         }),
                                     );
-                                }}
-                                paraBefore="Use Custom Color Filter"
-                                value={colorUtils.new([
-                                    appSettings.readerSettings.customColorFilter.r,
-                                    appSettings.readerSettings.customColorFilter.g,
-                                    appSettings.readerSettings.customColorFilter.b,
-                                    appSettings.readerSettings.customColorFilter.a,
-                                ])}
-                                timeout={[
-                                    500,
-                                    (value) => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    r: value.red(),
-                                                    g: value.green(),
-                                                    b: value.blue(),
-                                                    a: value.alpha(),
-                                                },
-                                            }),
-                                        );
-                                    },
-                                ]}
-                            />
-                            {/* //todo separate  */}
-                            <InputSelect
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                value={appSettings.readerSettings.customColorFilter.blendMode}
-                                labeled={true}
-                                paraBefore="Blend&nbsp;Mode:"
-                                onChange={(value) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            customColorFilter: {
-                                                ...appSettings.readerSettings.customColorFilter,
-                                                blendMode:
-                                                    value as AppSettings["readerSettings"]["customColorFilter"]["blendMode"],
-                                            },
-                                        }),
-                                    );
-                                }}
-                                // todo get from schema
-                                options={[
-                                    "color",
-                                    "color-burn",
-                                    "color-dodge",
-                                    "darken",
-                                    "difference",
-                                    "exclusion",
-                                    "hard-light",
-                                    "hue",
-                                    "lighten",
-                                    "luminosity",
-                                    "multiply",
-                                    "normal",
-                                    "overlay",
-                                    "saturation",
-                                    "screen",
-                                    "soft-light",
-                                ].map((e) => ({ label: e, value: e }))}
-                            />
-                            <InputRange
-                                labelText="Hue: "
-                                min={0}
-                                max={360}
-                                value={appSettings.readerSettings.customColorFilter.hue}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                timeout={[
-                                    350,
-                                    (value) => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    hue: value,
-                                                },
-                                            }),
-                                        );
-                                    },
-                                ]}
-                            />
-                            <InputRange
-                                labelText="Contrast: "
-                                min={-1}
-                                max={1}
-                                step={0.1}
-                                value={appSettings.readerSettings.customColorFilter.contrast}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                timeout={[
-                                    350,
-                                    (value) => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    contrast: value,
-                                                },
-                                            }),
-                                        );
-                                    },
-                                ]}
-                            />
-                            <InputRange
-                                labelText="Saturation: "
-                                min={-1}
-                                max={1}
-                                step={0.1}
-                                value={appSettings.readerSettings.customColorFilter.saturation}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                timeout={[
-                                    350,
-                                    (value) => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    saturation: value,
-                                                },
-                                            }),
-                                        );
-                                    },
-                                ]}
-                            />
-                            <InputRange
-                                labelText="Brightness: "
-                                min={-1}
-                                max={1}
-                                step={0.1}
-                                value={appSettings.readerSettings.customColorFilter.brightness}
-                                disabled={!appSettings.readerSettings.customColorFilter.enabled}
-                                timeout={[
-                                    350,
-                                    (value) => {
-                                        dispatch(
-                                            setReaderSettings({
-                                                customColorFilter: {
-                                                    ...appSettings.readerSettings.customColorFilter,
-                                                    brightness: value,
-                                                },
-                                            }),
-                                        );
-                                    },
-                                ]}
-                            />
-                            <button
-                                onClick={() => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            customColorFilter: {
-                                                ...defaultMangaReaderSettings.customColorFilter,
-                                            },
-                                            invertImage: defaultMangaReaderSettings.invertImage,
-                                            grayscale: defaultMangaReaderSettings.grayscale,
-                                        }),
-                                    );
-                                }}
-                            >
-                                Reset
-                            </button>
-                            <InputCheckbox
-                                checked={appSettings.readerSettings.invertImage}
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            invertImage: e.currentTarget.checked,
-                                        }),
-                                    );
-                                }}
-                                paraAfter="Invert Image"
-                            />
-                            <InputCheckbox
-                                checked={appSettings.readerSettings.grayscale}
-                                onChange={(e) => {
-                                    dispatch(
-                                        setReaderSettings({
-                                            grayscale: e.currentTarget.checked,
-                                        }),
-                                    );
-                                }}
-                                paraAfter="Grayscale"
-                            />
-                        </div>
-                    </div>
-                    <div className={"settingItem "}>
-                        <div
-                            className={`name ${!appSettings.readerSettings.settingsCollapsed.others ? "expanded " : ""}`}
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                            }}
-                            onClick={() => {
+                                },
+                            ]}
+                        />
+                        {/* //todo separate  */}
+                        <InputSelect
+                            disabled={!readerSettings.customColorFilter.enabled}
+                            value={readerSettings.customColorFilter.blendMode}
+                            labeled={true}
+                            paraBefore={t("settings.blendMode")}
+                            onChange={(value) => {
                                 dispatch(
-                                    setReaderSettings({
-                                        settingsCollapsed: {
-                                            ...appSettings.readerSettings.settingsCollapsed,
-                                            others: !appSettings.readerSettings.settingsCollapsed.others,
+                                    patchLiveMangaReaderSettings({
+                                        customColorFilter: {
+                                            ...readerSettings.customColorFilter,
+                                            blendMode:
+                                                value as AppSettings["readerSettings"]["customColorFilter"]["blendMode"],
                                         },
                                     }),
                                 );
                             }}
-                        >
-                            Other Settings
-                        </div>
-
-                        <div className="options col">
-                            <InputCheckbox
-                                disabled={appSettings.readerSettings.pagesPerRowSelected !== 0}
-                                checked={appSettings.readerSettings.variableImageSize}
-                                onChange={(e) => {
-                                    dispatch(setReaderSettings({ variableImageSize: e.currentTarget.checked }));
-                                }}
-                                paraAfter="Double size for double spread pages."
-                            />
-                            <InputCheckboxNumber
-                                disabled={appSettings.readerSettings.readerTypeSelected !== 0}
-                                checked={appSettings.readerSettings.gapBetweenRows}
-                                onChangeCheck={(e) => {
-                                    dispatch(setReaderSettings({ gapBetweenRows: e.currentTarget.checked }));
-                                }}
-                                value={appSettings.readerSettings.gapSize}
-                                min={0}
-                                max={2000}
-                                timeout={[1000, (value) => dispatch(setReaderSettings({ gapSize: value }))]}
-                                paraBefore="Gap between rows&nbsp;:"
-                                paraAfter="px"
-                            />
-                            <InputCheckbox
-                                checked={appSettings.readerSettings.showPageNumberInZenMode}
-                                onChange={(e) => {
+                            // todo get from schema
+                            options={[
+                                "color",
+                                "color-burn",
+                                "color-dodge",
+                                "darken",
+                                "difference",
+                                "exclusion",
+                                "hard-light",
+                                "hue",
+                                "lighten",
+                                "luminosity",
+                                "multiply",
+                                "normal",
+                                "overlay",
+                                "saturation",
+                                "screen",
+                                "soft-light",
+                            ].map((e) => ({ label: e, value: e }))}
+                        />
+                        <InputRange
+                            labelText={t("settings.hue")}
+                            min={0}
+                            max={360}
+                            value={readerSettings.customColorFilter.hue}
+                            disabled={!readerSettings.customColorFilter.enabled}
+                            timeout={[
+                                350,
+                                (value) => {
                                     dispatch(
-                                        setReaderSettings({
-                                            showPageNumberInZenMode: e.currentTarget.checked,
+                                        patchLiveMangaReaderSettings({
+                                            customColorFilter: {
+                                                ...readerSettings.customColorFilter,
+                                                hue: value,
+                                            },
                                         }),
                                     );
-                                }}
-                                paraAfter="Show Page Number in Zen Mode"
-                            />
-                            <InputCheckbox
-                                checked={appSettings.readerSettings.forceLowBrightness.enabled}
-                                onChange={(e) => {
+                                },
+                            ]}
+                        />
+                        <InputRange
+                            labelText={t("settings.contrast")}
+                            min={-1}
+                            max={1}
+                            step={0.1}
+                            value={readerSettings.customColorFilter.contrast}
+                            disabled={!readerSettings.customColorFilter.enabled}
+                            timeout={[
+                                350,
+                                (value) => {
                                     dispatch(
-                                        setReaderSettings({
+                                        patchLiveMangaReaderSettings({
+                                            customColorFilter: {
+                                                ...readerSettings.customColorFilter,
+                                                contrast: value,
+                                            },
+                                        }),
+                                    );
+                                },
+                            ]}
+                        />
+                        <InputRange
+                            labelText={t("settings.saturation")}
+                            min={-1}
+                            max={1}
+                            step={0.1}
+                            value={readerSettings.customColorFilter.saturation}
+                            disabled={!readerSettings.customColorFilter.enabled}
+                            timeout={[
+                                350,
+                                (value) => {
+                                    dispatch(
+                                        patchLiveMangaReaderSettings({
+                                            customColorFilter: {
+                                                ...readerSettings.customColorFilter,
+                                                saturation: value,
+                                            },
+                                        }),
+                                    );
+                                },
+                            ]}
+                        />
+                        <InputRange
+                            labelText={t("settings.brightness")}
+                            min={-1}
+                            max={1}
+                            step={0.1}
+                            value={readerSettings.customColorFilter.brightness}
+                            disabled={!readerSettings.customColorFilter.enabled}
+                            timeout={[
+                                350,
+                                (value) => {
+                                    dispatch(
+                                        patchLiveMangaReaderSettings({
+                                            customColorFilter: {
+                                                ...readerSettings.customColorFilter,
+                                                brightness: value,
+                                            },
+                                        }),
+                                    );
+                                },
+                            ]}
+                        />
+                        <button
+                            onClick={() => {
+                                dispatch(
+                                    patchLiveMangaReaderSettings({
+                                        customColorFilter: {
+                                            ...defaultMangaReaderSettings.customColorFilter,
+                                        },
+                                        invertImage: defaultMangaReaderSettings.invertImage,
+                                        grayscale: defaultMangaReaderSettings.grayscale,
+                                    }),
+                                );
+                            }}
+                        >
+                            {tSettings("shared.reset")}
+                        </button>
+                        <InputCheckbox
+                            checked={readerSettings.invertImage}
+                            onChange={(e) => {
+                                dispatch(
+                                    patchLiveMangaReaderSettings({
+                                        invertImage: e.currentTarget.checked,
+                                    }),
+                                );
+                            }}
+                            paraAfter={t("settings.invertImage")}
+                        />
+                        <InputCheckbox
+                            checked={readerSettings.grayscale}
+                            onChange={(e) => {
+                                dispatch(
+                                    patchLiveMangaReaderSettings({
+                                        grayscale: e.currentTarget.checked,
+                                    }),
+                                );
+                            }}
+                            paraAfter={t("settings.grayscale")}
+                        />
+                    </MangaReaderSettingSection>
+                    <MangaReaderSettingSection
+                        title={t("settings.otherSettings")}
+                        collapsedKey="others"
+                        optionsClassName="col"
+                    >
+                        <InputCheckbox
+                            disabled={readerSettings.pagesPerRowSelected !== 0}
+                            checked={readerSettings.variableImageSize}
+                            onChange={(e) => {
+                                dispatch(
+                                    patchLiveMangaReaderSettings({
+                                        variableImageSize: e.currentTarget.checked,
+                                    }),
+                                );
+                            }}
+                            paraAfter={t("settings.doubleSizeSpread")}
+                        />
+                        <InputCheckboxNumber
+                            disabled={readerSettings.readerTypeSelected !== 0}
+                            checked={readerSettings.gapBetweenRows}
+                            onChangeCheck={(e) => {
+                                dispatch(
+                                    patchLiveMangaReaderSettings({ gapBetweenRows: e.currentTarget.checked }),
+                                );
+                            }}
+                            value={readerSettings.gapSize}
+                            min={0}
+                            max={2000}
+                            timeout={[1000, (value) => dispatch(patchLiveMangaReaderSettings({ gapSize: value }))]}
+                            paraBefore={t("settings.gapBetweenRows")}
+                            paraAfter={t("settings.pxUnit")}
+                        />
+                        <InputCheckbox
+                            checked={readerSettings.showPageNumberInZenMode}
+                            onChange={(e) => {
+                                dispatch(
+                                    patchLiveMangaReaderSettings({
+                                        showPageNumberInZenMode: e.currentTarget.checked,
+                                    }),
+                                );
+                            }}
+                            paraAfter={t("settings.showPageNumberInZen")}
+                        />
+                        <InputCheckbox
+                            checked={readerSettings.forceLowBrightness.enabled}
+                            onChange={(e) => {
+                                dispatch(
+                                    patchLiveMangaReaderSettings({
+                                        forceLowBrightness: {
+                                            ...readerSettings.forceLowBrightness,
+                                            enabled: e.currentTarget.checked,
+                                        },
+                                    }),
+                                );
+                            }}
+                            paraAfter={t("settings.forceLowBrightness")}
+                        />
+                        <InputRange
+                            className={"colorRange"}
+                            min={0}
+                            max={0.9}
+                            step={0.05}
+                            value={readerSettings.forceLowBrightness.value}
+                            disabled={!readerSettings.forceLowBrightness.enabled}
+                            labeled={true}
+                            labelText=""
+                            timeout={[
+                                350,
+                                (value) =>
+                                    dispatch(
+                                        patchLiveMangaReaderSettings({
                                             forceLowBrightness: {
-                                                ...appSettings.readerSettings.forceLowBrightness,
-                                                enabled: e.currentTarget.checked,
+                                                ...readerSettings.forceLowBrightness,
+                                                value,
                                             },
                                         }),
-                                    );
-                                }}
-                                paraAfter="Force Low brightness"
-                            />
-                            <InputRange
-                                className={"colorRange"}
-                                min={0}
-                                max={0.9}
-                                step={0.05}
-                                value={appSettings.readerSettings.forceLowBrightness.value}
-                                disabled={!appSettings.readerSettings.forceLowBrightness.enabled}
-                                labeled={true}
-                                labelText=""
-                                timeout={[
-                                    350,
-                                    (value) =>
-                                        dispatch(
-                                            setReaderSettings({
-                                                forceLowBrightness: {
-                                                    ...appSettings.readerSettings.forceLowBrightness,
-                                                    value,
-                                                },
-                                            }),
-                                        ),
-                                ]}
-                            />
-                        </div>
-                    </div>
+                                    ),
+                            ]}
+                        />
+                    </MangaReaderSettingSection>
                 </div>
             </div>
         );

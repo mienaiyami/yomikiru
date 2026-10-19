@@ -132,6 +132,14 @@
                     flex-direction: column;
                 }
 
+                .settingHint {
+                    width: 100%;
+                    font-size: 0.75em;
+                    line-height: 1.35;
+                    opacity: 0.7;
+                    padding: 0 2px;
+                }
+
                 input[type="number"] {
                     width: 3.5em;
                     padding: 5px;

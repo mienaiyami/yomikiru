@@ -1,3 +1,4 @@
+import { mainT } from "@electron/i18n/mainI18n";
 import { getWindowFromWebContents } from "@electron/util";
 import { dialog } from "electron";
 import { ipc } from "./utils";
@@ -7,7 +8,7 @@ export const registerDialogHandlers = () => {
         return dialog.showMessageBox(getWindowFromWebContents(event.sender), {
             type: "error",
             title: args.name,
-            message: `Error no.: ${args.errno}`,
+            message: mainT("nodeError.message", { ns: "dialogs", errno: args.errno }),
             detail: args.message,
         });
     });
@@ -29,6 +30,7 @@ export const registerDialogHandlers = () => {
             detail: args.detail,
             buttons: args.noOption && args.buttons?.length === 0 ? [] : args.buttons,
             defaultId: args.defaultId,
+            cancelId: args.cancelId,
         });
     });
 

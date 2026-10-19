@@ -1,5 +1,7 @@
-import { setEpubReaderSettings } from "@store/appSettings";
+import { BookReaderSettingSection } from "@features/reader/components/ReaderSettingSection";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { selectLiveBookReaderSettings } from "@store/reader";
+import { patchLiveBookReaderSettings } from "@store/readerPresets";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputColor from "@ui/InputColor";
 import InputRange from "@ui/InputRange";
@@ -7,238 +9,225 @@ import { colorUtils } from "@utils/color";
 import { promptSelectDir } from "@utils/file";
 import { defaultSettings } from "@utils/settingsSchema";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 
 const BackgroundSettings = memo(() => {
-    const appSettings = useAppSelector((store) => store.appSettings);
+    const { t } = useTranslation("reader");
+    const { t: tSettings } = useTranslation("settings");
+    const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
     const dispatch = useAppDispatch();
 
     return (
-        <div className="settingItem">
-            <div
-                className={`name ${!appSettings.epubReaderSettings.settingsCollapsed.background ? "expanded " : ""}`}
-                onKeyDown={(e) => {
-                    if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                }}
-                onClick={() => {
+        <BookReaderSettingSection
+            title={t("settings.backgroundImage")}
+            collapsedKey="background"
+            optionsClassName="col"
+        >
+            <InputCheckbox
+                checked={epubReaderSettings.backgroundImage.enabled}
+                onChange={(e) => {
                     dispatch(
-                        setEpubReaderSettings({
-                            settingsCollapsed: {
-                                ...appSettings.epubReaderSettings.settingsCollapsed,
-                                background: !appSettings.epubReaderSettings.settingsCollapsed.background,
+                        patchLiveBookReaderSettings({
+                            backgroundImage: {
+                                ...epubReaderSettings.backgroundImage,
+                                enabled: e.currentTarget.checked,
                             },
                         }),
                     );
                 }}
-            >
-                Background Image
-            </div>
-            <div className="options col">
-                <InputCheckbox
-                    checked={appSettings.epubReaderSettings.backgroundImage.enabled}
-                    onChange={(e) => {
-                        dispatch(
-                            setEpubReaderSettings({
-                                backgroundImage: {
-                                    ...appSettings.epubReaderSettings.backgroundImage,
-                                    enabled: e.currentTarget.checked,
-                                },
-                            }),
-                        );
-                    }}
-                    labelAfter="Use Background Image"
-                />
-                {appSettings.epubReaderSettings.backgroundImage.enabled && (
-                    <>
-                        <div className="row">
-                            <input
-                                type="text"
-                                placeholder="No image selected"
-                                value={appSettings.epubReaderSettings.backgroundImage.path}
-                                readOnly
-                            />
-                        </div>
-                        <div className="row">
-                            <button
-                                onClick={() => {
-                                    promptSelectDir(
-                                        (path) => {
-                                            dispatch(
-                                                setEpubReaderSettings({
-                                                    backgroundImage: {
-                                                        ...appSettings.epubReaderSettings.backgroundImage,
-                                                        path: path as string,
-                                                    },
-                                                }),
-                                            );
+                labelAfter={t("settings.useBackgroundImage")}
+            />
+            {epubReaderSettings.backgroundImage.enabled && (
+                <>
+                    <div className="row">
+                        <input
+                            type="text"
+                            placeholder={t("settings.noImageSelected")}
+                            value={epubReaderSettings.backgroundImage.path}
+                            readOnly
+                        />
+                    </div>
+                    <div className="row">
+                        <button
+                            onClick={() => {
+                                promptSelectDir(
+                                    (path) => {
+                                        dispatch(
+                                            patchLiveBookReaderSettings({
+                                                backgroundImage: {
+                                                    ...epubReaderSettings.backgroundImage,
+                                                    path: path as string,
+                                                },
+                                            }),
+                                        );
+                                    },
+                                    true,
+                                    [
+                                        {
+                                            extensions: ["jpg", "jpeg", "png", "webp", "gif", "svg"],
+                                            name: t("settings.imagesFilter"),
                                         },
-                                        true,
-                                        [
-                                            {
-                                                extensions: ["jpg", "jpeg", "png", "webp", "gif", "svg"],
-                                                name: "Images",
-                                            },
-                                        ],
-                                    );
-                                }}
-                            >
-                                Select
-                            </button>
-                            <button
-                                onClick={() => {
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
-                                                path: "",
-                                            },
-                                        }),
-                                    );
-                                }}
-                            >
-                                Clear
-                            </button>
-                            <button
-                                onClick={() => {
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            backgroundImage: {
-                                                ...defaultSettings.epubReaderSettings.backgroundImage,
-                                                enabled: appSettings.epubReaderSettings.backgroundImage.enabled,
-                                            },
-                                        }),
-                                    );
-                                }}
-                            >
-                                Reset
-                            </button>
-                        </div>
-                        <InputRange
-                            min={0}
-                            max={100}
-                            step={5}
-                            value={appSettings.epubReaderSettings.backgroundImage.dimIntensity}
-                            labeled
-                            labelText="Dim intensity"
-                            timeout={[
-                                350,
-                                (value) =>
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
-                                                dimIntensity: value,
-                                            },
-                                        }),
-                                    ),
-                            ]}
-                        />
-                        <InputRange
-                            min={50}
-                            max={150}
-                            step={5}
-                            value={appSettings.epubReaderSettings.backgroundImage.brightness}
-                            labeled
-                            labelText="Brightness"
-                            timeout={[
-                                350,
-                                (value) =>
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
-                                                brightness: value,
-                                            },
-                                        }),
-                                    ),
-                            ]}
-                        />
-                        <InputRange
-                            min={50}
-                            max={150}
-                            step={5}
-                            value={appSettings.epubReaderSettings.backgroundImage.contrast}
-                            labeled
-                            labelText="Contrast"
-                            timeout={[
-                                350,
-                                (value) =>
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
-                                                contrast: value,
-                                            },
-                                        }),
-                                    ),
-                            ]}
-                        />
-                        <InputCheckbox
-                            checked={appSettings.epubReaderSettings.backgroundImage.layer.enabled}
-                            onChange={(e) => {
+                                    ],
+                                );
+                            }}
+                        >
+                            {tSettings("shared.select")}
+                        </button>
+                        <button
+                            onClick={() => {
                                 dispatch(
-                                    setEpubReaderSettings({
+                                    patchLiveBookReaderSettings({
                                         backgroundImage: {
-                                            ...appSettings.epubReaderSettings.backgroundImage,
-                                            layer: {
-                                                ...appSettings.epubReaderSettings.backgroundImage.layer,
-                                                enabled: e.currentTarget.checked,
-                                            },
+                                            ...epubReaderSettings.backgroundImage,
+                                            path: "",
                                         },
                                     }),
                                 );
                             }}
-                            labelAfter="Image layer overlay"
-                        />
+                        >
+                            {tSettings("shared.clear")}
+                        </button>
+                        <button
+                            onClick={() => {
+                                dispatch(
+                                    patchLiveBookReaderSettings({
+                                        backgroundImage: {
+                                            ...defaultSettings.epubReaderSettings.backgroundImage,
+                                            enabled: epubReaderSettings.backgroundImage.enabled,
+                                        },
+                                    }),
+                                );
+                            }}
+                        >
+                            {tSettings("shared.reset")}
+                        </button>
+                    </div>
+                    <InputRange
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={epubReaderSettings.backgroundImage.dimIntensity}
+                        labeled
+                        labelText={t("settings.dimIntensity")}
+                        timeout={[
+                            350,
+                            (value) =>
+                                dispatch(
+                                    patchLiveBookReaderSettings({
+                                        backgroundImage: {
+                                            ...epubReaderSettings.backgroundImage,
+                                            dimIntensity: value,
+                                        },
+                                    }),
+                                ),
+                        ]}
+                    />
+                    <InputRange
+                        min={50}
+                        max={150}
+                        step={5}
+                        value={epubReaderSettings.backgroundImage.brightness}
+                        labeled
+                        labelText={t("settings.brightnessLabel")}
+                        timeout={[
+                            350,
+                            (value) =>
+                                dispatch(
+                                    patchLiveBookReaderSettings({
+                                        backgroundImage: {
+                                            ...epubReaderSettings.backgroundImage,
+                                            brightness: value,
+                                        },
+                                    }),
+                                ),
+                        ]}
+                    />
+                    <InputRange
+                        min={50}
+                        max={150}
+                        step={5}
+                        value={epubReaderSettings.backgroundImage.contrast}
+                        labeled
+                        labelText={t("settings.contrastLabel")}
+                        timeout={[
+                            350,
+                            (value) =>
+                                dispatch(
+                                    patchLiveBookReaderSettings({
+                                        backgroundImage: {
+                                            ...epubReaderSettings.backgroundImage,
+                                            contrast: value,
+                                        },
+                                    }),
+                                ),
+                        ]}
+                    />
+                    <InputCheckbox
+                        checked={epubReaderSettings.backgroundImage.layer.enabled}
+                        onChange={(e) => {
+                            dispatch(
+                                patchLiveBookReaderSettings({
+                                    backgroundImage: {
+                                        ...epubReaderSettings.backgroundImage,
+                                        layer: {
+                                            ...epubReaderSettings.backgroundImage.layer,
+                                            enabled: e.currentTarget.checked,
+                                        },
+                                    },
+                                }),
+                            );
+                        }}
+                        labelAfter={t("settings.imageLayerOverlay")}
+                    />
 
-                        <InputColor
-                            labeled
-                            disabled={!appSettings.epubReaderSettings.backgroundImage.layer.enabled}
-                            value={colorUtils.new(appSettings.epubReaderSettings.backgroundImage.layer.color)}
-                            timeout={[
-                                500,
-                                (value) =>
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
-                                                layer: {
-                                                    ...appSettings.epubReaderSettings.backgroundImage.layer,
-                                                    color: value.hexa(),
-                                                },
+                    <InputColor
+                        labeled
+                        disabled={!epubReaderSettings.backgroundImage.layer.enabled}
+                        value={colorUtils.new(epubReaderSettings.backgroundImage.layer.color)}
+                        timeout={[
+                            500,
+                            (value) =>
+                                dispatch(
+                                    patchLiveBookReaderSettings({
+                                        backgroundImage: {
+                                            ...epubReaderSettings.backgroundImage,
+                                            layer: {
+                                                ...epubReaderSettings.backgroundImage.layer,
+                                                color: value.hexa(),
                                             },
-                                        }),
-                                    ),
-                            ]}
-                            paraBefore="Layer color&nbsp;:"
-                        />
-                        <InputRange
-                            min={0}
-                            max={1}
-                            step={0.05}
-                            disabled={!appSettings.epubReaderSettings.backgroundImage.layer.enabled}
-                            value={appSettings.epubReaderSettings.backgroundImage.layer.opacity}
-                            labeled
-                            labelText="Layer opacity"
-                            timeout={[
-                                350,
-                                (value) =>
-                                    dispatch(
-                                        setEpubReaderSettings({
-                                            backgroundImage: {
-                                                ...appSettings.epubReaderSettings.backgroundImage,
-                                                layer: {
-                                                    ...appSettings.epubReaderSettings.backgroundImage.layer,
-                                                    opacity: value,
-                                                },
+                                        },
+                                    }),
+                                ),
+                        ]}
+                        paraBefore={t("settings.layerColor")}
+                    />
+                    <InputRange
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        disabled={!epubReaderSettings.backgroundImage.layer.enabled}
+                        value={epubReaderSettings.backgroundImage.layer.opacity}
+                        labeled
+                        labelText={t("settings.layerOpacity")}
+                        timeout={[
+                            350,
+                            (value) =>
+                                dispatch(
+                                    patchLiveBookReaderSettings({
+                                        backgroundImage: {
+                                            ...epubReaderSettings.backgroundImage,
+                                            layer: {
+                                                ...epubReaderSettings.backgroundImage.layer,
+                                                opacity: value,
                                             },
-                                        }),
-                                    ),
-                            ]}
-                        />
-                    </>
-                )}
-            </div>
-        </div>
+                                        },
+                                    }),
+                                ),
+                        ]}
+                    />
+                </>
+            )}
+        </BookReaderSettingSection>
     );
 });
 

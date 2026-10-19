@@ -38,14 +38,15 @@ const InputSelect: React.FC<{
     const { setOptSelectData } = useAppContext();
 
     useLayoutEffect(() => {
-        // if (value) {
-        const aa = options.find((e) => e.value === value);
-        if (aa) {
-            setBtnLabel(aa.label);
-        } else {
+        const selected = options.find((e) => e.value === value);
+        if (selected) {
+            setBtnLabel(selected.label);
+            return;
+        }
+        // empty options usually means the parent is still loading async choices
+        if (options.length > 0) {
             log.error(`value "${value}" not in options list`);
         }
-        // }
     }, [value, options]);
 
     // making it a component will cause re-render and issues

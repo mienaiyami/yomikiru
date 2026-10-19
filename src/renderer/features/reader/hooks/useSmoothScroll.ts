@@ -1,4 +1,5 @@
 import { useAppSelector } from "@store/hooks";
+import { selectLiveMangaReaderSettings } from "@store/reader";
 import { type RefObject, useEffect } from "react";
 import { shallowEqual } from "react-redux";
 
@@ -7,7 +8,7 @@ import { shallowEqual } from "react-redux";
  */
 export const useSmoothScroll = (elementRef: RefObject<HTMLElement>): void => {
     const { overrideMouseWheelSpeed, mouseWheelScrollSpeed, mouseWheelScrollDuration } = useAppSelector(
-        (state) => state.appSettings.readerSettings,
+        selectLiveMangaReaderSettings,
         shallowEqual,
     );
     useEffect(() => {

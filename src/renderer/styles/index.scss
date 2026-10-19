@@ -66,6 +66,69 @@ html{
     --error-color: #c62828;
 }
 
+/*
+ * ListNavigator.SearchInput chrome.
+ *
+ * Deliberately left outside @layer main: every consumer toolbar (gallery, details
+ * panel, classic lists) ships an unlayered component stylesheet, and unlayered rules
+ * beat any layered rule regardless of specificity. These have to sit on the same
+ * footing to survive.
+ *
+ * The wrapper takes over the layout slot the bare input used to occupy and anchors
+ * the absolutely positioned clear button.
+ */
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    /* stretch, not center: several toolbars gave the bare input its height by
+     * stretching it as a flex child; the wrapper has to pass that through */
+    align-items: stretch;
+    /* width: 100% keeps the flex-basis the bare input had in those toolbars */
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+
+    > input.search-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Consumers style .search-input with a padding shorthand from deeply nested
+     * (and therefore more specific) selectors. Keeping text out from under the clear
+     * button is a component invariant, so this one declaration has to force itself. */
+    &:has(> .search-input-clear) > input.search-input {
+        padding-right: 2.4em !important;
+    }
+
+    /* positioning only - visual style comes from the app's default button rules */
+    > .search-input-clear {
+        position: absolute;
+        right: 0.35em;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.8em;
+        height: calc(100% - 0.5em);
+        min-width: 0;
+        padding: 0;
+        font-size: 0.85em;
+        cursor: pointer;
+    }
+}
+
+/*
+ * Library item title: original folder/file name sits in muted parentheses after the
+ * edited or tracker title. Unlayered so gallery (unlayered home/styles) and details
+ * (unlayered mangaDetailsPanel.scss) cannot override the mute.
+ */
+.itemDisplayTitle-original {
+    color: var(--font-color-secondary);
+    font-weight: 400;
+    font-size: 0.85em;
+}
+
 @layer main {
     ::-webkit-scrollbar {
         width: 10px;
@@ -128,11 +191,19 @@ html{
                     // visibility: hidden;
                     display: none;
                 }
+                /*
+                 * Zen hides the side list, so drop the closed-list inset.
+                 * :not(.sideListPinned) keeps this as specific as the unpinned
+                 * padding rule declared later under body #app.
+                 */
+                &:not(.sideListPinned) {
+                    padding-left: 0;
+                }
             }
             #EPubReader {
                 section.main {
                     &.limitImgHeight {
-                        > .cont img {
+                        .htmlCont img {
                             max-height: 90vh;
                         }
                     }
@@ -168,6 +239,9 @@ html{
 
         @import "./mini/inputs.scss";
         @import "./mini/topbar.scss";
+        @import "./mini/popover.scss";
+        @import "./mini/rowSelectCheck.scss";
+        @import "./mini/inputMultiSelect.scss";
 
         .icon {
             color: var(--icon-color) !important;
@@ -269,11 +343,15 @@ html{
                 pointer-events: none;
             }
 
-            // &.tooltip-top-start::before {
-            //     left: 0%;
-            //     top: 0%;
-            //     --translate: 0% -100%;
-            // }
+            /*
+             * Under the host, flush with its inline start, so the tip grows
+             * away from that edge instead of centering on the control.
+             */
+            &.tooltip-bottom-start::before {
+                top: 100%;
+                left: 0;
+                --translate: 0, 10px;
+            }
             &:hover::before {
                 opacity: 1;
                 visibility: visible;
@@ -286,6 +364,44 @@ html{
             width: 100%;
             height: 100%;
             overflow: hidden;
+        }
+
+        /*
+         * Non-dismissible lock above TopBar, Settings, and menus. Mouse is covered
+         * by the overlay; keyboard/pointer shortcuts are stopped in capture in the
+         * overlay component.
+         */
+        #uiBlockOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000000;
+            display: grid;
+            place-items: center;
+            gap: 1em;
+            background: var(--body-bg-color);
+            cursor: wait;
+            opacity: 0.7;
+            backdrop-filter: blur(4px);
+
+
+            @keyframes uiBlockPulse {
+                0% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.2;
+                }
+                100% {
+                    opacity: 1;
+                }
+            }
+
+            .loadingText {
+                font-size: 2em;
+                text-align: center;
+                padding: 0 1em;
+                animation: 2s linear uiBlockPulse infinite;
+            }
         }
 
         #app {
@@ -373,11 +489,25 @@ html{
                 overflow-y: auto;
                 background-color: var(--btn-color);
                 color: var(--font-color);
+                /* KeyboardList enables clicks only on :focus-within; filter-while-type lists stay unfocused */
+                &.retainFocus {
+                    pointer-events: all;
+                }
                 ul {
                     li {
                         padding: 5px 10px;
                         display: grid;
-                        grid-template-columns: 1em auto;
+                        grid-template-columns: 1em minmax(0, 1fr) auto;
+                        column-gap: 0.5em;
+                        align-items: baseline;
+                        .itemListLabel {
+                            min-width: 0;
+                        }
+                        .itemListDesc {
+                            opacity: 0.55;
+                            font-size: 0.85em;
+                            white-space: nowrap;
+                        }
                     }
                 }
             }
@@ -419,6 +549,9 @@ html{
                     p {
                         padding: 10px 20px;
                     }
+                    p.loginDesc {
+                        white-space: pre-line;
+                    }
                     .btns {
                         display: flex;
                         flex-direction: column;
@@ -456,6 +589,19 @@ html{
                     background: var(--body-bg-color);
                 }
                 --tabMoverHeight: 3em;
+                --settingsSearchHeight: 3.5em;
+                .settingsSearch {
+                    position: relative;
+                    z-index: 2;
+                    height: var(--settingsSearchHeight);
+                    padding: 0.5em 0.75em;
+                    box-sizing: border-box;
+                    border-bottom: 1px solid var(--divider-color);
+                    .search-input-wrapper,
+                    .search-input {
+                        height: 100%;
+                    }
+                }
                 .tabMovers {
                     height: var(--tabMoverHeight);
                     position: relative;
@@ -498,7 +644,7 @@ html{
                 .overlayCont {
                     position: relative;
                     width: 100%;
-                    height: calc(100% - var(--tabMoverHeight));
+                    height: calc(100% - var(--tabMoverHeight) - var(--settingsSearchHeight));
                     overflow: auto;
 
                     &.noScroll {
@@ -572,6 +718,9 @@ html{
                                     word-spacing: 0.3em;
                                     letter-spacing: 0.02em;
                                 }
+                                h4 {
+                                    margin-top: 1.2em;
+                                }
                                 ul {
                                     margin: 0;
                                     margin-left: 1.5em;
@@ -630,6 +779,11 @@ html{
                                     display: flex;
                                     color: var(--font-color);
                                     padding: 0.4em 1em;
+                                    /* Nested copy already sits in this padding (reader-preset layout). */
+                                    .desc {
+                                        padding-left: 0;
+                                        padding-right: 0;
+                                    }
                                     // align-items: center;
                                     justify-content: flex-start;
                                     // flex-wrap: wrap;
@@ -646,6 +800,82 @@ html{
                                     }
                                     label:has(.toggle-area) {
                                         font-size: 1.3em;
+                                    }
+                                    .libraryFolderCard {
+                                        width: 100%;
+                                        gap: 0.2em;
+                                        display: flex;
+                                        padding: 0.65em 0 0.2em;
+                                        box-shadow: inset 0 1px 0 0 var(--divider-color);
+                                        .libraryFolderPathLabel {
+                                            flex: 0 0 auto;
+                                            opacity: 0.8;
+                                        }
+                                    }
+                                    .libraryFolderControls {
+                                        width: 100%;
+                                        display: flex;
+                                        gap: 0.2em;
+                                    }
+                                    .libraryScanDefaultLocation {
+                                        width: 100%;
+                                        gap: 0.4em;
+                                    }
+                                    .libraryScanRootOptions {
+                                        width: 100%;
+                                        gap: 0.25em;
+                                        .libraryScanRootRow {
+                                            width: 100%;
+                                            label.noBG {
+                                                flex: 1 1 16em;
+                                                min-width: 0;
+                                                padding: 0;
+                                                gap: 0.5em;
+                                            }
+                                            .librarySkipPatternInput {
+                                                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                                                flex: 1 1 12em;
+                                                min-width: 8em;
+                                            }
+                                            > button {
+                                                flex: 0 0 auto;
+                                            }
+                                        }
+                                        .librarySkipPatternError {
+                                            color: var(--error-color);
+                                        }
+                                    }
+                                    .libraryFolderRow {
+                                        align-items: center;
+                                        flex-wrap: wrap;
+                                        gap: 0.45em 0.7em;
+                                        input[type="text"] {
+                                            flex: 1 1 12em;
+                                            min-width: 8em;
+                                            max-width: none;
+                                        }
+                                        label:has(.toggle-area) {
+                                            font-size: 1em;
+                                            flex-direction: row;
+                                            padding: 0.15em 0;
+                                            gap: 0.35em;
+                                            .toggle-area {
+                                                margin-left: 0;
+                                            }
+                                        }
+                                        /* Max depth / interval hints: below the label, wrapped */
+                                        [data-tooltip] {
+                                            overflow: visible;
+                                            &::before {
+                                                left: 50%;
+                                                top: 100%;
+                                                --translate: -50%, 0.5em;
+                                                white-space: normal;
+                                                max-width: min(22em, 90vw);
+                                                width: max-content;
+                                                padding: 0.4em 0.5em;
+                                            }
+                                        }
                                     }
                                     &:has(.themeButtons) {
                                         flex-wrap: wrap;
@@ -856,66 +1086,152 @@ html{
                         }
 
                         .shortcutKey {
-                            padding: 0 1.3em;
-                            display: grid;
-                            // place-items: center;
-                            table {
-                                tr {
-                                    th,
-                                    td {
-                                        &:nth-child(1) {
-                                            width: 40%;
-                                        }
-                                        &:nth-child(2) {
-                                            width: 60%;
-                                            overflow-x: auto;
-                                        }
-                                    }
+                            --shortcut-control-height: 2.5em;
+                            --shortcut-add-width: 7.25em;
+                            --shortcut-key-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                                "Liberation Mono", monospace;
+                            .settingItem2 ul.shortcutHints {
+                                list-style: disc;
+                                margin: 0 0 0 1.25em;
+                                li {
+                                    list-style: disc;
+                                    padding: 0.15em 0;
                                 }
                             }
-                            .addNewKey {
-                                min-width: 7em;
-                                width: 7em;
-                                font-size: 0.9em;
-                                text-align: center;
-                                &::placeholder {
-                                    opacity: 1;
+                            .shortcut-save-status {
+                                margin: 0.75em 0 0;
+                                color: var(--error-color);
+                            }
+                            .shortcutCommand {
+                                margin: 0.35em 1em;
+                                padding: 0.55em 0;
+                                box-shadow: inset 0 -1px 0 0 var(--divider-color);
+                                &:last-of-type {
+                                    box-shadow: none;
                                 }
                             }
-                            div.keyDisplay {
+                            .shortcutCommandMain {
                                 display: flex;
-                                flex-direction: row;
-                                position: relative;
-                                justify-content: start;
-                                align-items: start;
-                                font-size: 0.9rem;
-                                input {
-                                    min-width: 0;
-                                    text-align: center;
-                                }
-                                button {
-                                    position: absolute;
-                                    right: 8px;
-                                    top: 50%;
-                                    transform: translateY(-50%);
-                                    // font-size: 0.5rem;
-                                    display: none;
-                                    padding: 4px 8px;
-                                }
-                                &:hover,
-                                &:focus-within {
-                                    button {
-                                        display: block;
-                                    }
+                                flex-wrap: wrap;
+                                align-items: flex-start;
+                                gap: 0.5em 1em;
+                            }
+                            .shortcutCommandName {
+                                flex: 1 1 12em;
+                                min-width: 9em;
+                                display: flex;
+                                flex-wrap: wrap;
+                                align-items: baseline;
+                                gap: 0.25em 0.7em;
+                                font-size: 1.15em;
+                                padding-top: 0.35em;
+                                a {
+                                    font-size: 0.8em;
                                 }
                             }
-                            p {
-                                width: 100%;
-                                padding-bottom: 10px;
-                                padding-left: 20px;
+                            .shortcutCommandBindings {
+                                display: flex;
+                                flex-wrap: wrap;
+                                align-items: center;
+                                gap: 0.4em;
+                                flex: 2 1 16em;
+                                min-width: 12em;
+                            }
+                            .shortcutChip {
+                                display: inline-flex;
+                                align-items: center;
+                                min-height: var(--shortcut-control-height);
+                                max-width: 100%;
+                                gap: 0.6em;
+                                padding: 0 0.25em 0 0.5em;
+                                background-color: var(--text-input-bg);
+                                border-radius: 3px;
+                                .shortcutChord {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    font-family: var(--shortcut-key-font);
+                                    font-size: 0.95em;
+                                    font-weight: 600;
+                                    white-space: nowrap;
+                                }
+                                .shortcutChipRemove {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-sizing: border-box;
+                                    height: var(--shortcut-control-height);
+                                    aspect-ratio: 1 / 1;
+                                    padding: 0;
+                                    font-size: 0.65em;
+                                    line-height: 1;
+                                    border-radius: 3px;
+                                    flex-shrink: 0;
+                                    align-self: center;
+                                }
+                            }
+                            .addNewKey,
+                            .shortcutReset {
+                                box-sizing: border-box;
+                                height: var(--shortcut-control-height);
+                                min-height: var(--shortcut-control-height);
+                                max-height: var(--shortcut-control-height);
+                                padding: 0 0.75em;
+                                font-size: 0.95em;
+                                line-height: 1;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                flex-shrink: 0;
+                            }
+                            .addNewKey,
+                            input.addNewKey {
+                                width: var(--shortcut-add-width);
+                                min-width: var(--shortcut-add-width);
+                                max-width: var(--shortcut-add-width);
+                                gap: 0.35em;
+                                overflow: hidden;
+                            }
+                            input.addNewKey {
+                                /* same box as the Add button; beat global text-input padding/width */
+                                padding: 0 0.75em;
+                                font-size: 0.95em;
+                                font-family: inherit;
+                                box-shadow: var(--btn-color-focus) 0 0 0 2px;
+                                text-align: center;
+                                cursor: text;
+                            }
+                            .shortcutCommandAlerts {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.2em;
+                                margin-top: 0.45em;
+                                font-size: 0.9em;
+                                color: var(--font-color-secondary);
+                                p {
+                                    width: auto;
+                                    padding: 0;
+                                    margin: 0;
+                                }
+                                .shortcut-conflict {
+                                    color: var(--font-color);
+                                }
+                                .shortcutDiagChord {
+                                    font-family: var(--shortcut-key-font);
+                                    font-weight: 600;
+                                    margin-right: 0.35em;
+                                }
                             }
                         }
                     }
+                }
+                /*
+                 * Must follow .settingItem2 / .toggleItem box-shadow rules or they override.
+                 * Prefer outline + bg: box-shadow alone loses to dividers.
+                 */
+                .settings-target-highlight {
+                    outline: 3px solid var(--btn-color-focus);
+                    outline-offset: 2px;
+                    background-color: rgba(255, 255, 0, 0.28);
                 }
             }
 
@@ -983,6 +1299,15 @@ html{
                 overflow-x: hidden;
                 overflow: auto;
                 --sideListWidth: 450px;
+                /*
+                 * Closed unpinned list stays translated so the resize strip remains
+                 * on-screen. In-flow pages inset by that peek so they are not covered.
+                 * Zen mode zeros this; a pinned list uses the grid column instead.
+                 */
+                --reader-sideList-closed-peek: 10px;
+                &:not(.sideListPinned) {
+                    padding-left: var(--reader-sideList-closed-peek);
+                }
                 &.noCursor {
                     cursor: none;
                 }
@@ -1108,42 +1433,75 @@ html{
                 }
             }
             #EPubReader {
-                // for .txt and .xhtml
-                &:not(.fake) {
-                    .readerSideList {
-                        .location-cont {
-                            li {
-                                // --level-top: 0;
-                                // font-size: calc(1rem + calc(calc(var(--level-top) / 3) * 1em));
-                                a {
-                                    grid-template-columns: auto;
+                .epubSpineVirtual {
+                    position: relative;
+                    width: 100%;
+                }
+                .epubSpineItem {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    /* top-align so an empty row does not center then jump when HTML injects */
+                    justify-content: flex-start;
+                }
+                .epubChapterBreak {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75em;
+                    padding: 1.4em 12% 0.9em;
+                    pointer-events: none;
+                    &::before,
+                    &::after {
+                        content: "";
+                        flex: 1;
+                        height: 1px;
+                        background: currentColor;
+                        opacity: 0.22;
+                    }
+                    &:not(:has(.epubChapterBreakTitle))::after {
+                        display: none;
+                    }
+                }
+                .epubChapterBreakTitle {
+                    font-size: 0.72em;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    opacity: 0.42;
+                    max-width: 50%;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .readerSideList {
+                    .location-cont {
+                        li {
+                            a {
+                                grid-template-columns: auto;
 
-                                    &::before {
-                                        display: none;
-                                    }
+                                &::before {
+                                    display: none;
                                 }
-                                // &.collapsed {
-                                //     display: none;
-                                // }
-                                &.collapsible {
+                            }
+                            &.collapsible {
+                                &::before {
+                                    content: "▼";
+                                    display: inline-block;
+                                    transform: rotate(0);
+                                    height: 100%;
+                                    aspect-ratio: 1;
+                                    margin-top: 0.2em;
+                                }
+                                &.collapsed {
+                                    display: flex;
+                                    align-items: center;
                                     &::before {
-                                        content: "▼";
-                                        display: inline-block;
-                                        transform: rotate(0);
-                                        height: 100%;
-                                        aspect-ratio: 1;
-                                        margin-top: 0.2em;
-                                    }
-                                    &.collapsed {
-                                        display: flex;
-                                        align-items: center;
-                                        &::before {
-                                            transform: rotate(-90deg);
-                                            margin-top: 0;
-                                        }
-                                        & + ol {
-                                            display: none;
-                                        }
+                                        transform: rotate(-90deg);
+                                        margin-top: 0;
                                     }
                                 }
                             }
@@ -1208,27 +1566,27 @@ html{
                         }
                     }
                     &.forceFont {
-                        > .cont * {
+                        .htmlCont * {
                             font-family: var(--font-family) !important;
                         }
                     }
                     &.forceFontWeight {
-                        > .cont * {
+                        .htmlCont * {
                             font-weight: var(--font-weight) !important;
                         }
                     }
                     &.forceParaGap {
-                        > .cont p {
+                        .htmlCont p {
                             margin: var(--paragraph-gap) !important;
                         }
                     }
                     /** Book reader: `overrideEpubColors` + non-default font color. */
                     &.overrideEpubFontColor {
-                        > .cont *:not(a) {
+                        .htmlCont *:not(a) {
                             color: var(--epub-font-color) !important;
                         }
                     }
-                    &.overrideEpubLinkColor > .cont a {
+                    &.overrideEpubLinkColor .htmlCont a {
                         color: var(--epub-link-color) !important;
                     }
                     &.overrideEpubPageBg {
@@ -1239,15 +1597,15 @@ html{
                      * (exclude elements where background is usually intentional).
                      */
                     &.overrideEpubContentBg {
-                        > .cont {
+                        .htmlCont {
                             background-color: var(--epub-content-background-color) !important;
                         }
-                        > .cont *:not(pre):not(code):not(img):not(svg):not(video):not(canvas) {
+                        .htmlCont *:not(pre):not(code):not(img):not(svg):not(video):not(canvas) {
                             background-color: transparent !important;
                         }
                     }
                     &.limitImgHeight {
-                        > .cont {
+                        .htmlCont {
                             img,
                             svg:has(image) {
                                 max-height: calc(90vh - var(--titleBar-height)) !important;
@@ -1255,12 +1613,12 @@ html{
                         }
                     }
                     &.noIndent {
-                        > .cont p {
+                        .htmlCont p {
                             text-indent: 0 !important;
                         }
                     }
                     &.blendImage {
-                        > .cont {
+                        .htmlCont {
                             img,
                             svg:has(image) {
                                 filter: invert(1);
@@ -1269,7 +1627,7 @@ html{
                         }
                     }
                     &.textSelect {
-                        > .cont {
+                        .htmlCont {
                             * {
                                 user-select: text !important;
                             }
@@ -1337,7 +1695,7 @@ html{
                             }
                         }
                     }
-                    > .cont {
+                    .htmlCont {
                         display: flex;
                         flex-direction: column;
                         justify-content: center;

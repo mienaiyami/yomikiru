@@ -81,12 +81,6 @@ const InputColor: React.FC<{
                     className="colorPickerBtn"
                     style={{ "--color": value.hsl().string() }}
                     onClick={onClickHandler}
-                    onKeyDown={(e) => {
-                        if (e.key === " ") {
-                            e.preventDefault();
-                            e.currentTarget.click();
-                        }
-                    }}
                 >
                     <span className="colorShow"></span>
                 </button>

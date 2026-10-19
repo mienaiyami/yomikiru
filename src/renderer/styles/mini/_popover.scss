@@ -1,0 +1,80 @@
+/**
+ * Generic Popover styles.
+ *
+ * The popover anchors to its trigger inside a `.popover-wrapper` span.
+ * `data-placement` controls vertical side, `data-align` controls horizontal
+ * alignment. Consumers can pass a custom class (merged onto `.popover`) for
+ * variant-specific theming.
+ */
+.popover-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.popover {
+    --popover-offset: 6px;
+    position: absolute;
+    z-index: 200;
+    min-width: 180px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background-color: var(--body-bg-color);
+    color: var(--font-color);
+    border: 1px solid var(--divider-color);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.28),
+        0 2px 6px rgba(0, 0, 0, 0.18);
+    font-size: 0.95em;
+
+    /* Animate in */
+    animation: popoverIn 120ms ease-out both;
+
+    &[data-placement="bottom"] {
+        top: calc(100% + var(--popover-offset));
+        bottom: auto;
+    }
+    &[data-placement="top"] {
+        bottom: calc(100% + var(--popover-offset));
+        top: auto;
+    }
+
+    &[data-align="end"] {
+        right: 0;
+        left: auto;
+    }
+    &[data-align="start"] {
+        left: 0;
+        right: auto;
+    }
+    &[data-align="center"] {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes popoverIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Center alignment needs to keep its centring transform during animation. */
+.popover[data-align="center"] {
+    animation: popoverInCenter 120ms ease-out both;
+}
+@keyframes popoverInCenter {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -4px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}

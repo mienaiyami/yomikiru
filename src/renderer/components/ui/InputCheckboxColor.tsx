@@ -1,3 +1,4 @@
+import { clickOnWidgetActivateKey, widgetActivateKind } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
 import type React from "react";
 import { useLayoutEffect, useState } from "react";
@@ -55,9 +56,7 @@ const InputCheckboxColor: React.FC<{
     return (
         <label
             className={(disabled ? "disabled " : "") + (checked ? "optionSelected " : "") + className}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") e.currentTarget.click();
-            }}
+            onKeyDown={clickOnWidgetActivateKey}
         >
             <span className={`toggle-area ${checked ? "on" : "off"} `}>
                 <span className={`toggle-state`}></span>
@@ -87,7 +86,7 @@ const InputCheckboxColor: React.FC<{
                 className="colorPickerBtn"
                 style={{ "--color": value.hsl().string() }}
                 onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") e.stopPropagation();
+                    if (widgetActivateKind(e)) e.stopPropagation();
                 }}
                 onClick={(e) => {
                     setColorSelectData({

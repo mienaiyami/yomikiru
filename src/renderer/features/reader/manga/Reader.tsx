@@ -1,31 +1,53 @@
-import type { MangaProgress } from "@common/types/db";
-import { setAnilistCurrentManga } from "@store/anilist";
-import { setAppSettings, setReaderSettings } from "@store/appSettings";
+import { type InvokeContext, useKeybindingRuntime } from "@features/keybindings";
+import { canCrossChapterEdge } from "@features/reader/readerCommandOps";
+import { DirectoryValidatorService } from "@features/reader/services/directoryValidator";
+import { applyMakeCoverFromPageImage } from "@features/reader/services/readerCoverFlows";
+import i18n from "@renderer/i18n";
+import { setAnilistCurrentListEntry } from "@store/anilist";
+import { setAppSettings } from "@store/appSettings";
+import { removeBookmark, updateMangaBookmark } from "@store/bookmarks";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { addLibraryItem, selectLibraryItem, updateChaptersRead, updateMangaProgress } from "@store/library";
+import store from "@store/index";
+import { selectLibraryItem, updateChaptersRead } from "@store/library";
 import {
-    getReaderMangaState,
+    selectLiveMangaReaderSettings,
+    selectReaderCommandsActive,
     setReaderLoading,
     setReaderOpen,
-    updateReaderContent,
     updateReaderMangaCurrentPage,
 } from "@store/reader";
-import { cyclePresetNext, cyclePresetPrev, selectPresetSlot } from "@store/readerPresets";
-import AniList from "@utils/anilist";
+import { ensureReaderPresetSession, patchLiveMangaReaderSettings } from "@store/readerPresets";
+import { updateTrackerSnapshot } from "@store/trackers";
+import { setAnilistListProgress, toAnilistTrackerSnapshotUpdate } from "@utils/anilist";
 import { processChapterNumber } from "@utils/chapterUtils";
-import { formatUtils } from "@utils/file";
-import { keyFormatter, mouseEventFormatter } from "@utils/keybindings";
+import { dialogUtils } from "@utils/dialog";
+import { fileSrcToImagePath, formatUtils } from "@utils/file";
+import { syncMangaLibraryOnReaderOpen } from "@utils/libraryMissingPath";
 import { createRendererLogger } from "@utils/logger";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { InView } from "react-intersection-observer";
 import { useAppContext } from "../../../App";
+import { useHeldScroll } from "../hooks/useHeldScroll";
 import useSmoothScroll from "../hooks/useSmoothScroll";
 import ReaderSettings from "./components/ReaderSettings";
 import ReaderSideList from "./components/ReaderSideList";
+import {
+    MANGA_BOOKMARK_OWNER_ID,
+    MANGA_READER_SETTINGS_OWNER_ID,
+    MANGA_SIDE_LIST_OWNER_ID,
+    useMangaCommandOwner,
+} from "./useMangaCommandOwner";
 
 const SCROLLBAR_THRESHOLD = 20;
 
 const log = createRendererLogger("manga/Reader");
+
+/**
+ * Quiet window after a zen toggle while fullscreen resize is still changing page height.
+ * Upgrade: drop the timer once one window resize is guaranteed to be the last layout.
+ */
+const ZEN_SCROLL_RESTORE_MS = 300;
 
 const Reader: React.FC = () => {
     const { pageNumberInputRef, validateDirectory, setContextMenuData } = useAppContext();
@@ -40,12 +62,27 @@ const Reader: React.FC = () => {
     // todo: convert checkForImgsAndLoad and related states to hook returning imageData and rows
 
     const appSettings = useAppSelector((store) => store.appSettings);
-    const shortcuts = useAppSelector((store) => store.shortcuts);
+    const readerSettings = useAppSelector(selectLiveMangaReaderSettings);
+    const shortcuts = useAppSelector((store) => store.shortcuts.entries);
     const isReaderOpen = useAppSelector((store) => store.reader.active);
-    const isSettingOpen = useAppSelector((store) => store.ui.isOpen.settings);
     const linkInReader = useAppSelector((store) => store.reader.link);
-    const readerState = useAppSelector(getReaderMangaState);
-    const anilistCurrentManga = useAppSelector((store) => store.anilist.currentManga);
+    // primitives only - avoid selecting whole reader slice so page ticks do not reconcile the image tree
+    const mangaOpenPage = useAppSelector((store) =>
+        store.reader.type === "manga" ? store.reader.mangaPageNumber : undefined,
+    );
+    const mangaChapterName = useAppSelector((store) =>
+        store.reader.type === "manga" ? store.reader.content?.progress?.chapterName : undefined,
+    );
+    const mangaTotalPages = useAppSelector((store) =>
+        store.reader.type === "manga" ? store.reader.content?.progress?.totalPages : undefined,
+    );
+    const mangaProgressItemLink = useAppSelector((store) =>
+        store.reader.type === "manga" ? store.reader.content?.progress?.itemLink : undefined,
+    );
+    const mangaHasProgress = useAppSelector((store) =>
+        store.reader.type === "manga" ? !!store.reader.content?.progress : false,
+    );
+    const anilistCurrentListEntry = useAppSelector((store) => store.anilist.currentListEntry);
     const isLoadingManga = useAppSelector((store) => store.reader.loading !== null);
 
     const libraryItem = useAppSelector((store) => selectLibraryItem(store, linkInReader));
@@ -67,26 +104,39 @@ const Reader: React.FC = () => {
         }[]
     >([]);
     const [isSideListPinned, setSideListPinned] = useState(false);
-    const [sideListWidth, setSideListWidth] = useState(appSettings.readerSettings.sideListWidth || 450);
+    const [sideListWidth, setSideListWidth] = useState(readerSettings.sideListWidth || 450);
     //not called on scroll but manually
     const [scrollPosPercent, setScrollPosPercent] = useState({ x: 0, y: 0 });
     const [zenMode, setZenMode] = useState(appSettings.openInZenMode || false);
     // todo: maybe can remove now?
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
     const [currentImageRow, setCurrentImageRow] = useState(1);
+    const currentPageNumberRef = useRef(1);
+    const currentImageRowRef = useRef(1);
+    /*
+     * Manga Reader stays mounted across chapters. Live page state (`currentPageNumber` /
+     * `currentPageNumberRef`) tracks the viewport and is rewritten by changePageNumber, so it
+     * cannot be the chapter-open target. `chapterOpenPageRef` holds reader.mangaPageNumber
+     * (next/prev first page, Continue/bookmark stored page) until scrollToPage has used it.
+     * `pendingChapterOpenScrollRef` blocks viewport detection until that scroll; otherwise a
+     * leftover scroller or a missed `[data-pagenumber]` query restores the previous chapter page.
+     */
+    const chapterOpenPageRef = useRef(1);
+    const pendingChapterOpenScrollRef = useRef(true);
 
     const [chapterChangerDisplay, setChapterChangerDisplay] = useState(false);
-    const [wasMaximized, setWasMaximized] = useState(false);
+    /** Mount applies zen chrome only; the first real toggle is what restores scroll. */
+    const zenScrollReadyRef = useRef(false);
     // display this text then shortcuts clicked
+    const { t } = useTranslation("reader");
     const [shortcutText, setShortcutText] = useState("");
     // for grab to scroll
     const [mouseDown, setMouseDown] = useState<null | { top: number; left: number; x: number; y: number }>(null);
     const [updatedAnilistProgress, setUpdatedAnilistProgress] = useState(false);
+    // sibling paths for the chapter-changer overlay; state so those labels re-render
     const [prevNextChapter, setPrevNextChapter] = useState<{ prev: string; next: string }>({ prev: "", next: "" });
 
     const readerSettingExtender = useRef<HTMLButtonElement>(null);
-    const sizePlusRef = useRef<HTMLButtonElement>(null);
-    const sizeMinusRef = useRef<HTMLButtonElement>(null);
     const openPrevChapterRef = useRef<HTMLButtonElement>(null);
     const openNextChapterRef = useRef<HTMLButtonElement>(null);
     const openRandomChapterRef = useRef<HTMLButtonElement>(null);
@@ -98,40 +148,28 @@ const Reader: React.FC = () => {
     const readerRef = useRef<HTMLDivElement>(null);
     const imgContRef = useRef<HTMLDivElement>(null);
     const shortcutTextRef = useRef<HTMLDivElement>(null);
+    const runtime = useKeybindingRuntime();
+    const commandsActive = useAppSelector(selectReaderCommandsActive);
+
+    /** Next/prev chapter is implemented by the side list owner; page edges and click zones call it here. */
+    const openSiblingChapter = (direction: "next" | "prev") => {
+        runtime.executeCommand(direction === "next" ? "nextChapter" : "prevChapter", MANGA_SIDE_LIST_OWNER_ID);
+    };
 
     useSmoothScroll(isSideListPinned ? imgContRef : readerRef);
 
-    const scrollReader = (intensity: number) => {
-        if (readerRef.current) {
-            // let startTime: number
-            let prevTime: number;
-            const anim = (timeStamp: number) => {
-                // if (startTime === undefined) startTime = timeStamp;
-                // const elapsed = timeStamp - startTime;
-                if (prevTime !== timeStamp && readerRef.current) {
-                    if (isSideListPinned && imgContRef.current) {
-                        imgContRef.current.scrollBy(0, intensity);
-                    } else {
-                        readerRef.current.scrollBy(0, intensity);
-                    }
-                }
-                // if (elapsed < window.app.clickDelay) {
-                if (window.app.keydown) {
-                    prevTime = timeStamp;
-                    window.requestAnimationFrame(anim);
-                }
-            };
-            window.requestAnimationFrame(anim);
-            return;
-        }
-    };
+    const { start: startHeldScroll, stop: stopHeldScroll } = useHeldScroll((intensity) => {
+        const scroller = isSideListPinned && imgContRef.current ? imgContRef.current : readerRef.current;
+        scroller?.scrollBy(0, intensity);
+    });
 
     const scrollToPage = (pageNumber: number, behavior: ScrollBehavior = "smooth", callback?: () => void) => {
         if (readerRef.current) {
-            if (pageNumber >= 1 && pageNumber <= (readerState?.content?.progress?.totalPages || 1)) {
+            if (pageNumber >= 1 && pageNumber <= (mangaTotalPages || images.length || 1)) {
                 const imgElem = document.querySelector(`#reader .imgCont [data-pagenumber='${pageNumber}']`);
-                if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) {
+                if ([1, 2].includes(readerSettings.readerTypeSelected)) {
                     const rowNumber = parseInt(imgElem?.parentElement?.getAttribute("data-imagerow") || "1");
+                    currentImageRowRef.current = rowNumber;
                     setCurrentImageRow(rowNumber);
                     if (callback) setTimeout(callback, 1500);
                 } else {
@@ -166,34 +204,80 @@ const Reader: React.FC = () => {
     }, [currentlyDecoding, imageDecodeQueue]);
 
     useEffect(() => {
+        currentPageNumberRef.current = currentPageNumber;
         dispatch(updateReaderMangaCurrentPage(currentPageNumber));
     }, [currentPageNumber]);
+    useLayoutEffect(() => {
+        currentImageRowRef.current = currentImageRow;
+        changePageNumber();
+    }, [currentImageRow]);
     useEffect(() => {
         readerRef.current?.focus();
     }, [isReaderOpen]);
-    useEffect(() => {
-        if (!isLoadingManga) {
-            setTimeout(() => {
-                scrollToPage(currentPageNumber, "auto");
-            }, 100);
+    /*
+     * Zen chrome changes column width (side-list inset, scrollbar, fullscreen), so
+     * width-sized pages change height. Reapply the pre-toggle scroll fraction.
+     * Scroll anchoring would also shift a tall page, so it stays off until resize settles.
+     * Fixed row gaps do not scale; that error stays small next to page height.
+     */
+    useLayoutEffect(() => {
+        const restoreScroll = zenScrollReadyRef.current;
+        zenScrollReadyRef.current = true;
+
+        const currentScroller =
+            readerRef.current?.classList.contains("sideListPinned") && imgContRef.current
+                ? imgContRef.current
+                : readerRef.current;
+        const ratio =
+            restoreScroll && currentScroller && currentScroller.scrollHeight > 0
+                ? {
+                      x: currentScroller.scrollWidth
+                          ? currentScroller.scrollLeft / currentScroller.scrollWidth
+                          : 0,
+                      y: currentScroller.scrollTop / currentScroller.scrollHeight,
+                  }
+                : null;
+
+        if (ratio) {
+            setScrollPosPercent(ratio);
+            if (readerRef.current) readerRef.current.style.overflowAnchor = "none";
+            if (imgContRef.current) imgContRef.current.style.overflowAnchor = "none";
         }
-    }, [isLoadingManga]);
-    useEffect(() => {
-        if ((zenMode && !window.electron.currentWindow.isMaximized()) || (!zenMode && !wasMaximized)) {
-            setTimeout(() => {
-                scrollToPage(currentPageNumber, "auto");
-            }, 100);
-        }
+
         if (zenMode) {
             setSideListPinned(false);
-            setWasMaximized(window.electron.currentWindow.isMaximized());
             document.body.classList.add("zenMode");
             window.electron.currentWindow.setFullScreen(true);
         } else {
             document.body.classList.remove("zenMode");
-            setWasMaximized(false);
             if (window.electron.currentWindow.isFullScreen()) window.electron.currentWindow.setFullScreen(false);
         }
+
+        if (!ratio) return;
+
+        const applyScrollRatio = () => {
+            const el =
+                readerRef.current?.classList.contains("sideListPinned") && imgContRef.current
+                    ? imgContRef.current
+                    : readerRef.current;
+            if (!el) return;
+            el.scrollLeft = ratio.x * el.scrollWidth;
+            el.scrollTop = ratio.y * el.scrollHeight;
+        };
+        applyScrollRatio();
+        window.addEventListener("resize", applyScrollRatio);
+        const timeoutId = window.setTimeout(() => {
+            applyScrollRatio();
+            window.removeEventListener("resize", applyScrollRatio);
+            if (readerRef.current) readerRef.current.style.overflowAnchor = "";
+            if (imgContRef.current) imgContRef.current.style.overflowAnchor = "";
+        }, ZEN_SCROLL_RESTORE_MS);
+        return () => {
+            window.clearTimeout(timeoutId);
+            window.removeEventListener("resize", applyScrollRatio);
+            if (readerRef.current) readerRef.current.style.overflowAnchor = "";
+            if (imgContRef.current) imgContRef.current.style.overflowAnchor = "";
+        };
     }, [zenMode]);
     /**
      * * readerType === 0 and on first/last page
@@ -202,7 +286,7 @@ const Reader: React.FC = () => {
      * * readerType [1,2] => 3
      */
     const prevNextDeciderLogic = () => {
-        if (appSettings.readerSettings.readerTypeSelected === 0 && imgContRef.current && readerRef.current) {
+        if (readerSettings.readerTypeSelected === 0 && imgContRef.current && readerRef.current) {
             if (isSideListPinned) {
                 if (
                     imgContRef.current.scrollTop <= window.innerHeight / 2 ||
@@ -214,316 +298,20 @@ const Reader: React.FC = () => {
                 readerRef.current.scrollTop >= readerRef.current.scrollHeight - window.innerHeight * 1.5
             )
                 return 2;
-        } else if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected)) return 3;
+        } else if ([1, 2].includes(readerSettings.readerTypeSelected)) return 3;
     };
     useLayoutEffect(() => {
-        window.app.clickDelay = 100;
         const wheelFunction = (e: WheelEvent) => {
-            if (e.ctrlKey) {
-                if (e.deltaY < 0) {
-                    sizePlusRef.current?.click();
-                    return;
-                }
-                if (e.deltaY > 0) {
-                    sizeMinusRef.current?.click();
-                    return;
-                }
-            }
+            if (!e.ctrlKey || !isReaderOpen || isLoadingManga) return;
+            e.preventDefault();
+            if (e.deltaY < 0) runtime.executeCommand("sizePlus", MANGA_READER_SETTINGS_OWNER_ID);
+            else if (e.deltaY > 0) runtime.executeCommand("sizeMinus", MANGA_READER_SETTINGS_OWNER_ID);
         };
-        const shortcutsMapped = Object.fromEntries(shortcuts.map((e) => [e.command, e.keys])) as Record<
-            ShortcutCommands,
-            string[]
-        >;
-        type ShortcutEv = {
-            preventDefault: () => void;
-            stopPropagation: () => void;
-            repeat: boolean;
-            key?: string;
-            shiftKey: boolean;
-        };
-        const handleShortcut = (keyStr: string, e: ShortcutEv): boolean => {
-            window.app.keyRepeated = e.repeat;
-            window.app.keydown = true;
-
-            if (
-                e.key &&
-                [" ", "Enter"].includes(e.key) &&
-                document.activeElement &&
-                document.activeElement.tagName === "BUTTON"
-            )
-                return false;
-            const is = (keys: string[]) => keys.includes(keyStr);
-            const isReaderActive = !isSettingOpen && isReaderOpen && !isLoadingManga;
-            const isReaderFocused =
-                document.activeElement?.tagName === "BODY" || document.activeElement === readerRef.current;
-
-            if (is(shortcutsMapped.contextMenu)) {
-                e.stopPropagation();
-                e.preventDefault();
-                if (imgContRef.current)
-                    imgContRef.current.dispatchEvent(
-                        window.contextMenu.fakeEvent(
-                            { posX: window.innerWidth / 2, posY: window.innerHeight / 2 },
-                            readerRef.current,
-                        ),
-                    );
-                return true;
-            }
-
-            if (!isReaderActive) return false;
-
-            if (e.key && [" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
-
-            switch (true) {
-                case is(shortcutsMapped.nextPage): {
-                    if (!isReaderFocused) break;
-                    const abc = prevNextDeciderLogic();
-                    if (abc === 1) openNextChapterRef.current?.click();
-                    else if (abc === 2) openNextChapterRef.current?.click();
-                    else if (abc === 3) {
-                        if (appSettings.readerSettings.readerTypeSelected === 1) openNextPageRef.current?.click();
-                        if (appSettings.readerSettings.readerTypeSelected === 2) openPrevPageRef.current?.click();
-                    }
-                    return true;
-                }
-                case is(shortcutsMapped.prevPage): {
-                    if (!isReaderFocused) break;
-                    const abc = prevNextDeciderLogic();
-                    if (abc === 1) openPrevChapterRef.current?.click();
-                    else if (abc === 2) openPrevChapterRef.current?.click();
-                    else if (abc === 3) {
-                        if (appSettings.readerSettings.readerTypeSelected === 2) openNextPageRef.current?.click();
-                        if (appSettings.readerSettings.readerTypeSelected === 1) openPrevPageRef.current?.click();
-                    }
-                    return true;
-                }
-                default:
-                    break;
-            }
-
-            if (e.repeat) return false;
-
-            const readerSizes = [50, 100, 150, 200, 250] as const;
-            const handleReaderSize = (w: number) => {
-                makeScrollPos();
-                dispatch(
-                    setReaderSettings({
-                        ...(w > 100 ? { widthClamped: false } : {}),
-                        fitOption: 0,
-                        readerWidth: w,
-                    }),
-                );
-                setShortcutText(`${w}%`);
-            };
-
-            switch (true) {
-                case is(shortcutsMapped[`readerSize_${readerSizes[0]}`]):
-                case is(shortcutsMapped[`readerSize_${readerSizes[1]}`]):
-                case is(shortcutsMapped[`readerSize_${readerSizes[2]}`]):
-                case is(shortcutsMapped[`readerSize_${readerSizes[3]}`]):
-                case is(shortcutsMapped[`readerSize_${readerSizes[4]}`]): {
-                    const idx = readerSizes.findIndex((w) => is(shortcutsMapped[`readerSize_${w}`]));
-                    if (idx >= 0) {
-                        handleReaderSize(readerSizes[idx]);
-                    }
-                    return true;
-                }
-                case is(shortcutsMapped.navToPage):
-                    navToPageButtonRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.toggleZenMode):
-                    setZenMode((prev) => !prev);
-                    return true;
-                case keyStr === "escape":
-                    setZenMode(false);
-                    return true;
-                case is(shortcutsMapped.readerSettings):
-                    readerSettingExtender.current?.click();
-                    readerSettingExtender.current?.focus();
-                    return true;
-                case is(shortcutsMapped.nextChapter):
-                    openNextChapterRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.prevChapter):
-                    openPrevChapterRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.focusSideListSearch):
-                    sideListSearchRef.current?.focus();
-                    return true;
-                case is(shortcutsMapped.randomChapter):
-                    openRandomChapterRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.bookmark):
-                    addToBookmarkRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.sizePlus):
-                    sizePlusRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.sizeMinus):
-                    sizeMinusRef.current?.click();
-                    return true;
-                case is(shortcutsMapped.showHidePageNumberInZen):
-                    setShortcutText(
-                        (!appSettings.readerSettings.showPageNumberInZenMode ? "Show" : "Hide") +
-                            " page-number in Zen Mode",
-                    );
-                    dispatch(
-                        setReaderSettings({
-                            showPageNumberInZenMode: !appSettings.readerSettings.showPageNumberInZenMode,
-                        }),
-                    );
-                    return true;
-                case is(shortcutsMapped.cycleFitOptions): {
-                    let fitOption = appSettings.readerSettings.fitOption + (e.shiftKey ? -1 : 1);
-                    if (fitOption < 0) fitOption = 3;
-                    fitOption %= 4;
-                    if (fitOption === 0) setShortcutText("Free");
-                    if (fitOption === 1) setShortcutText("Fit Vertically");
-                    if (fitOption === 2) setShortcutText("Fit Horizontally");
-                    if (fitOption === 3) setShortcutText("1:1");
-                    dispatch(
-                        setReaderSettings({
-                            fitOption: fitOption as 0 | 1 | 2 | 3,
-                        }),
-                    );
-                    return true;
-                }
-                case is(shortcutsMapped.selectReaderMode0):
-                    setShortcutText("Reading Mode - Vertical Scroll");
-                    dispatch(setReaderSettings({ readerTypeSelected: 0 }));
-                    return true;
-                case is(shortcutsMapped.selectReaderMode1):
-                    setShortcutText("Reading Mode - Left to Right");
-                    dispatch(setReaderSettings({ readerTypeSelected: 1 }));
-                    return true;
-                case is(shortcutsMapped.selectReaderMode2):
-                    setShortcutText("Reading Mode - Right to Left");
-                    dispatch(setReaderSettings({ readerTypeSelected: 2 }));
-                    return true;
-                case is(shortcutsMapped.selectPagePerRow1):
-                    if (appSettings.readerSettings.pagesPerRowSelected !== 0) {
-                        const pagesPerRowSelected = 0;
-                        let readerWidth = appSettings.readerSettings.readerWidth / 2;
-
-                        if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
-                            readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
-                        if (readerWidth < 1) readerWidth = 1;
-                        setShortcutText("Page per Row - 1");
-                        dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
-                    }
-                    return true;
-                case is(shortcutsMapped.selectPagePerRow2): {
-                    const pagesPerRowSelected = 1;
-                    let readerWidth = appSettings.readerSettings.readerWidth;
-                    if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                        readerWidth *= 2;
-                        if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
-                            readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
-                        if (readerWidth < 1) readerWidth = 1;
-                    }
-                    setShortcutText("Page per Row - 2");
-                    dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
-                    return true;
-                }
-                case is(shortcutsMapped.selectPagePerRow2odd): {
-                    const pagesPerRowSelected = 2;
-                    let readerWidth = appSettings.readerSettings.readerWidth;
-                    if (appSettings.readerSettings.pagesPerRowSelected === 0) {
-                        readerWidth *= 2;
-                        if (readerWidth > (appSettings.readerSettings.widthClamped ? 100 : 500))
-                            readerWidth = appSettings.readerSettings.widthClamped ? 100 : 500;
-                        if (readerWidth < 1) readerWidth = 1;
-                    }
-                    setShortcutText("Page per Row - 2odd");
-                    dispatch(setReaderSettings({ pagesPerRowSelected, readerWidth }));
-                    return true;
-                }
-                case is(shortcutsMapped.cyclePresetNext): {
-                    const name = dispatch(cyclePresetNext("manga"));
-                    if (name) setShortcutText(`Preset: ${name}`);
-                    return true;
-                }
-                case is(shortcutsMapped.cyclePresetPrev): {
-                    const name = dispatch(cyclePresetPrev("manga"));
-                    if (name) setShortcutText(`Preset: ${name}`);
-                    return true;
-                }
-                case is(shortcutsMapped.selectPreset1):
-                case is(shortcutsMapped.selectPreset2):
-                case is(shortcutsMapped.selectPreset3):
-                case is(shortcutsMapped.selectPreset4):
-                case is(shortcutsMapped.selectPreset5): {
-                    const slotIdx = [
-                        shortcutsMapped.selectPreset1,
-                        shortcutsMapped.selectPreset2,
-                        shortcutsMapped.selectPreset3,
-                        shortcutsMapped.selectPreset4,
-                        shortcutsMapped.selectPreset5,
-                    ].findIndex((keys) => is(keys ?? []));
-                    if (slotIdx >= 0) {
-                        const name = dispatch(selectPresetSlot("manga", slotIdx));
-                        if (name) setShortcutText(`Preset: ${name}`);
-                    }
-                    return true;
-                }
-                default:
-                    break;
-            }
-
-            if (isReaderFocused) {
-                switch (true) {
-                    case is(shortcutsMapped.largeScrollReverse):
-                        scrollReader(-appSettings.readerSettings.scrollSpeedB);
-                        return true;
-                    case is(shortcutsMapped.largeScroll):
-                        scrollReader(appSettings.readerSettings.scrollSpeedB);
-                        return true;
-                    case is(shortcutsMapped.scrollDown):
-                        scrollReader(appSettings.readerSettings.scrollSpeedA);
-                        return true;
-                    case is(shortcutsMapped.scrollUp):
-                        scrollReader(0 - appSettings.readerSettings.scrollSpeedA);
-                        return true;
-                    default:
-                        break;
-                }
-            }
-            return false;
-        };
-        const registerShortcuts = (e: KeyboardEvent) => {
-            const keyStr = keyFormatter(e, false);
-            if (keyStr === "") return;
-            handleShortcut(keyStr, e);
-        };
-        const registerMouseShortcuts = (e: MouseEvent) => {
-            const keyStr = mouseEventFormatter(e);
-            if (keyStr === "") return;
-            if (
-                handleShortcut(keyStr, {
-                    preventDefault: () => e.preventDefault(),
-                    stopPropagation: () => e.stopPropagation(),
-                    repeat: false,
-                    shiftKey: e.shiftKey,
-                })
-            )
-                e.preventDefault();
-        };
-        window.addEventListener("wheel", wheelFunction);
-        window.addEventListener("keydown", registerShortcuts);
-        window.addEventListener("mousedown", registerMouseShortcuts);
-        const onPointerUp = () => {
-            window.app.keydown = false;
-        };
-        window.addEventListener("keyup", onPointerUp);
-        window.addEventListener("mouseup", onPointerUp);
+        window.addEventListener("wheel", wheelFunction, { passive: false });
         return () => {
             window.removeEventListener("wheel", wheelFunction);
-            window.removeEventListener("keydown", registerShortcuts);
-            window.removeEventListener("mousedown", registerMouseShortcuts);
-            window.removeEventListener("keyup", onPointerUp);
-            window.removeEventListener("mouseup", onPointerUp);
         };
-    }, [isSideListPinned, appSettings, shortcuts, isLoadingManga, isSettingOpen, isReaderOpen]);
+    }, [isReaderOpen, isLoadingManga, runtime]);
 
     const makeScrollPos = useCallback(() => {
         if (isSideListPinned && imgContRef.current)
@@ -538,66 +326,82 @@ const Reader: React.FC = () => {
             });
     }, [isSideListPinned, imgContRef.current, readerRef.current]);
 
+    /**
+     * Reads page/row under the viewport center. Only flushes React state when values change
+     * so mid-page scroll does not re-render the reader image tree.
+     */
     const changePageNumber = () => {
+        // skip until the chapter-open scroll so leftover DOM does not keep the previous page
+        if (isLoadingManga || pendingChapterOpenScrollRef.current) return;
         if (imgContRef.current) {
             const elem = document.elementFromPoint(
                 imgContRef.current.clientWidth / 2 + imgContRef.current.offsetLeft,
-                window.innerHeight / (appSettings.readerSettings.readerTypeSelected === 0 ? 4 : 2),
+                window.innerHeight / (readerSettings.readerTypeSelected === 0 ? 4 : 2),
             );
             if (elem?.hasAttribute("data-pagenumber")) {
                 const pageNumber = parseInt(elem.getAttribute("data-pagenumber") || "1");
-                setCurrentPageNumber(pageNumber);
                 const rowNumber = parseInt(elem.parentElement?.getAttribute("data-imagerow") || "1");
-                setCurrentImageRow(rowNumber);
+                if (pageNumber !== currentPageNumberRef.current) {
+                    currentPageNumberRef.current = pageNumber;
+                    setCurrentPageNumber(pageNumber);
+                }
+                if (rowNumber !== currentImageRowRef.current) {
+                    currentImageRowRef.current = rowNumber;
+                    setCurrentImageRow(rowNumber);
+                }
             }
         }
     };
 
-    const openPrevPage = () => {
-        // Prevents unintended continuous chapter changes when holding down page navigation keys.
-        // window.app.keydown and window.app.keyRepeated are used so that when holding the left/right (prev/next) page key,
-        // it doesn't auto-trigger a chapter switch when reaching the start/end of the chapter. Chapter change should only occur on a new keypress, not while held.
+    const openPrevPage = (ctx: InvokeContext = { repeat: false, freshPress: true }) => {
+        /* only a fresh press may leave the chapter while the edge overlay is showing */
         if (currentImageRow <= 1) {
-            if (
-                chapterChangerDisplay &&
-                (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
-            ) {
-                return openPrevChapterRef.current?.click();
+            if (canCrossChapterEdge(chapterChangerDisplay, ctx.freshPress)) {
+                openSiblingChapter("prev");
+                return;
             }
             setChapterChangerDisplay(true);
             return;
         }
         if (chapterChangerDisplay) return setChapterChangerDisplay(false);
-        setCurrentImageRow((init) => init - 1);
+        setCurrentImageRow((init) => {
+            const next = init - 1;
+            currentImageRowRef.current = next;
+            return next;
+        });
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
-    const openNextPage = () => {
+    const openNextPage = (ctx: InvokeContext = { repeat: false, freshPress: true }) => {
         if (currentImageRow >= imageRow.length) {
-            if (
-                chapterChangerDisplay &&
-                (!window.app.keydown || (window.app.keydown && !window.app.keyRepeated))
-            ) {
-                return openNextChapterRef.current?.click();
+            if (canCrossChapterEdge(chapterChangerDisplay, ctx.freshPress)) {
+                openSiblingChapter("next");
+                return;
             }
             setChapterChangerDisplay(true);
             return;
         }
         if (chapterChangerDisplay) return setChapterChangerDisplay(false);
-        setCurrentImageRow((init) => init + 1);
+        setCurrentImageRow((init) => {
+            const next = init + 1;
+            currentImageRowRef.current = next;
+            return next;
+        });
         if (readerRef.current) readerRef.current.scrollTop = 0;
     };
+
     /**
-     * Check if directory `link` have images or not.
-     * If any image is found then load images otherwise keep linkInReader same as before.
-     * @param link Local link of folder containing images.
-     * @example
-     * "D://manga/chapter/"
+     * Load images for `options.link` when the folder is valid.
+     * `options.page` is reader `mangaPageNumber` (chapter-open target). The manga Reader stays
+     * mounted across chapters, so this applies that target before leftover viewport detection runs.
      */
     const checkForImgsAndLoad = (options: { link: string; page: number }) => {
+        const page = options.page >= 1 ? options.page : 1;
+        chapterOpenPageRef.current = page;
+        pendingChapterOpenScrollRef.current = true;
+        currentPageNumberRef.current = page;
+        setCurrentPageNumber(page);
         if (window.cachedImageList?.link === options.link && window.cachedImageList.images) {
-            // console.log("using cached image list for " + link);
-            setCurrentPageNumber(options.page || 1);
-            loadImgs(options.link, window.cachedImageList.images);
+            loadImgs(options.link, window.cachedImageList.images, page);
             window.cachedImageList = { link: "", images: [] };
             return;
         }
@@ -607,17 +411,134 @@ const Reader: React.FC = () => {
             showLoading: false,
         }).then((result) => {
             if (result.isValid && result.images) {
-                setCurrentPageNumber(options.page || 1);
-                loadImgs(options.link, result.images);
+                loadImgs(options.link, result.images, page);
+            } else {
+                pendingChapterOpenScrollRef.current = false;
+                log.warn("chapter folder is not readable; images were not loaded", { link: options.link });
             }
         });
     };
-    const loadImgs = async (link: string, imgs: string[]) => {
+
+    /**
+     * Page numbers shown together in the current row.
+     * When pagesPerRowSelected is single-image, that is only the current page.
+     * Otherwise every image index in the current row.
+     */
+    const activePageNumbers = (): number[] => {
+        if (readerSettings.pagesPerRowSelected === 0) return [currentPageNumber];
+        const rowIndex =
+            readerSettings.readerTypeSelected === 0
+                ? imageRow.findIndex((row) => row.i.includes(currentPageNumber - 1))
+                : currentImageRow - 1;
+        const row = imageRow[rowIndex];
+        if (!row || row.i.length === 0) return [currentPageNumber];
+        return row.i.map((imageIndex) => imageIndex + 1);
+    };
+
+    /**
+     * Permanently deletes one or two 1-based pages from the open chapter folder.
+     * Bookmarks on those pages are removed; later bookmarks move down once, lowest
+     * page first, so the unique chapter-page key stays free. Then the chapter reloads.
+     */
+    const deleteMangaPages = async (pageNumbers: number[]) => {
+        if (!linkInReader || !window.fs.isDir(linkInReader)) return;
+        const pages = [...new Set(pageNumbers)]
+            .filter((pageNumber) => images[pageNumber - 1])
+            .sort((a, b) => a - b);
+        if (pages.length === 0) return;
+        const pageNames = pages.map((pageNumber) => window.path.basename(images[pageNumber - 1]));
+        const { response } = await dialogUtils.confirm({
+            message:
+                pageNames.length === 1
+                    ? t("dialogs.deletePage", { name: pageNames[0] })
+                    : t("dialogs.deletePages", { first: pageNames[0], second: pageNames[1] }),
+            noOption: false,
+            buttons: [i18n.t("actions.cancel", { ns: "common" }), i18n.t("actions.yes", { ns: "common" })],
+            defaultId: 0,
+            cancelId: 0,
+            type: "warning",
+        });
+        if (response !== 1) return;
+
+        const removed: number[] = [];
+        for (const pageNumber of pages) {
+            const imagePath = images[pageNumber - 1];
+            try {
+                await window.fs.rm(imagePath, { force: true });
+                removed.push(pageNumber);
+            } catch (err) {
+                log.error("failed to delete manga page", { imagePath }, err);
+                await dialogUtils.customError({
+                    message: t("dialogs.deleteFailed", { name: window.path.basename(imagePath) }),
+                });
+            }
+        }
+        if (removed.length === 0) return;
+
+        const itemLink = mangaProgressItemLink ?? libraryItem?.link ?? window.path.dirname(linkInReader);
+        const chapterName = mangaChapterName || window.path.basename(linkInReader);
+        const chapterBookmarks = (store.getState().bookmarks.manga[itemLink] ?? []).filter(
+            (bookmark) => bookmark.chapterName === chapterName,
+        );
+        const removedIds = chapterBookmarks
+            .filter((bookmark) => removed.includes(bookmark.page))
+            .map((bookmark) => bookmark.id);
+        if (removedIds.length > 0) {
+            await dispatch(removeBookmark({ itemLink, type: "manga", ids: removedIds }));
+        }
+        const firstRemoved = Math.min(...removed);
+        const later = chapterBookmarks
+            .filter((bookmark) => bookmark.page > firstRemoved && !removed.includes(bookmark.page))
+            .sort((a, b) => a.page - b.page);
+        for (const bookmark of later) {
+            const shift = removed.filter((pageNumber) => pageNumber < bookmark.page).length;
+            await dispatch(updateMangaBookmark({ id: bookmark.id, page: bookmark.page - shift }));
+        }
+
+        // a page before the hole stays; otherwise show what slides into the first removed page
+        const pagesAtOrBeforeCurrent = removed.filter((pageNumber) => pageNumber <= currentPageNumber).length;
+        const nextPage =
+            currentPageNumber < firstRemoved
+                ? currentPageNumber
+                : Math.max(firstRemoved, currentPageNumber - pagesAtOrBeforeCurrent);
+        DirectoryValidatorService.invalidate(linkInReader);
+        checkForImgsAndLoad({
+            link: linkInReader,
+            page: Math.min(nextPage, Math.max(1, images.length - removed.length)),
+        });
+    };
+
+    /** Delete command: every image in the current row. */
+    const deleteMangaPage = () => {
+        void deleteMangaPages(activePageNumbers());
+    };
+
+    useMangaCommandOwner({
+        visible: commandsActive,
+        readerRef,
+        imgContRef,
+        pageNumberInputRef,
+        openNextPage,
+        openPrevPage,
+        openSiblingChapter,
+        prevNextDeciderLogic,
+        setZenMode,
+        setShortcutText,
+        makeScrollPos,
+        startHeldScroll,
+        stopHeldScroll,
+        deleteMangaPage,
+    });
+
+    /**
+     * Replace the image list and persist open progress for `page` (chapter-open target).
+     */
+    const loadImgs = async (link: string, imgs: string[], page: number) => {
         link = window.path.normalize(link);
         if (link[link.length - 1] === window.path.sep) link = link.substring(0, link.length - 1);
-        //mark, reset
         setImages([]);
-        if (pageNumberInputRef.current) pageNumberInputRef.current.value = "1";
+        if (pageNumberInputRef.current) pageNumberInputRef.current.value = String(page);
+        currentImageRowRef.current = 1;
         setCurrentImageRow(1);
         setImageData([]);
         setImageRow([]);
@@ -625,74 +546,31 @@ const Reader: React.FC = () => {
         setUpdatedAnilistProgress(false);
         setCurrentlyDecoding(false);
         setChapterChangerDisplay(false);
-        /**
-         * adding this here will make options.page work even when dynamic loading is enabled
-         * check useLayoutEffect [isLoadingManga] above
-         */
+        /* overlay stays until the imageRow open-scroll so a stored page does not flash page 1 */
         dispatch(
             setReaderLoading({
                 percent: 0.1,
             }),
         );
 
-        const linkSplitted = link.split(window.path.sep).filter((e) => e !== "");
-
-        const progress: MangaProgress = {
-            chapterLink: link,
-            currentPage: readerState?.mangaPageNumber || 1,
-            lastReadAt: new Date(),
-            chapterName: linkSplitted.at(-1) || "",
-            itemLink: window.path.dirname(link),
-            totalPages: imgs.length,
-            chaptersRead: [],
-        };
-        if (libraryItem && libraryItem.type === "manga") {
-            progress.chaptersRead = Array.from(libraryItem.progress?.chaptersRead || []);
-            progress.chaptersRead.push(window.path.basename(link));
-
-            dispatch(
-                updateReaderContent({
-                    ...libraryItem,
-                    progress,
-                }),
-            );
-            dispatch(updateMangaProgress(progress));
-        } else {
-            const mangaOpened = {
-                type: "manga",
-                link: window.path.dirname(link),
-                title: linkSplitted[linkSplitted.length - 2],
-                author: null,
-                cover: imgs[0],
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            } as const;
-            dispatch(
-                updateReaderContent({
-                    ...mangaOpened,
-                    progress,
-                }),
-            );
-            dispatch(
-                addLibraryItem({
-                    type: "manga",
-                    data: mangaOpened,
-                    progress: {
-                        chapterLink: link,
-                        currentPage: 1,
-                        totalPages: imgs.length,
-                        chapterName: linkSplitted.at(-1) || "",
-                    },
-                }),
-            );
+        const mangaItem = libraryItem?.type === "manga" ? libraryItem : null;
+        const { itemLink } = await syncMangaLibraryOnReaderOpen({
+            dispatch,
+            openedPath: link,
+            libraryItem: mangaItem,
+            images: imgs,
+            currentPage: page,
+        });
+        /* primary bind after the row exists; skip when openInReaderIfValid already started this session */
+        if (store.getState().reader.presetSession?.itemLink !== itemLink) {
+            await dispatch(ensureReaderPresetSession({ itemLink, itemType: "manga" }));
         }
         setImages(imgs);
         dispatch(setReaderOpen());
     };
     useLayoutEffect(() => {
         // window.electron.webFrame.clearCache();
-        const dynamic = appSettings.readerSettings.dynamicLoading;
-
+        const dynamic = readerSettings.dynamicLoading;
         const isWide = (width: number, height: number) => {
             const ratio = height / width;
             /**
@@ -704,13 +582,16 @@ const Reader: React.FC = () => {
         };
 
         const onProgress = (loaded: number) => {
-            if (loaded === images.length) dispatch(setReaderLoading(null));
-            else
-                dispatch(
-                    setReaderLoading({
-                        percent: 10 + Math.round((loaded / images.length) * 90),
-                    }),
-                );
+            if (loaded === images.length) {
+                // last image: keep overlay while pending so the open-scroll can run first
+                if (!pendingChapterOpenScrollRef.current) dispatch(setReaderLoading(null));
+                return;
+            }
+            dispatch(
+                setReaderLoading({
+                    percent: 10 + Math.round((loaded / images.length) * 90),
+                }),
+            );
         };
         let imagesLoaded = 0;
         images.forEach((imgURL, i) => {
@@ -758,7 +639,7 @@ const Reader: React.FC = () => {
                     canvas.width = 500;
                     canvas.height = 100;
                     ctx.fillStyle = window.getComputedStyle(document.body).color || "black";
-                    ctx.fillText("Error occurred while loading image.", 10, 10);
+                    ctx.fillText(t("errors.imageLoadFailed"), 10, 10);
 
                     imagesLoaded++;
                     onProgress(imagesLoaded);
@@ -813,6 +694,7 @@ const Reader: React.FC = () => {
     useEffect(() => {
         //todo use just src for image and canvas, add canvas using element outside
         appSettings.useCanvasBasedReader &&
+            // biome-ignore lint/style/noNonNullAssertion: <section.imgCont is guaranteed to be defined>
             [...document.querySelector("section.imgCont")!.children].forEach((e, i) => {
                 imageRow[i].i.forEach((canvasIndex) => {
                     const elem = imageData[canvasIndex].img;
@@ -820,15 +702,31 @@ const Reader: React.FC = () => {
                 });
             });
     }, [imageRow]);
+    /*
+     * Open-scroll after row commit and the canvas-attach effect above. scrollToPage queries
+     * `[data-pagenumber]`, which is not reliably in the layout tree in the same turn, so we
+     * yield one macrotask. Cleanup reschedules if imageRow is replaced before that runs.
+     * Overlay stays until then so a stored page does not paint the first page first.
+     */
+    useEffect(() => {
+        if (!pendingChapterOpenScrollRef.current || imageRow.length === 0) return;
+        const page = chapterOpenPageRef.current;
+        const timeoutId = window.setTimeout(() => {
+            scrollToPage(page, "auto");
+            pendingChapterOpenScrollRef.current = false;
+            dispatch(setReaderLoading(null));
+        }, 1);
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [imageRow]);
     useLayoutEffect(() => {
         if (images.length > 0 && images.length === imageData.length) {
             imageData.sort((a, b) => a.index - b.index);
             const tempImageRow: typeof imageRow = [];
-            const wideImageEnabled =
-                appSettings.readerSettings.pagesPerRowSelected !== 0 ||
-                appSettings.readerSettings.variableImageSize;
+            const wideImageEnabled = readerSettings.pagesPerRowSelected !== 0 || readerSettings.variableImageSize;
             for (let index = 0; index < imageData.length; index++) {
-                if (appSettings.readerSettings.pagesPerRowSelected === 0) {
+                if (readerSettings.pagesPerRowSelected === 0) {
                     tempImageRow.push({
                         i: [index],
                         wide: wideImageEnabled && imageData[index].isWide,
@@ -843,7 +741,7 @@ const Reader: React.FC = () => {
                     continue;
                 }
                 if (
-                    (appSettings.readerSettings.pagesPerRowSelected === 2 && index === 0) ||
+                    (readerSettings.pagesPerRowSelected === 2 && index === 0) ||
                     index === images.length - 1 ||
                     (wideImageEnabled && imageData[index + 1].isWide)
                 ) {
@@ -860,19 +758,15 @@ const Reader: React.FC = () => {
         }
     }, [
         imageData,
-        appSettings.readerSettings.pagesPerRowSelected,
-        appSettings.readerSettings.readerTypeSelected,
-        appSettings.readerSettings.variableImageSize,
+        readerSettings.pagesPerRowSelected,
+        readerSettings.readerTypeSelected,
+        readerSettings.variableImageSize,
     ]);
     useEffect(() => {
-        // if (appSettings.readerSettings.readerTypeSelected === 0)
+        // if (readerSettings.readerTypeSelected === 0)
         setTimeout(() => scrollToPage(currentPageNumber, "auto"), 100);
         // scrollToPage(currentPageNumber, "auto");
-    }, [
-        appSettings.readerSettings.readerTypeSelected,
-        appSettings.readerSettings.fitOption,
-        appSettings.readerSettings.pagesPerRowSelected,
-    ]);
+    }, [readerSettings.readerTypeSelected, readerSettings.fitOption, readerSettings.pagesPerRowSelected]);
     useLayoutEffect(() => {
         readerRef.current?.scrollTo(
             scrollPosPercent.x * readerRef.current.scrollWidth,
@@ -882,14 +776,15 @@ const Reader: React.FC = () => {
             scrollPosPercent.x * imgContRef.current.scrollWidth,
             scrollPosPercent.y * imgContRef.current.scrollHeight,
         );
-    }, [appSettings.readerSettings.readerWidth, isSideListPinned]);
+    }, [readerSettings.readerWidth, isSideListPinned]);
     useEffect(() => {
-        if (!readerState?.link) return;
+        if (!linkInReader) return;
         checkForImgsAndLoad({
-            link: readerState.link,
-            page: readerState.mangaPageNumber || 1,
+            link: linkInReader,
+            page: mangaOpenPage && mangaOpenPage >= 1 ? mangaOpenPage : 1,
         });
-    }, [readerState?.link]);
+        /* mangaOpenPage comes from the same setReaderState as link (open target, not scroll progress) */
+    }, [linkInReader]);
 
     useLayoutEffect(() => {
         if (isSideListPinned) {
@@ -899,8 +794,8 @@ const Reader: React.FC = () => {
             );
         }
         const timeOutId = setTimeout(() => {
-            if (sideListWidth !== appSettings?.readerSettings?.sideListWidth)
-                dispatch(setReaderSettings({ sideListWidth }));
+            if (sideListWidth !== readerSettings.sideListWidth)
+                dispatch(patchLiveMangaReaderSettings({ sideListWidth }));
         }, 500);
         return () => {
             clearTimeout(timeOutId);
@@ -908,45 +803,44 @@ const Reader: React.FC = () => {
     }, [sideListWidth]);
     useLayoutEffect(() => {
         // anilist auto update progress
-        if (updatedAnilistProgress || !appSettings.readerSettings.autoUpdateAnilistProgress) return;
+        if (updatedAnilistProgress || !readerSettings.autoUpdateAnilistProgress) return;
         if (currentPageNumber / images.length > (images.length <= 4 ? 0.5 : 0.7)) {
-            if (!anilistCurrentManga || !readerState?.content?.progress) {
-                // console.error("anilistCurrentManga is null, this should not happen");
+            if (!anilistCurrentListEntry || !mangaHasProgress || !mangaChapterName || !mangaProgressItemLink) {
                 return;
             }
-            const chapterNumber = processChapterNumber(readerState?.content?.progress?.chapterName);
+            const chapterNumber = processChapterNumber(mangaChapterName);
             if (!chapterNumber) {
                 log.log(
                     "AniList auto-progress: skipped (could not parse chapter number from chapter title)",
-                    readerState?.content?.progress?.chapterName,
+                    mangaChapterName,
                 );
                 return;
             }
             dispatch(
                 updateChaptersRead({
-                    itemLink: readerState?.content?.progress?.itemLink,
-                    chapterName: readerState?.content?.progress?.chapterName,
+                    itemLink: mangaProgressItemLink,
+                    chapterName: mangaChapterName,
                     read: true,
                 }),
             );
             setUpdatedAnilistProgress(true);
-            if (chapterNumber > anilistCurrentManga.progress)
-                AniList.setCurrentMangaProgress(chapterNumber).then((e) => {
+            if (chapterNumber > anilistCurrentListEntry.progress)
+                setAnilistListProgress(chapterNumber).then((e) => {
                     if (e) {
-                        dispatch(setAnilistCurrentManga(e));
+                        dispatch(setAnilistCurrentListEntry(e));
+                        void dispatch(
+                            updateTrackerSnapshot(toAnilistTrackerSnapshotUpdate(mangaProgressItemLink, e)),
+                        );
                         log.log(`AniList auto-progress: synced list progress to chapter ${chapterNumber}`);
                     } else {
                         log.error(
-                            "AniList auto-progress: setCurrentMangaProgress returned empty (sync may have failed)",
+                            "AniList auto-progress: setAnilistListProgress returned empty (sync may have failed)",
                         );
                         // dialogUtils.customError({ message: "Failed to sync AniList progress.", log: false });
                     }
                 });
         }
-    }, [currentPageNumber, appSettings.readerSettings.autoUpdateAnilistProgress]);
-    useLayoutEffect(() => {
-        changePageNumber();
-    }, [currentImageRow]);
+    }, [currentPageNumber, readerSettings.autoUpdateAnilistProgress]);
 
     useEffect(() => {
         if (shortcutText === "") return;
@@ -978,14 +872,14 @@ const Reader: React.FC = () => {
         <div
             className={
                 "chapterChangerScreen " +
-                ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "")
+                ([1, 2].includes(readerSettings.readerTypeSelected) ? "readerMode1n2 " : "")
             }
             style={{
                 display:
-                    (appSettings.readerSettings.readerTypeSelected === 0 &&
+                    (readerSettings.readerTypeSelected === 0 &&
                         !isSideListPinned &&
-                        !appSettings.readerSettings.disableChapterTransitionScreen) ||
-                    (appSettings.readerSettings.readerTypeSelected !== 0 && chapterChangerDisplay)
+                        !readerSettings.disableChapterTransitionScreen) ||
+                    (readerSettings.readerTypeSelected !== 0 && chapterChangerDisplay)
                         ? "grid"
                         : "none",
             }}
@@ -993,23 +887,23 @@ const Reader: React.FC = () => {
                 const abc = prevNextDeciderLogic();
                 if (abc === 1) {
                     const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
-                    if (clickPos <= 40) openPrevChapterRef.current?.click();
-                    if (clickPos > 60) openNextChapterRef.current?.click();
+                    if (clickPos <= 40) openSiblingChapter("prev");
+                    if (clickPos > 60) openSiblingChapter("next");
                 } else if (abc === 2) {
                     const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                    if (clickPos <= 40) openPrevChapterRef.current?.click();
-                    if (clickPos > 60) openNextChapterRef.current?.click();
+                    if (clickPos <= 40) openSiblingChapter("prev");
+                    if (clickPos > 60) openSiblingChapter("next");
                 } else if (abc === 3) {
                     const clickPos =
                         ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) * 100;
 
-                    if (appSettings.readerSettings.readerTypeSelected === 1) {
-                        if (clickPos <= 40) openPrevPageRef.current?.click();
-                        if (clickPos > 60) openNextPageRef.current?.click();
+                    if (readerSettings.readerTypeSelected === 1) {
+                        if (clickPos <= 40) openPrevPage();
+                        if (clickPos > 60) openNextPage();
                     }
-                    if (appSettings.readerSettings.readerTypeSelected === 2) {
-                        if (clickPos <= 40) openNextPageRef.current?.click();
-                        if (clickPos > 60) openPrevPageRef.current?.click();
+                    if (readerSettings.readerTypeSelected === 2) {
+                        if (clickPos <= 40) openNextPage();
+                        if (clickPos > 60) openPrevPage();
                     }
                 }
             }}
@@ -1018,39 +912,34 @@ const Reader: React.FC = () => {
                 <div
                     className="a"
                     style={{
-                        display:
-                            currentImageRow <= 1 || appSettings.readerSettings.readerTypeSelected === 0
-                                ? "flex"
-                                : "none",
+                        display: currentImageRow <= 1 || readerSettings.readerTypeSelected === 0 ? "flex" : "none",
                     }}
                 >
                     <span
                         className="a"
-                        data-tooltip={
-                            `press "${shortcuts.find((e) => e.command === "prevPage")?.keys}"` +
-                            ` or click left side of screen`
-                        }
+                        data-tooltip={t("chapterNav.prevTooltip", {
+                            keys: shortcuts.find((e) => e.command === "prevPage")?.keys,
+                        })}
                     >
-                        Previous :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
+                        {t("chapterNav.previous")}
+                        {/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
                         {window.path.basename(
                             prevNextChapter.prev,
                             formatUtils.files.getExt(prevNextChapter.prev),
                         )}
-                        {formatUtils.files.test(prevNextChapter.prev) && (
+                        {formatUtils.mangaFile.test(prevNextChapter.prev) && (
                             <code>{formatUtils.files.getExt(prevNextChapter.prev)}</code>
                         )}
                     </span>
                 </div>
                 <div className="c">
-                    <span className="a">Current :</span>
+                    <span className="a">{t("chapterNav.current")}</span>
                     <span className="b">
-                        {window.path.basename(readerState?.content?.progress?.chapterName || "")}
-                        {formatUtils.files.test(readerState?.content?.progress?.chapterName || "") && (
-                            <code>
-                                {formatUtils.files.getExt(readerState?.content?.progress?.chapterName || "")}
-                            </code>
+                        {window.path.basename(mangaChapterName || "")}
+                        {formatUtils.mangaFile.test(mangaChapterName || "") && (
+                            <code>{formatUtils.files.getExt(mangaChapterName || "")}</code>
                         )}
                     </span>
                 </div>
@@ -1058,27 +947,26 @@ const Reader: React.FC = () => {
                     className="b"
                     style={{
                         display:
-                            currentImageRow >= imageRow.length ||
-                            appSettings.readerSettings.readerTypeSelected === 0
+                            currentImageRow >= imageRow.length || readerSettings.readerTypeSelected === 0
                                 ? "flex"
                                 : "none",
                     }}
                 >
                     <span
                         className="a"
-                        data-tooltip={
-                            `press "${shortcuts.find((e) => e.command === "nextPage")?.keys}"` +
-                            ` or click right side of screen`
-                        }
+                        data-tooltip={t("chapterNav.nextTooltip", {
+                            keys: shortcuts.find((e) => e.command === "nextPage")?.keys,
+                        })}
                     >
-                        Next :{/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
+                        {t("chapterNav.next")}
+                        {/* <FontAwesomeIcon icon={faQuestionCircle} />: */}
                     </span>
                     <span className="b">
                         {window.path.basename(
                             prevNextChapter.next,
                             formatUtils.files.getExt(prevNextChapter.next),
                         )}
-                        {formatUtils.files.test(prevNextChapter.next) && (
+                        {formatUtils.mangaFile.test(prevNextChapter.next) && (
                             <code>{formatUtils.files.getExt(prevNextChapter.next)}</code>
                         )}
                     </span>
@@ -1105,7 +993,7 @@ const Reader: React.FC = () => {
                 "--sideListWidth": `${sideListWidth}px`,
             }}
             onScroll={() => {
-                if (appSettings.readerSettings.readerTypeSelected === 0 && !isSideListPinned) changePageNumber();
+                if (readerSettings.readerTypeSelected === 0 && !isSideListPinned) changePageNumber();
             }}
             tabIndex={-1}
         >
@@ -1113,8 +1001,6 @@ const Reader: React.FC = () => {
                 readerRef={readerRef}
                 makeScrollPos={makeScrollPos}
                 readerSettingExtender={readerSettingExtender}
-                sizePlusRef={sizePlusRef}
-                sizeMinusRef={sizeMinusRef}
                 setShortcutText={setShortcutText}
             />
             <ReaderSideList
@@ -1128,24 +1014,23 @@ const Reader: React.FC = () => {
                 setSideListPinned={setSideListPinned}
                 setSideListWidth={setSideListWidth}
                 makeScrollPos={makeScrollPos}
-                prevNextChapter={prevNextChapter}
                 setPrevNextChapter={setPrevNextChapter}
             />
 
             <div className="hiddenPageMover" style={{ display: "none" }}>
-                <button ref={openPrevPageRef} onClick={openPrevPage}>
-                    Prev
+                <button ref={openPrevPageRef} onClick={() => openPrevPage()}>
+                    {t("chapterNav.prevHidden")}
                 </button>
-                <button ref={openNextPageRef} onClick={openNextPage}>
-                    Next
+                <button ref={openNextPageRef} onClick={() => openNextPage()}>
+                    {t("chapterNav.nextHidden")}
                 </button>
                 <button ref={navToPageButtonRef} onClick={() => pageNumberInputRef.current?.focus()}>
-                    Nav to page number
+                    {t("chapterNav.navToPage")}
                 </button>
             </div>
-            {appSettings.readerSettings.showPageNumberInZenMode && (
-                <div className={"zenModePageNumber " + "show"}>
-                    {currentPageNumber}/{readerState?.content?.progress?.totalPages}
+            {readerSettings.showPageNumberInZenMode && (
+                <div className="zenModePageNumber show">
+                    {currentPageNumber}/{mangaTotalPages}
                 </div>
             )}
             <ChapterChanger />
@@ -1153,42 +1038,37 @@ const Reader: React.FC = () => {
             <div className="shortcutClicked faded" ref={shortcutTextRef}>
                 {shortcutText}
             </div>
-            {appSettings.readerSettings.forceLowBrightness.enabled && (
+            {readerSettings.forceLowBrightness.enabled && (
                 <div
                     className="forcedLowBrightness"
-                    style={{ "--neg-brightness": appSettings.readerSettings.forceLowBrightness.value }}
+                    style={{ "--neg-brightness": readerSettings.forceLowBrightness.value }}
                 ></div>
             )}
             <section
                 ref={imgContRef}
                 className={
                     "imgCont " +
-                    (appSettings.readerSettings.gapBetweenRows ? "gap " : "") +
-                    ([1, 2].includes(appSettings.readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
-                    (["", "fitVertically ", "fitHorizontally ", "original "].at(
-                        appSettings.readerSettings.fitOption,
-                    ) ?? "") +
-                    (appSettings.readerSettings.customColorFilter.enabled ? "customColorFilter " : "") +
-                    (appSettings.readerSettings.invertImage ? "invertImage " : "") +
-                    (appSettings.readerSettings.grayscale ? "grayscale " : "")
+                    (readerSettings.gapBetweenRows ? "gap " : "") +
+                    ([1, 2].includes(readerSettings.readerTypeSelected) ? "readerMode1n2 " : "") +
+                    (["", "fitVertically ", "fitHorizontally ", "original "].at(readerSettings.fitOption) ?? "") +
+                    (readerSettings.customColorFilter.enabled ? "customColorFilter " : "") +
+                    (readerSettings.invertImage ? "invertImage " : "") +
+                    (readerSettings.grayscale ? "grayscale " : "")
                 }
                 style={{
-                    "--varWidth": `${appSettings.readerSettings.readerWidth}%`,
-                    "--gapSize": `${appSettings.readerSettings.gapSize}px`,
-                    display:
-                        !chapterChangerDisplay || appSettings.readerSettings.readerTypeSelected === 0
-                            ? "flex"
-                            : "none",
-                    "--blend-bg": `rgba(${appSettings.readerSettings.customColorFilter.r},${appSettings.readerSettings.customColorFilter.g},${appSettings.readerSettings.customColorFilter.b},${appSettings.readerSettings.customColorFilter.a})`,
-                    "--blend-mode": appSettings.readerSettings.customColorFilter.blendMode,
-                    "--hue": appSettings.readerSettings.customColorFilter.hue,
-                    "--saturation": appSettings.readerSettings.customColorFilter.saturation + 1,
-                    "--brightness": appSettings.readerSettings.customColorFilter.brightness + 1,
-                    "--contrast": appSettings.readerSettings.customColorFilter.contrast + 1,
+                    "--varWidth": `${readerSettings.readerWidth}%`,
+                    "--gapSize": `${readerSettings.gapSize}px`,
+                    display: !chapterChangerDisplay || readerSettings.readerTypeSelected === 0 ? "flex" : "none",
+                    "--blend-bg": `rgba(${readerSettings.customColorFilter.r},${readerSettings.customColorFilter.g},${readerSettings.customColorFilter.b},${readerSettings.customColorFilter.a})`,
+                    "--blend-mode": readerSettings.customColorFilter.blendMode,
+                    "--hue": readerSettings.customColorFilter.hue,
+                    "--saturation": readerSettings.customColorFilter.saturation + 1,
+                    "--brightness": readerSettings.customColorFilter.brightness + 1,
+                    "--contrast": readerSettings.customColorFilter.contrast + 1,
                 }}
                 onWheel={(e) => {
                     if (e.ctrlKey) return;
-                    if ([1, 2].includes(appSettings.readerSettings.readerTypeSelected))
+                    if ([1, 2].includes(readerSettings.readerTypeSelected))
                         if (isSideListPinned && imgContRef.current)
                             if (imgContRef.current.offsetHeight === imgContRef.current.scrollHeight) {
                                 if (e.nativeEvent.deltaY > 0 && currentImageRow !== imageRow.length)
@@ -1202,21 +1082,20 @@ const Reader: React.FC = () => {
                         }
                 }}
                 onScroll={() => {
-                    if (appSettings.readerSettings.readerTypeSelected === 0 && isSideListPinned)
-                        changePageNumber();
+                    if (readerSettings.readerTypeSelected === 0 && isSideListPinned) changePageNumber();
                 }}
                 onContextMenu={(e) => {
                     e.stopPropagation();
                     const items: Menu.ListItem[] = [
                         {
-                            label: "Zen Mode",
+                            label: t("contextMenu.zenMode"),
                             selected: zenMode,
                             action() {
                                 setZenMode((init) => !init);
                             },
                         },
                         {
-                            label: "Hide Cursor in Zen Mode",
+                            label: t("contextMenu.hideCursorInZen"),
                             selected: appSettings.hideCursorInZenMode,
                             action() {
                                 dispatch(
@@ -1228,10 +1107,10 @@ const Reader: React.FC = () => {
                         },
                         window.contextMenu.template.divider(),
                         {
-                            label: "Bookmark",
+                            label: t("contextMenu.bookmark"),
                             disabled: false,
                             action() {
-                                addToBookmarkRef.current?.click();
+                                runtime.executeCommand("bookmark", MANGA_BOOKMARK_OWNER_ID);
                             },
                         },
                         window.contextMenu.template.divider(),
@@ -1240,19 +1119,58 @@ const Reader: React.FC = () => {
                         let src = e.target.getAttribute("src");
                         if (!src || src?.startsWith("data:") || src?.startsWith("file"))
                             src = e.target.getAttribute("data-src") || src;
-                        if (src)
+                        if (src) {
                             items.push(
                                 window.contextMenu.template.copyImage(src),
                                 window.contextMenu.template.copyPath(src),
                                 window.contextMenu.template.showInExplorer(src),
+                                {
+                                    label: t("contextMenu.makeCover"),
+                                    action() {
+                                        void (async () => {
+                                            const fsPath = fileSrcToImagePath(src || "");
+                                            const mangaRoot =
+                                                libraryItem?.link ?? window.path.dirname(linkInReader);
+                                            try {
+                                                await applyMakeCoverFromPageImage({
+                                                    dispatch,
+                                                    libraryId: libraryItem?.id,
+                                                    mangaRoot,
+                                                    fsPath,
+                                                });
+                                            } catch (err) {
+                                                log.error("Make Cover materialize failed", err);
+                                            }
+                                        })();
+                                    },
+                                },
                             );
-                        else
+                        } else {
                             items.push(
                                 window.contextMenu.template.copyPath(linkInReader),
                                 window.contextMenu.template.showInExplorer(linkInReader),
                                 window.contextMenu.template.openInNewWindow(linkInReader),
                             );
+                        }
                     }
+                    const pageHost = e.target instanceof Element ? e.target.closest("[data-pagenumber]") : null;
+                    const deletedPage = Number(pageHost?.getAttribute("data-pagenumber"));
+                    const deleteItems: Menu.ListItem[] = [];
+                    if (Number.isInteger(deletedPage) && deletedPage >= 1 && window.fs.isDir(linkInReader)) {
+                        deleteItems.push({
+                            label: t("contextMenu.deletePage"),
+                            action() {
+                                void deleteMangaPages([deletedPage]);
+                            },
+                        });
+                    }
+                    deleteItems.push({
+                        label: t("contextMenu.deleteChapter"),
+                        action() {
+                            runtime.executeCommand("deleteMangaChapter", MANGA_SIDE_LIST_OWNER_ID);
+                        },
+                    });
+                    items.push(window.contextMenu.template.divider(), ...deleteItems);
                     setContextMenuData({
                         clickX: e.clientX,
                         clickY: e.clientY,
@@ -1263,7 +1181,7 @@ const Reader: React.FC = () => {
                 onDoubleClick={(e) => {
                     const abc = prevNextDeciderLogic();
                     // first/last page
-                    if (abc || appSettings.readerSettings.readerTypeSelected !== 0) {
+                    if (abc || readerSettings.readerTypeSelected !== 0) {
                         const clickPos =
                             ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
                             100;
@@ -1284,28 +1202,28 @@ const Reader: React.FC = () => {
                     const abc = prevNextDeciderLogic();
                     if (abc === 1) {
                         const clickPos = ((e.clientX - sideListWidth) / e.currentTarget.offsetWidth) * 100;
-                        if (clickPos <= 20) openPrevChapterRef.current?.click();
-                        if (clickPos > 80) openNextChapterRef.current?.click();
+                        if (clickPos <= 20) openSiblingChapter("prev");
+                        if (clickPos > 80) openSiblingChapter("next");
                     } else if (abc === 2) {
                         const clickPos = (e.clientX / e.currentTarget.offsetWidth) * 100;
-                        if (clickPos <= 20) openPrevChapterRef.current?.click();
-                        if (clickPos > 80) openNextChapterRef.current?.click();
+                        if (clickPos <= 20) openSiblingChapter("prev");
+                        if (clickPos > 80) openSiblingChapter("next");
                     } else if (abc === 3) {
                         const clickPos =
                             ((e.clientX - (isSideListPinned ? sideListWidth : 0)) / e.currentTarget.offsetWidth) *
                             100;
-                        if (appSettings.readerSettings.readerTypeSelected === 1) {
-                            if (clickPos <= 40) openPrevPageRef.current?.click();
-                            if (clickPos > 60) openNextPageRef.current?.click();
+                        if (readerSettings.readerTypeSelected === 1) {
+                            if (clickPos <= 40) openPrevPage();
+                            if (clickPos > 60) openNextPage();
                         }
-                        if (appSettings.readerSettings.readerTypeSelected === 2) {
-                            if (clickPos <= 40) openNextPageRef.current?.click();
-                            if (clickPos > 60) openPrevPageRef.current?.click();
+                        if (readerSettings.readerTypeSelected === 2) {
+                            if (clickPos <= 40) openNextPage();
+                            if (clickPos > 60) openPrevPage();
                         }
                     }
                 }}
                 onMouseDown={(e) => {
-                    if (!appSettings.readerSettings.enableTouchScroll) return;
+                    if (!readerSettings.enableTouchScroll) return;
                     if (e.button === 0 && readerRef.current && imgContRef.current) {
                         const target = e.currentTarget;
                         const isScrollbarClick =
@@ -1326,51 +1244,47 @@ const Reader: React.FC = () => {
                 //     setMouseDown(null);
                 // }}
                 onMouseLeave={() => {
-                    if (!appSettings.readerSettings.enableTouchScroll) return;
+                    if (!readerSettings.enableTouchScroll) return;
                     setMouseDown(null);
                 }}
                 onMouseMove={(e) => {
-                    if (!appSettings.readerSettings.enableTouchScroll) return;
+                    if (!readerSettings.enableTouchScroll) return;
                     if (!mouseDown) return;
                     const elem = isSideListPinned ? imgContRef.current : readerRef.current;
                     if (!elem) return;
                     elem.scrollLeft =
-                        mouseDown.left -
-                        (e.clientX - mouseDown.x) * appSettings.readerSettings.touchScrollMultiplier;
+                        mouseDown.left - (e.clientX - mouseDown.x) * readerSettings.touchScrollMultiplier;
                     elem.scrollTop =
-                        mouseDown.top -
-                        (e.clientY - mouseDown.y) * appSettings.readerSettings.touchScrollMultiplier;
+                        mouseDown.top - (e.clientY - mouseDown.y) * readerSettings.touchScrollMultiplier;
                 }}
             >
                 {imageRow.map((e, i) => {
                     const props = {
                         className:
                             "row " +
-                            (appSettings.readerSettings.readingSide === 1 ? "rtl " : "ltr ") +
+                            (readerSettings.readingSide === 1 ? "rtl " : "ltr ") +
                             (e.wide ? "wide " : "") +
-                            (appSettings.readerSettings.pagesPerRowSelected !== 0 ? "twoPagePerRow " : "") +
-                            (appSettings.readerSettings.widthClamped ? "widthClamped " : ""),
+                            (readerSettings.pagesPerRowSelected !== 0 ? "twoPagePerRow " : "") +
+                            (readerSettings.widthClamped ? "widthClamped " : ""),
                         "data-imagerow": i + 1,
                         style: {
-                            display: [1, 2].includes(appSettings.readerSettings.readerTypeSelected)
+                            display: [1, 2].includes(readerSettings.readerTypeSelected)
                                 ? currentImageRow === i + 1
                                     ? "flex"
                                     : "none"
                                 : "flex",
                             "--max-width":
-                                appSettings.readerSettings.maxHeightWidthSelector === "width" &&
-                                !appSettings.readerSettings.widthClamped
-                                    ? `${appSettings.readerSettings.maxWidth}px`
+                                readerSettings.maxHeightWidthSelector === "width" && !readerSettings.widthClamped
+                                    ? `${readerSettings.maxWidth}px`
                                     : "500%",
                             "--max-height":
-                                appSettings.readerSettings.maxHeightWidthSelector === "height" &&
-                                !appSettings.readerSettings.widthClamped
-                                    ? `${appSettings.readerSettings.maxHeight}px`
+                                readerSettings.maxHeightWidthSelector === "height" && !readerSettings.widthClamped
+                                    ? `${readerSettings.maxHeight}px`
                                     : "auto",
                         },
                         key: i,
                     } as const;
-                    if (appSettings.readerSettings.dynamicLoading)
+                    if (readerSettings.dynamicLoading)
                         return (
                             <InView
                                 as="div"
@@ -1450,7 +1364,7 @@ const Reader: React.FC = () => {
                     );
                 })}
             </section>
-            {appSettings.readerSettings.readerTypeSelected === 0 ? <ChapterChanger /> : ""}
+            {readerSettings.readerTypeSelected === 0 ? <ChapterChanger /> : ""}
         </div>
     );
 };

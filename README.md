@@ -8,6 +8,8 @@ Yomikiru is a feature-rich desktop application designed for reading locally stor
 [![Github All Releases](https://img.shields.io/github/downloads/mienaiyami/yomikiru/total.svg?style=flat-square&logo=github)](https://github.com/mienaiyami/yomikiru/releases) |
 [![License](https://img.shields.io/github/license/mienaiyami/yomikiru?style=flat-square)](LICENSE)
 
+[Privacy Policy](PRIVACY.md)
+
 ## Join the Community
 
 If you have questions, ideas, or want to stay updated with development, join our Discord server.
@@ -132,9 +134,18 @@ Beta versions are available for users who want to try the latest features before
 
 ### Future Plans
 
-- **Windows 7 Deprecation**: Moving to newer Electron version (post-gallery view)
 - **Enhanced Performance**: Optimization for large collections
 - **Additional Formats**: Expand supported file types
+
+## Development
+
+For local UI and format testing, populate a **dev-only** demo library (public-domain EPUBs, open comic pages, and generated fake chapters). It is **not** shipped with installs.
+
+```powershell
+pnpm demo:setup
+```
+
+Add the printed `demo/` path as a library location in Settings. Details: [Demo fixtures](docs/demo-fixtures.md).
 
 ## Documentation
 
@@ -142,6 +153,7 @@ Beta versions are available for users who want to try the latest features before
 - **[Screenshots](docs/SCREENSHOTS.md)**: Visual overview of features
 - **[Build Guide](docs/build.md)**: Development setup and compilation
 - **[Contributing](docs/contribute.md)**: How to contribute to the project
+- **[Demo fixtures](docs/demo-fixtures.md)**: Dev-only sample library (not in releases)
 
 ## Support & Issues
 

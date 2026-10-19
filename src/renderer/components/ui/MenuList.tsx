@@ -1,12 +1,10 @@
-import { getShortcutsMapped } from "@store/shortcuts";
-import { keyFormatter } from "@utils/keybindings";
+import { useCommandOwner, useOwnerId } from "@features/keybindings";
+import { onWidgetActivateKey } from "@utils/keyboard";
 import { createRendererLogger } from "@utils/logger";
 import type React from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
-import { shallowEqual } from "react-redux";
 import { useAppContext } from "../../App";
-import { useAppSelector } from "../../store/hooks";
 
 const log = createRendererLogger("components/ui/MenuList");
 
@@ -16,7 +14,7 @@ const log = createRendererLogger("components/ui/MenuList");
 //todo rename later for select only
 const MenuList: React.FC = () => {
     const { optSelectData } = useAppContext();
-    const shortcutsMapped = useAppSelector(getShortcutsMapped, shallowEqual);
+    const ownerId = useOwnerId("menu-list");
 
     //todo, maybe add height,width to it as well.
     const [pos, setPos] = useState({ x: 0, y: 0, width: 1 });
@@ -58,10 +56,76 @@ const MenuList: React.FC = () => {
                 }
                 setFocused(optSelectData.items.findIndex((e) => e.selected));
                 setPos({ x, y, width });
-                ref.current.focus();
+                if (!optSelectData.retainFocus) ref.current.focus();
             }
         }
     }, [optSelectData]);
+
+    // retainFocus lists call move/select here so arrow-repeat does not replace optSelectData
+    useEffect(() => {
+        const navRef = optSelectData?.navRef;
+        if (!navRef) return;
+        navRef.current = {
+            move: (delta) => {
+                const items = optSelectData.items;
+                const len = items.length;
+                if (len <= 0) return;
+                setFocused((init) => {
+                    const start = init < 0 ? 0 : init;
+                    let next = start;
+                    for (let n = 0; n < len; n++) {
+                        next = (next + delta + len) % len;
+                        if (!items[next]?.disabled) return next;
+                    }
+                    return start;
+                });
+            },
+            select: () => {
+                const elem = ref.current?.querySelector('[data-focused="true"]') as HTMLLIElement | null;
+                if (elem && !elem.classList.contains("disabled")) elem.click();
+            },
+        };
+        return () => {
+            navRef.current = null;
+        };
+    }, [optSelectData]);
+
+    const moveFocus = (delta: number) => {
+        const items = optSelectData?.items;
+        if (!items || items.length <= 0) return;
+        setFocused((init) => {
+            if (init + delta >= items.length) return 0;
+            if (init + delta < 0) return items.length - 1;
+            return init + delta;
+        });
+    };
+
+    const activateFocused = () => {
+        const elem = ref.current?.querySelector('[data-focused="true"]') as HTMLLIElement | null;
+        if (elem && !elem.classList.contains("disabled")) elem.click();
+    };
+
+    useCommandOwner({
+        ownerId,
+        /* menu blocks background commands; searchWidget is how list movement is catalogued */
+        contextKinds: ["menu", "searchWidget"],
+        visible: Boolean(optSelectData) && !optSelectData?.retainFocus,
+        ownsEventTarget: (node) => Boolean(node instanceof Node && ref.current?.contains(node)),
+        handlers: {
+            listDown: () => moveFocus(1),
+            listUp: () => moveFocus(-1),
+            listSelect: () => activateFocused(),
+            contextMenu: () => {
+                ref.current?.blur();
+            },
+        },
+        onEscape: () => {
+            if (!optSelectData || optSelectData.retainFocus) return false;
+            if (!ref.current?.contains(document.activeElement)) return false;
+            ref.current.blur();
+            return true;
+        },
+    });
 
     useLayoutEffect(() => {
         const ff = () => {
@@ -85,125 +149,106 @@ const MenuList: React.FC = () => {
             target.blur();
         }, 100);
     };
+
+    const list = optSelectData && (
+        <div
+            className={`itemList${optSelectData.retainFocus ? " retainFocus" : ""}`}
+            tabIndex={-1}
+            onBlur={(e) => {
+                // optSelectData.focusBackElem && optSelectData.focusBackElem.focus();
+                optSelectData.onBlur?.(e);
+            }}
+            onClick={onClick}
+            onContextMenu={onClick}
+            onMouseDown={(e) => {
+                // keep the trigger input focused so blur does not close the list before click
+                if (optSelectData.retainFocus && (e.target as HTMLElement).closest("li")) e.preventDefault();
+            }}
+            onWheel={(e) => {
+                e.stopPropagation();
+            }}
+            ref={ref}
+            style={{
+                left: pos.x,
+                top: pos.y,
+                // display: display ? "block" : "none",
+                "--min-width": pos.width === 0 ? "fit-content" : `${pos.width}px`,
+                visibility: optSelectData.items.length > 0 ? "visible" : "hidden",
+            }}
+            onKeyDown={(e) => {
+                e.stopPropagation();
+                /* letter typeahead is specific to this menu; list movement is a command */
+                if (!e.ctrlKey && e.key.length === 1 && /^[\w]/i.test(e.key)) {
+                    e.preventDefault();
+                    if (ref.current) {
+                        const elems = [...ref.current.querySelectorAll("li")];
+                        let i = focused;
+                        i = elems.findIndex(
+                            (elem, i2) =>
+                                i < i2 &&
+                                elem.innerText.length > 0 &&
+                                elem.innerText[0].toLowerCase() === e.key.toLowerCase(),
+                        );
+                        if (i < 0) {
+                            i = elems.findIndex(
+                                (elem) =>
+                                    elem.innerText.length > 0 &&
+                                    elem.innerText[0].toLowerCase() === e.key.toLowerCase(),
+                            );
+                        }
+                        if (i >= 0) setFocused(i);
+                    }
+                    return;
+                }
+                onWidgetActivateKey(e, { space: activateFocused });
+            }}
+        >
+            <ul>
+                {optSelectData.items.map((e, i) => (
+                    <li
+                        key={`${i}-${e.label}`}
+                        className={e.disabled ? "disabled" : undefined}
+                        onClick={() => {
+                            if (e.disabled) return;
+                            e.action();
+                        }}
+                        onContextMenu={() => {
+                            if (e.disabled) return;
+                            e.action();
+                        }}
+                        style={e.style}
+                        ref={(node) => {
+                            if (node && i === focused)
+                                node.scrollIntoView({ behavior: "instant", block: "nearest" });
+                        }}
+                        data-focused={i === focused}
+                        onMouseEnter={() => {
+                            if (!e.disabled) setFocused(i);
+                        }}
+                        data-default-selected={e.selected}
+                    >
+                        <span>{!optSelectData.retainFocus && e.selected ? "•" : ""}</span>
+                        <span className="itemListLabel">{e.label}</span>
+                        {e.description ? <span className="itemListDesc">{e.description}</span> : null}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+
+    if (!optSelectData || !list) return null;
+
+    // retainFocus: trigger keeps typing; FocusLock would steal keys from the input
+    if (optSelectData.retainFocus) return list;
+
     return (
-        optSelectData && (
-            <FocusLock
-                onDeactivation={() => {
-                    optSelectData.focusBackElem?.focus();
-                }}
-            >
-                <div
-                    className="itemList"
-                    tabIndex={-1}
-                    onBlur={(e) => {
-                        // optSelectData.focusBackElem && optSelectData.focusBackElem.focus();
-                        optSelectData.onBlur?.(e);
-                    }}
-                    onClick={onClick}
-                    onContextMenu={onClick}
-                    onWheel={(e) => {
-                        e.stopPropagation();
-                    }}
-                    ref={ref}
-                    style={{
-                        left: pos.x,
-                        top: pos.y,
-                        // display: display ? "block" : "none",
-                        "--min-width": pos.width === 0 ? "fit-content" : `${pos.width}px`,
-                        visibility: optSelectData.items.length > 0 ? "visible" : "hidden",
-                    }}
-                    onKeyDown={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-
-                        const keyStr = keyFormatter(e, false);
-                        if (keyStr === "") return;
-
-                        if (shortcutsMapped.contextMenu.includes(keyStr)) {
-                            e.currentTarget.blur();
-                            return;
-                        }
-                        if (!e.ctrlKey && e.key.length === 1 && /^[\w]/i.test(e.key)) {
-                            if (ref.current) {
-                                const elems = [...ref.current.querySelectorAll("li")];
-                                let i = focused;
-                                i = elems.findIndex(
-                                    (elem, i2) =>
-                                        i < i2 &&
-                                        elem.innerText.length > 0 &&
-                                        elem.innerText[0].toLowerCase() === e.key.toLowerCase(),
-                                );
-                                if (i < 0) {
-                                    i = elems.findIndex(
-                                        (elem) =>
-                                            elem.innerText.length > 0 &&
-                                            elem.innerText[0].toLowerCase() === e.key.toLowerCase(),
-                                    );
-                                }
-                                if (i >= 0) setFocused(i);
-                                return;
-                            }
-                        }
-                        switch (true) {
-                            case keyStr === "escape":
-                                e.currentTarget.blur();
-                                break;
-                            case shortcutsMapped.listDown.includes(keyStr):
-                            case keyStr === "right":
-                                setFocused((init) => {
-                                    if (init + 1 >= optSelectData.items.length) return 0;
-                                    return init + 1;
-                                });
-                                break;
-                            case shortcutsMapped.listUp.includes(keyStr):
-                            case keyStr === "left":
-                                setFocused((init) => {
-                                    if (init - 1 < 0) return optSelectData.items.length - 1;
-                                    return init - 1;
-                                });
-                                break;
-                            case shortcutsMapped.listSelect.includes(keyStr):
-                            case keyStr === "space": {
-                                const elem = ref.current?.querySelector(
-                                    '[data-focused="true"]',
-                                ) as HTMLLIElement | null;
-                                if (elem && !elem.classList.contains("disabled")) elem.click();
-                                break;
-                            }
-                            default:
-                                break;
-                        }
-                    }}
-                >
-                    <ul>
-                        {optSelectData.items.map((e, i) => (
-                            <li
-                                key={e.label}
-                                onClick={e.action}
-                                onContextMenu={e.action}
-                                style={e.style}
-                                ref={(node) => {
-                                    if (node && i === focused)
-                                        node.scrollIntoView({ behavior: "instant", block: "nearest" });
-                                }}
-                                data-focused={i === focused}
-                                onMouseEnter={() => {
-                                    setFocused(i);
-                                }}
-                                data-default-selected={e.selected}
-                                // onMouseLeave={() => {
-                                //     setFocused(-1);
-                                // }}
-                                // className={`${e.selected ? "selected " : ""}`}
-                            >
-                                <span>{e.selected ? "•" : ""}</span>
-                                {e.label}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </FocusLock>
-        )
+        <FocusLock
+            onDeactivation={() => {
+                optSelectData.focusBackElem?.focus();
+            }}
+        >
+            {list}
+        </FocusLock>
     );
 };
 

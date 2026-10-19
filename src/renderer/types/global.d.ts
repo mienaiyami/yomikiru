@@ -1,6 +1,6 @@
 import Colorjs from "color";
+import type { CommandId } from "@common/keybindings";
 import { settingSchema } from "../utils/settingsSchema";
-import { SHORTCUT_COMMAND_MAP } from "../utils/keybindings";
 import { z } from "zod";
 import { themeProps } from "../utils/theme";
 import { addBookmark } from "../store/bookmarks";
@@ -26,7 +26,16 @@ declare global {
                 copyPath: (url: string) => Menu.ListItem;
                 copyImage: (url: string) => Menu.ListItem;
                 addToBookmark: (args: Parameters<typeof addBookmark>["0"]) => Menu.ListItem;
-                removeHistory: (url: string, isInSideList?: boolean) => Menu.ListItem;
+                /**
+                 * Confirm and delete a library item (progress, bookmarks, notes).
+                 * Files on disk are left alone. Optional `onRemoved` runs after dispatch.
+                 */
+                removeHistory: (url: string, isInSideList?: boolean, onRemoved?: () => void) => Menu.ListItem;
+                /**
+                 * Confirm and drop reading progress for a catalogue row.
+                 * The library item, bookmarks, and notes stay. Disabled when there is no progress.
+                 */
+                removeProgress: (url: string, onRemoved?: () => void) => Menu.ListItem;
                 removeBookmark: (
                     itemLink: string,
                     bookmarkId: number,
@@ -53,9 +62,11 @@ declare global {
                 behavior?: ScrollBehavior,
                 callback?: () => void,
             ) => void;
-            keyRepeated: boolean;
-            // to remove later
-            keydown: boolean;
+            /**
+             * Sync EPUB scroll CSS position into Redux before progress is persisted (e.g. close reader).
+             * Set by {@link EPubReader} while mounted.
+             */
+            flushEpubScrollPos?: () => void;
         };
         /**
          * TODO: refactor
@@ -69,7 +80,7 @@ declare global {
     //
     //
 
-    type ShortcutCommands = (typeof SHORTCUT_COMMAND_MAP)[number]["command"];
+    type ShortcutCommands = CommandId;
 
     type ShortcutSchema = {
         command: ShortcutCommands;

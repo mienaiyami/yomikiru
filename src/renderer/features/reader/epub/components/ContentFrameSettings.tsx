@@ -1,5 +1,7 @@
-import { setEpubReaderSettings } from "@store/appSettings";
+import { BookReaderSettingSection } from "@features/reader/components/ReaderSettingSection";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { selectLiveBookReaderSettings } from "@store/reader";
+import { patchLiveBookReaderSettings } from "@store/readerPresets";
 import InputCheckbox from "@ui/InputCheckbox";
 import InputCheckboxColor from "@ui/InputCheckboxColor";
 import InputColor from "@ui/InputColor";
@@ -8,173 +10,158 @@ import InputSelect from "@ui/InputSelect";
 import { colorUtils } from "@utils/color";
 import type { BookReaderSettings } from "@utils/readerSettingsSchema";
 import { memo } from "react";
-
-const BORDER_STYLE_OPTIONS: Menu.OptSelectOption[] = [
-    { label: "Solid", value: "solid" },
-    { label: "Dashed", value: "dashed" },
-    { label: "Dotted", value: "dotted" },
-    { label: "Double", value: "double" },
-];
+import { useTranslation } from "react-i18next";
 
 /**
  * EPUB reader: content column padding and border (see `contentFrame` in book reader settings).
  */
 const ContentFrameSettings = memo(() => {
-    const appSettings = useAppSelector((store) => store.appSettings);
+    const { t } = useTranslation("reader");
+    const epubReaderSettings = useAppSelector(selectLiveBookReaderSettings);
     const dispatch = useAppDispatch();
-    const cf = appSettings.epubReaderSettings.contentFrame;
+    const cf = epubReaderSettings.contentFrame;
     const border = cf.border;
+    const borderStyleOptions: Menu.OptSelectOption[] = [
+        { label: t("settings.borderSolid"), value: "solid" },
+        { label: t("settings.borderDashed"), value: "dashed" },
+        { label: t("settings.borderDotted"), value: "dotted" },
+        { label: t("settings.borderDouble"), value: "double" },
+    ];
 
     return (
-        <div className="settingItem">
-            <div
-                className={`name ${!appSettings.epubReaderSettings.settingsCollapsed.contentFrame ? "expanded " : ""}`}
-                onKeyDown={(e) => {
-                    if (e.key === " " || e.key === "Enter") e.currentTarget.click();
-                }}
-                onClick={() => {
+        <BookReaderSettingSection
+            title={t("settings.contentFrame")}
+            collapsedKey="contentFrame"
+            optionsClassName="col"
+        >
+            <InputCheckboxColor
+                checked={!cf.useDefault_contentBackgroundColor}
+                onChangeCheck={(e) => {
                     dispatch(
-                        setEpubReaderSettings({
-                            settingsCollapsed: {
-                                ...appSettings.epubReaderSettings.settingsCollapsed,
-                                contentFrame: !appSettings.epubReaderSettings.settingsCollapsed.contentFrame,
+                        patchLiveBookReaderSettings({
+                            contentFrame: {
+                                ...cf,
+                                useDefault_contentBackgroundColor: !e.currentTarget.checked,
                             },
                         }),
                     );
                 }}
-            >
-                Content Frame
-            </div>
-            <div className="options col">
-                <InputCheckboxColor
-                    checked={!cf.useDefault_contentBackgroundColor}
-                    onChangeCheck={(e) => {
+                value={colorUtils.new(cf.contentBackgroundColor)}
+                timeout={[
+                    500,
+                    (value) =>
                         dispatch(
-                            setEpubReaderSettings({
+                            patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
-                                    useDefault_contentBackgroundColor: !e.currentTarget.checked,
+                                    contentBackgroundColor: value.hexa(),
                                 },
                             }),
-                        );
-                    }}
-                    value={colorUtils.new(cf.contentBackgroundColor)}
-                    timeout={[
-                        500,
-                        (value) =>
-                            dispatch(
-                                setEpubReaderSettings({
-                                    contentFrame: {
-                                        ...cf,
-                                        contentBackgroundColor: value.hexa(),
-                                    },
-                                }),
-                            ),
-                    ]}
-                    paraBefore="Content background color&nbsp;:"
-                />
-                <InputNumber
-                    value={cf.paddingInline}
-                    min={0}
-                    max={200}
-                    timeout={[
-                        1000,
-                        (value) =>
-                            dispatch(
-                                setEpubReaderSettings({
-                                    contentFrame: {
-                                        ...cf,
-                                        paddingInline: value,
-                                    },
-                                }),
-                            ),
-                    ]}
-                    paraBefore="Horizontal spacing&nbsp;:"
-                    paraAfter="px"
-                />
-                <InputCheckbox
-                    checked={border.enabled}
-                    onChange={(e) => {
+                        ),
+                ]}
+                paraBefore={t("settings.contentBackgroundColor")}
+            />
+            <InputNumber
+                value={cf.paddingInline}
+                min={0}
+                max={200}
+                timeout={[
+                    1000,
+                    (value) =>
                         dispatch(
-                            setEpubReaderSettings({
+                            patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
-                                    border: {
-                                        ...border,
-                                        enabled: e.currentTarget.checked,
-                                    },
+                                    paddingInline: value,
                                 },
                             }),
-                        );
-                    }}
-                    labelAfter="Content border"
-                />
-                <InputNumber
-                    value={border.width}
-                    min={0}
-                    max={32}
-                    disabled={!border.enabled}
-                    timeout={[
-                        1000,
-                        (value) =>
-                            dispatch(
-                                setEpubReaderSettings({
-                                    contentFrame: {
-                                        ...cf,
-                                        border: {
-                                            ...border,
-                                            width: value,
-                                        },
-                                    },
-                                }),
-                            ),
-                    ]}
-                    paraBefore="Border width&nbsp;:"
-                    paraAfter="px"
-                />
-                <InputSelect
-                    labeled
-                    disabled={!border.enabled}
-                    value={border.style}
-                    onChange={(value) => {
+                        ),
+                ]}
+                paraBefore={t("settings.horizontalSpacing")}
+                paraAfter={t("settings.pxUnit")}
+            />
+            <InputCheckbox
+                checked={border.enabled}
+                onChange={(e) => {
+                    dispatch(
+                        patchLiveBookReaderSettings({
+                            contentFrame: {
+                                ...cf,
+                                border: {
+                                    ...border,
+                                    enabled: e.currentTarget.checked,
+                                },
+                            },
+                        }),
+                    );
+                }}
+                labelAfter={t("settings.contentBorder")}
+            />
+            <InputNumber
+                value={border.width}
+                min={0}
+                max={32}
+                disabled={!border.enabled}
+                timeout={[
+                    1000,
+                    (value) =>
                         dispatch(
-                            setEpubReaderSettings({
+                            patchLiveBookReaderSettings({
                                 contentFrame: {
                                     ...cf,
                                     border: {
                                         ...border,
-                                        style: value as BookReaderSettings["contentFrame"]["border"]["style"],
+                                        width: value,
                                     },
                                 },
                             }),
-                        );
-                    }}
-                    options={BORDER_STYLE_OPTIONS}
-                    paraBefore="Border style&nbsp;:"
-                />
-                <InputColor
-                    labeled
-                    value={colorUtils.new(border.color)}
-                    disabled={!border.enabled}
-                    timeout={[
-                        500,
-                        (value) =>
-                            dispatch(
-                                setEpubReaderSettings({
-                                    contentFrame: {
-                                        ...cf,
-                                        border: {
-                                            ...border,
-                                            color: value.hexa(),
-                                        },
+                        ),
+                ]}
+                paraBefore={t("settings.borderWidth")}
+                paraAfter={t("settings.pxUnit")}
+            />
+            <InputSelect
+                labeled
+                disabled={!border.enabled}
+                value={border.style}
+                onChange={(value) => {
+                    dispatch(
+                        patchLiveBookReaderSettings({
+                            contentFrame: {
+                                ...cf,
+                                border: {
+                                    ...border,
+                                    style: value as BookReaderSettings["contentFrame"]["border"]["style"],
+                                },
+                            },
+                        }),
+                    );
+                }}
+                options={borderStyleOptions}
+                paraBefore={t("settings.borderStyle")}
+            />
+            <InputColor
+                labeled
+                value={colorUtils.new(border.color)}
+                disabled={!border.enabled}
+                timeout={[
+                    500,
+                    (value) =>
+                        dispatch(
+                            patchLiveBookReaderSettings({
+                                contentFrame: {
+                                    ...cf,
+                                    border: {
+                                        ...border,
+                                        color: value.hexa(),
                                     },
-                                }),
-                            ),
-                    ]}
-                    paraBefore="Border color&nbsp;:"
-                />
-            </div>
-        </div>
+                                },
+                            }),
+                        ),
+                ]}
+                paraBefore={t("settings.borderColor")}
+            />
+        </BookReaderSettingSection>
     );
 });
 

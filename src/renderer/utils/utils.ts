@@ -1,31 +1,99 @@
-export const getCSSPath = (el: Element): string => {
-    if (!(el instanceof Element)) return "";
-    const path = [] as string[];
-    let elem = el;
-    while (elem.nodeType === Node.ELEMENT_NODE) {
+import { formatUtils } from "./file";
+
+/**
+ * Clamps a draggable split pane while preserving a minimum remainder for its sibling.
+ * If the container cannot satisfy both minima, the pane floor contracts first.
+ */
+export const clampSplitPaneSize = (
+    candidatePx: number,
+    containerPx: number,
+    minPanePx: number,
+    maxPaneFraction: number,
+    minRemainderPx: number,
+): number => {
+    const maxByFraction = Math.floor(containerPx * maxPaneFraction);
+    const maxByRemainder = Math.floor(containerPx - minRemainderPx);
+    const maximumPx = Math.max(1, Math.min(maxByFraction, maxByRemainder));
+    const minimumPx = Math.min(minPanePx, maximumPx);
+    return Math.min(Math.max(Math.round(candidatePx), minimumPx), maximumPx);
+};
+
+/**
+ * CSS path from `element` up to (not including) `chapterRoot`, stopping at the first id.
+ * Pass `chapterRoot` null for a document-wide path ({@link getCSSPath}).
+ * Empty when `element` is `chapterRoot` or not a descendant.
+ *
+ * @param element - node to describe
+ * @param chapterRoot - stop before this ancestor; null walks to the document
+ */
+export const getCSSPathWithin = (element: Element, chapterRoot: Element | null): string => {
+    if (
+        !(element instanceof Element) ||
+        (chapterRoot && (element === chapterRoot || !chapterRoot.contains(element)))
+    )
+        return "";
+    const path: string[] = [];
+    let elem = element;
+    while (elem.nodeType === Node.ELEMENT_NODE && elem !== chapterRoot) {
         let selector = elem.nodeName.toLowerCase();
         if (elem.id) {
-            selector += `#${elem.id.trim().replaceAll(".", "\\.")}`;
-            path.unshift(selector);
+            path.unshift(`${selector}#${elem.id.trim().replaceAll(".", "\\.")}`);
             break;
-        } else {
-            let sib = elem,
-                nth = 1;
-            while (sib.previousElementSibling) {
-                sib = sib.previousElementSibling;
-                if (sib.nodeName.toLowerCase() === selector) nth++;
-            }
-            if (nth !== 1) selector += `:nth-of-type(${nth})`;
         }
+        let sib = elem;
+        let nth = 1;
+        while (sib.previousElementSibling) {
+            sib = sib.previousElementSibling;
+            if (sib.nodeName.toLowerCase() === selector) nth++;
+        }
+        if (nth !== 1) selector += `:nth-of-type(${nth})`;
         path.unshift(selector);
-        elem = elem.parentNode as Element;
+        const parent = elem.parentNode;
+        if (!(parent instanceof Element)) break;
+        elem = parent;
     }
     return path.join(" > ");
 };
 
+/**
+ * Document-wide CSS path for `element`, stopping at the first id.
+ * Prefer {@link getCSSPathWithin} for EPUB locators so the path stays inside one chapter root.
+ *
+ * @param element - node to describe
+ */
+export const getCSSPath = (element: Element): string => getCSSPathWithin(element, null);
+
+/**
+ * `#app` when the shell is mounted, otherwise `document.body` (unit tests).
+ * Portal host for overlays that must escape CSS containment without changing Modal.
+ */
+export const appRootElement = (): HTMLElement => document.getElementById("app") ?? document.body;
+
 window.app.betterSortOrder = Intl.Collator(undefined, { numeric: true, sensitivity: "base" }).compare;
 window.app.deleteDirOnClose = "";
 window.sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Finds a cover image in the given manga directory
+ * @param dirPath The path to the manga directory
+ * @returns The path to the cover image if found, empty string otherwise
+ */
+export const findCover = (dirPath: string): string => {
+    let realCover = "";
+    const possibleCoverNames = formatUtils.image.list.map((e) => `cover${e}`).concat("cover");
+    try {
+        for (const file of possibleCoverNames) {
+            const filePath = window.path.join(dirPath, file);
+            if (window.fs.isFile(filePath)) {
+                realCover = filePath;
+                break;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    return realCover;
+};
 
 //@ts-expect-error
 window.contextMenu = {
@@ -67,19 +135,49 @@ export const randomString = (length: number) => {
     return result;
 };
 
-// /**
-//  * scroll to a element
-//  * @param query - element query string of position to scroll to
-//  * @param behavior - `ScrollBehavior`
-//  */
-// export const scrollToElement = (query: string, behavior: ScrollBehavior = "smooth") => {
-//     const element = document.querySelector(query);
-//     if (element) {
-//         element.scrollIntoView({ behavior, block: "start" });
-//     }
-// };
+/**
+ * Scrolls `child` inside `container` without moving ancestor scrollers.
+ * `Element.scrollIntoView` also shifts outer overflow boxes (gallery details hero).
+ *
+ * @param block `"center"` places the child in the middle of the container; `"nearest"`
+ * only moves if the child is clipped.
+ */
+export const scrollChildInContainer = (
+    container: HTMLElement,
+    child: HTMLElement,
+    block: "center" | "nearest" = "center",
+): void => {
+    const cRect = container.getBoundingClientRect();
+    const eRect = child.getBoundingClientRect();
+    if (block === "nearest") {
+        if (eRect.top >= cRect.top && eRect.bottom <= cRect.bottom) return;
+        if (eRect.top < cRect.top) {
+            container.scrollTop += eRect.top - cRect.top;
+            return;
+        }
+        container.scrollTop += eRect.bottom - cRect.bottom;
+        return;
+    }
+    container.scrollTop += eRect.top - cRect.top - (cRect.height - eRect.height) / 2;
+};
 
 export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * True when `el` is in the document and not under `display:none` /
+ * `visibility:hidden`. Used so CSS-hidden Settings tabs and search fields
+ * are not treated as focusable.
+ */
+export const isElementShown = (el: HTMLElement): boolean => {
+    if (!el.isConnected) return false;
+    let node: HTMLElement | null = el;
+    while (node) {
+        const style = getComputedStyle(node);
+        if (style.display === "none" || style.visibility === "hidden") return false;
+        node = node.parentElement;
+    }
+    return true;
+};
 
 /**
  * Returns a debounced function that delays invoking `callback` until `waitMs` has elapsed.

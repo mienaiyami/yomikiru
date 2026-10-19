@@ -1,3 +1,4 @@
+import { APP_TEMP_DIR_NAME } from "@common/mainSettings";
 import { setAppSettings } from "@store/appSettings";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { updateMainSettings } from "@store/mainSettings";
@@ -5,36 +6,38 @@ import InputCheckbox from "@ui/InputCheckbox";
 import { dialogUtils } from "@utils/dialog";
 import { promptSelectDir } from "@utils/file";
 import { createRendererLogger } from "@utils/logger";
+import { useTranslation } from "react-i18next";
 
 const log = createRendererLogger("settings/CustomTempLocation");
 
 const CustomTempLocation: React.FC = () => {
+    const { t } = useTranslation("settings");
+    const { t: tCommon } = useTranslation("common");
     const dispatch = useAppDispatch();
     const appSettings = useAppSelector((state) => state.appSettings);
     const { tempPath } = useAppSelector((state) => state.mainSettings);
 
-    const updateTempPath = async (newPath?: string) => {
+    const updateTempPath = async (newPath: string) => {
         try {
-            if (newPath === undefined || window.fs.existsSync(newPath)) {
-                dispatch(updateMainSettings({ tempPath: newPath }));
-            } else {
-                throw new Error(`Folder does not exist : ${newPath}`);
+            if (!window.fs.existsSync(newPath)) {
+                await window.fs.mkdir(newPath, { recursive: true });
             }
+            dispatch(updateMainSettings({ tempPath: newPath }));
         } catch (reason) {
-            log.error("temp path update failed (IPC)", reason);
+            log.error("temp path update failed", { tempPath: newPath }, reason);
         }
     };
 
     return (
         <div className="settingItem2" id="settings-customTempFolder">
-            <h3>Custom Temp Folder</h3>
+            <h3>{t("tempFolder.title")}</h3>
             <div className="desc">
-                Folder where app will extract archives or epub or render pdf. It can have big effect on extracting
-                speed depending on type of drive (ssd, faster drives) or storage left (10GB+ recommended).
-                <br /> Defaults to temp folder provided by OS.
+                {t("tempFolder.desc1")}
+                <br />
+                {t("tempFolder.desc2")}
             </div>
             <div className="main row">
-                <input type="text" placeholder="No path Selected" value={tempPath} readOnly />
+                <input type="text" placeholder={t("tempFolder.placeholder")} value={tempPath} readOnly />
                 <button
                     onClick={() => {
                         promptSelectDir((path) => {
@@ -42,16 +45,18 @@ const CustomTempLocation: React.FC = () => {
                         });
                     }}
                 >
-                    Select
+                    {t("shared.select")}
                 </button>
             </div>
             <div className="main row">
                 <button
                     onClick={() => {
-                        updateTempPath();
+                        void updateTempPath(
+                            window.path.join(window.electron.app.getPath("userData"), APP_TEMP_DIR_NAME),
+                        );
                     }}
                 >
-                    Use Default
+                    {t("tempFolder.useDefault")}
                 </button>
                 <button
                     onClick={async (e) => {
@@ -59,9 +64,9 @@ const CustomTempLocation: React.FC = () => {
                             const target = e.currentTarget;
                             target.disabled = true;
                             const res = await dialogUtils.confirm({
-                                message: "Clear all extracted/rendered files?",
-                                checkboxLabel: "Also clear app's cache.",
-                                buttons: ["Yes", "No"],
+                                message: t("tempFolder.clearConfirm"),
+                                checkboxLabel: t("tempFolder.alsoClearCache"),
+                                buttons: [tCommon("actions.yes"), tCommon("actions.no")],
                                 cancelId: 1,
                                 defaultId: 1,
                                 type: "question",
@@ -90,7 +95,7 @@ const CustomTempLocation: React.FC = () => {
                         }
                     }}
                 >
-                    Delete all File Cache
+                    {t("tempFolder.deleteCache")}
                 </button>
             </div>
             <div className="toggleItem" id="settings-keepExtractedFiles">
@@ -104,13 +109,12 @@ const CustomTempLocation: React.FC = () => {
                             }),
                         );
                     }}
-                    labelAfter="Keep Temp Files"
+                    labelAfter={t("tempFolder.keepTempFiles")}
                 />
                 <div className="desc">
-                    Keep temporary files, mainly extracted archives, pdf and epub. Skip extracting part when
-                    opening same title again. <br />
-                    NOTE: If temp folder is set to default then there is a possibility that your system might
-                    delete those files after each power on.
+                    {t("tempFolder.keepDesc1")}
+                    <br />
+                    {t("tempFolder.keepDesc2")}
                 </div>
             </div>
         </div>

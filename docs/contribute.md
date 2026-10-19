@@ -41,6 +41,8 @@ pnpm dev
 pnpm lint
 ```
 
+For UI and format testing (EPUB, CBZ/CBR, PDF, image folders, long-strip vs paged), run `pnpm demo:setup` and add the printed `demo/` folder as a library location. See [Demo fixtures](./demo-fixtures.md). **Never commit** binaries under `demo/` — the tree is gitignored on purpose and is not packaged with releases.
+
 For detailed development workflow, debugging tips, and troubleshooting, see the [Development Workflow](./build.md#development-workflow) section in the build guide.
 
 ### 3. Code Guidelines

@@ -1,4 +1,4 @@
-import { exec } from "node:child_process";
+import { exec, execSync } from "node:child_process";
 import readline from "node:readline";
 import packageJSON from "../package.json";
 
@@ -7,7 +7,27 @@ const rl = readline.createInterface({
     output: process.stdout,
 });
 
+/**
+ * Runs unit tests (`pnpm test`). Tagging must not continue if this fails.
+ *
+ * @throws when the test process exits non-zero
+ */
+const runUnitTests = (): void => {
+    execSync("pnpm test", { stdio: "inherit" });
+};
+
+/**
+ * Creates an annotated version tag and pushes tags. Runs only after unit tests pass.
+ */
 const tagAndPush = (): void => {
+    console.log("Running unit tests before tagging...");
+    try {
+        runUnitTests();
+    } catch {
+        console.error("Unit tests failed; not tagging or pushing.");
+        process.exit(1);
+    }
+
     console.log(`Tagging v${packageJSON.version} and pushing tags.`);
     const push = (): void => {
         const gitSpawn = exec(`git push --tags`);
@@ -24,6 +44,10 @@ const tagAndPush = (): void => {
     });
     gitSpawn.on("close", (code) => {
         console.log(`git tag: exited with code ${code}.`);
+        if (code !== 0) {
+            console.error("git tag failed; not pushing tags.");
+            process.exit(code ?? 1);
+        }
         push();
     });
 };

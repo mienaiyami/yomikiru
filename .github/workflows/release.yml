@@ -129,11 +129,22 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.15.0
+          # serialize-javascript@7 (pnpm override) needs Node 20+ global crypto; toolchain is Node 22+
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install
+
+      # Ubuntu 22.04's unversioned clang is Clang 14. Electron 44's V8 headers
+      # use std::source_location, which Clang 14 does not provide. Clang 15 does.
+      # https://github.com/arcboxlabs/linkcode/pull/343
+      - name: Use Clang 15 for native modules
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-15
+          echo "CC=clang-15" >> "$GITHUB_ENV"
+          echo "CXX=clang++-15" >> "$GITHUB_ENV"
 
       - name: forge make
         run: pnpm make:deb
@@ -159,7 +170,9 @@ jobs:
 
   build:
     needs: [check-ci-status, buildLinux]
-    runs-on: windows-latest
+    # windows-latest currently ships VS 2026; pnpm's bundled node-gyp cannot detect it
+    # when rebuilding better-sqlite3 (unknown version "undefined"). Pin VS 2022.
+    runs-on: windows-2022
     env:
       BUILD_COMMIT: ${{ needs.check-ci-status.outputs.commit-sha }}
       BUILD_VERSION: ${{ needs.check-ci-status.outputs.version }}
@@ -180,7 +193,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.15.0
+          # serialize-javascript@7 (pnpm override) needs Node 20+ global crypto; toolchain is Node 22+
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -207,7 +221,6 @@ jobs:
 
       - name: Build for windows
         run: |
-          pnpm make:win32
           pnpm make:win64
 
       - name: Generate release artifacts

@@ -1,3 +1,4 @@
+import type { LibraryItemExtra } from "@common/types/db";
 import { z } from "zod";
 import { createRendererLogger } from "./logger";
 import { getValueFromDeepObject } from "./objectPath";
@@ -116,6 +117,34 @@ export const initReaderPresets: ReaderPresetsState = {
  * @returns true if the id is the non-removable User preset for manga or book.
  */
 export const isUserPresetId = (id: string): boolean => id === USER_PRESET_MANGA_ID || id === USER_PRESET_BOOK_ID;
+
+/**
+ * Reads {@link LibraryItemExtra.readerPresetId} when it is a non-empty string.
+ */
+export const parseLibraryItemReaderPresetId = (extra: LibraryItemExtra | undefined): string | undefined => {
+    const id = extra?.readerPresetId;
+    if (typeof id !== "string" || id.length === 0) return undefined;
+    return id;
+};
+
+/**
+ * Stored preset id when a catalog entry exists with that id and {@link ReaderPreset.type}.
+ *
+ * @param extra library row extra JSON
+ * @param itemType catalog side to match ({@link ReaderPreset.type} / library_items.type)
+ * @param presets in-memory reader preset catalog
+ */
+export const resolveLibraryItemReaderPresetId = (
+    extra: LibraryItemExtra | undefined,
+    itemType: "manga" | "book",
+    presets: readonly ReaderPreset[],
+): string | undefined => {
+    const storedPresetId = parseLibraryItemReaderPresetId(extra);
+    if (!storedPresetId) return undefined;
+    return presets.some((preset) => preset.id === storedPresetId && preset.type === itemType)
+        ? storedPresetId
+        : undefined;
+};
 
 /**
  * First-run presets: defaults + User preset per type with current settings from app.

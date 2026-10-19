@@ -1,6 +1,7 @@
 import type { BookNote } from "@common/types/db";
 import type { DatabaseChannels } from "@common/types/ipc";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { relocateLibraryItem } from "./library";
 
 type BookNotesState = {
     // map of key:itemLink value: notes
@@ -80,6 +81,15 @@ const bookNotesSlice = createSlice({
                     state.book[bookNote.itemLink]?.push(bookNote);
                 }
                 state.loading = false;
+            })
+            .addCase(relocateLibraryItem.fulfilled, (state, action) => {
+                if (!action.payload) return;
+                const { oldLink, newLink } = action.meta.arg;
+                if (oldLink === newLink) return;
+                const list = state.book[oldLink];
+                if (!list) return;
+                delete state.book[oldLink];
+                state.book[newLink] = list.map((n) => ({ ...n, itemLink: newLink }));
             });
     },
 });

@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { HistoryItem, Manga_BookItem } from "@common/types/legacy";
+import { mainT } from "@electron/i18n/mainI18n";
 import { pingDatabaseChange } from "@electron/ipc/database";
 import { app, dialog } from "electron";
 import { type DatabaseService, DB_PATH } from "../db";
@@ -25,15 +26,14 @@ export const migrateToSqlite = async (
         const backupPath = path.join(userDataURL, `data.db-${Date.now()}.backup`);
         await fs.copyFile(DB_PATH, backupPath);
         await db.migrateFromJSON(history, bookmarks);
-        await pingDatabaseChange("db:library:change");
-        await pingDatabaseChange("db:bookmark:change");
+        pingDatabaseChange(["db:library:change", "db:bookmark:change"]);
         await fs.rename(bookmarksPath, path.join(userDataURL, "bookmarks.json.old"));
         await fs.rename(historyPath, path.join(userDataURL, "history.json.old"));
     } catch (error) {
         logger.error("SQLite migration from bookmarks/history JSON failed", error);
         dialog.showMessageBox({
             type: "error",
-            message: "Error migrating to sqlite",
+            message: mainT("migrate.errorTitle", { ns: "electron" }),
             detail: String(error),
         });
     }
@@ -53,13 +53,12 @@ export const checkForJSONMigration = async (db: DatabaseService): Promise<void> 
         }
 
         if (bookmarks.length > 0 || history.length > 0) {
+            const t = mainT;
             const res = await dialog.showMessageBox({
                 type: "question",
-                message: "Found old bookmarks and history data to migrate.",
-                detail:
-                    "Do you want to migrate it to the new database system?\n" +
-                    "You current and old data will be backed up before migration.",
-                buttons: ["Yes", "No"],
+                message: t("migrate.foundData", { ns: "electron" }),
+                detail: t("migrate.foundDataDetail", { ns: "electron" }),
+                buttons: [t("buttons.yes", { ns: "dialogs" }), t("buttons.no", { ns: "dialogs" })],
                 defaultId: 0,
                 cancelId: 1,
             });
