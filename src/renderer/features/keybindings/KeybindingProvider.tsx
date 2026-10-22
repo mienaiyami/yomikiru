@@ -49,9 +49,6 @@ export const KeybindingProvider = ({ children }: KeybindingProviderProps): React
         const onPointerUp = (e: MouseEvent) => {
             runtime.handlePointerUp(e);
         };
-        const onAuxClick = (e: MouseEvent) => {
-            runtime.handlePointerDown(e);
-        };
         const onBlur = () => {
             runtime.handleBlur();
         };
@@ -68,7 +65,6 @@ export const KeybindingProvider = ({ children }: KeybindingProviderProps): React
         window.addEventListener("keyup", onKeyUp, true);
         window.addEventListener("mousedown", onPointerDown, true);
         window.addEventListener("mouseup", onPointerUp, true);
-        window.addEventListener("auxclick", onAuxClick, true);
         window.addEventListener("blur", onBlur);
         document.addEventListener("visibilitychange", onVisibility);
         document.addEventListener("compositionstart", onCompositionStart, true);
@@ -78,7 +74,6 @@ export const KeybindingProvider = ({ children }: KeybindingProviderProps): React
             window.removeEventListener("keyup", onKeyUp, true);
             window.removeEventListener("mousedown", onPointerDown, true);
             window.removeEventListener("mouseup", onPointerUp, true);
-            window.removeEventListener("auxclick", onAuxClick, true);
             window.removeEventListener("blur", onBlur);
             document.removeEventListener("visibilitychange", onVisibility);
             document.removeEventListener("compositionstart", onCompositionStart, true);

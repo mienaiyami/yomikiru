@@ -1,7 +1,13 @@
 import { emptyKeymapDocument, type KeyboardCode } from "@common/keybindings";
+import { keyModifiers } from "@common/keybindings/types";
 import { describe, expect, it } from "vitest";
 import { createKeybindingRuntime } from "./runtime";
 import type { OwnerSpec } from "./types";
+
+/** `MouseEvent.button` for the back side button. */
+const MOUSE_BACK_BUTTON = 3;
+/** `MouseEvent.button` for the forward side button. */
+const MOUSE_FORWARD_BUTTON = 4;
 
 const keyDown = (code: KeyboardCode, key: string, init: KeyboardEventInit = {}): KeyboardEvent =>
     new KeyboardEvent("keydown", { code, key, bubbles: true, cancelable: true, ...init });
@@ -26,6 +32,9 @@ const keyUp = (code: KeyboardCode, key: string, init: KeyboardEventInit = {}): K
 
 const mouseDown = (button: number): MouseEvent =>
     new MouseEvent("mousedown", { button, bubbles: true, cancelable: true });
+
+const mouseUp = (button: number): MouseEvent =>
+    new MouseEvent("mouseup", { button, bubbles: true, cancelable: true });
 
 /**
  * Runtime with catalog defaults and one app owner that records command ids.
@@ -398,10 +407,97 @@ describe("keybinding runtime", () => {
             visible: true,
             handlers: { prevPage: () => calls.push("prev") },
         });
-        const e = mouseDown(3);
+        const e = mouseDown(MOUSE_BACK_BUTTON);
         expect(runtime.handlePointerDown(e).outcome).toBe("handled");
         expect(e.defaultPrevented).toBe(true);
         expect(calls).toEqual(["prev"]);
+    });
+
+    it("runs a side-button command on press and cancels browser history on release", () => {
+        const runtime = createKeybindingRuntime();
+        runtime.setDocument(emptyKeymapDocument(), "win32");
+        const calls: string[] = [];
+        runtime.registerOwner({
+            ownerId: "manga",
+            contextKinds: ["mangaReader"],
+            visible: true,
+            handlers: { prevPage: () => calls.push("prev") },
+        });
+        runtime.handlePointerDown(mouseDown(MOUSE_BACK_BUTTON));
+        const up = mouseUp(MOUSE_BACK_BUTTON);
+        runtime.handlePointerUp(up);
+        expect(calls).toEqual(["prev"]);
+        expect(up.defaultPrevented).toBe(true);
+    });
+
+    it("stops a held side-button session on release", () => {
+        const runtime = createKeybindingRuntime();
+        const keymap = emptyKeymapDocument();
+        keymap.overrides.scrollDown = [
+            { kind: "pointer", button: "forward", ...keyModifiers(), modifierMatch: "exact" },
+        ];
+        keymap.overrides.nextPage = [];
+        runtime.setDocument(keymap, "win32");
+        let starts = 0;
+        let stops = 0;
+        runtime.registerOwner({
+            ownerId: "manga",
+            contextKinds: ["mangaReader"],
+            visible: true,
+            heldHandlers: {
+                scrollDown: {
+                    start: () => {
+                        starts += 1;
+                    },
+                    stop: () => {
+                        stops += 1;
+                    },
+                },
+            },
+        });
+        runtime.handlePointerDown(mouseDown(MOUSE_FORWARD_BUTTON));
+        expect(starts).toBe(1);
+        const up = mouseUp(MOUSE_FORWARD_BUTTON);
+        runtime.handlePointerUp(up);
+        expect(stops).toBe(1);
+        expect(starts).toBe(1);
+        expect(up.defaultPrevented).toBe(true);
+    });
+
+    it("cancels browser history on a side-button release even when no command ran", () => {
+        const runtime = createKeybindingRuntime();
+        runtime.setDocument(emptyKeymapDocument(), "win32");
+        runtime.registerOwner({
+            ownerId: "manga",
+            contextKinds: ["mangaReader"],
+            visible: true,
+            handlers: {},
+        });
+        runtime.handlePointerDown(mouseDown(MOUSE_BACK_BUTTON));
+        const up = mouseUp(MOUSE_BACK_BUTTON);
+        runtime.handlePointerUp(up);
+        expect(up.defaultPrevented).toBe(true);
+    });
+
+    it("does not cancel a primary button release", () => {
+        const runtime = createKeybindingRuntime();
+        runtime.setDocument(emptyKeymapDocument(), "win32");
+        const up = mouseUp(0);
+        runtime.handlePointerUp(up);
+        expect(up.defaultPrevented).toBe(false);
+    });
+
+    it("records a side button on press only", () => {
+        const { runtime } = appRuntime();
+        const captured: string[] = [];
+        runtime.beginRecording((live) => {
+            if (live.kind === "pointer") captured.push(live.button);
+        });
+        runtime.handlePointerDown(mouseDown(MOUSE_BACK_BUTTON));
+        const up = mouseUp(MOUSE_BACK_BUTTON);
+        runtime.handlePointerUp(up);
+        expect(captured).toEqual(["back"]);
+        expect(up.defaultPrevented).toBe(true);
     });
 
     it("cancels held sessions on blur", () => {

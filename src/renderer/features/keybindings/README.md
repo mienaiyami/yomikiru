@@ -13,6 +13,8 @@ The old matcher (`keyFormatter` + per-surface `keys.includes`) is gone. Feature 
 | `KeybindingProvider.tsx` | Mounts ingress once; publishes the runtime |
 | `useCommandOwner.ts` | Register/update/cleanup without stale handler closures; `useOwnerId` for per-mount ids (runtime React has no `useId`) |
 
+Side-button commands run on `mousedown` and held sessions stop on `mouseup`. That release also cancels browser back/forward. There is no side-button click listener.
+
 Ingress uses physical `KeyboardEvent.code` positions (US-named). Layouts that type different characters on those positions still match catalog defaults. Historical imported `logicalKey` rows match `KeyboardEvent.key` instead. Chromium often reports the application Menu key as `key: ContextMenu` with `code: Unidentified`; that is mapped to the catalog `ContextMenu` code and is not recorded as Unidentified.
 
 Feature adapters (App, lists, readers) live next to the state they operate on and call {@link useCommandOwner}.

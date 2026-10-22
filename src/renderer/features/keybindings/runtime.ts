@@ -79,6 +79,10 @@ export type KeybindingRuntime = {
     handleKeyDown: (e: KeyboardEvent) => CommandOutcome;
     handleKeyUp: (e: KeyboardEvent) => void;
     handlePointerDown: (e: MouseEvent) => CommandOutcome;
+    /**
+     * Ends a held session for this side button and cancels browser
+     * back/forward on that release.
+     */
     handlePointerUp: (e: MouseEvent) => void;
     handleBlur: () => void;
     handleVisibilityHidden: () => void;
@@ -543,7 +547,10 @@ export const createKeybindingRuntime = (clock: RuntimeClock = defaultClock): Key
 
     const handlePointerUp = (e: MouseEvent): void => {
         const live = liveTriggerFromMouse(e);
-        if (live) releaseTrigger(liveTriggerId(live));
+        if (!live) return;
+        releaseTrigger(liveTriggerId(live));
+        // Chromium navigates back/forward unless this release is consumed
+        consume(e);
     };
 
     const executeCommand = (commandId: CommandId, ownerId?: string): CommandOutcome => {

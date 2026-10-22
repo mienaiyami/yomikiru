@@ -1,6 +1,10 @@
 > [!Note]
 > **Community Discord Server**: A Discord server for Yomikiru and Collection Extension is now open. Join for discussions, usage help, feedback, and updates. See [Discussion #495](https://github.com/mienaiyami/yomikiru/discussions/495).
 
+# 2.25.1
+
+- fix: Mouse back and forward run their shortcut once per click. Releasing the button was running it again, so a page binding turned two pages and a scroll binding kept scrolling.
+
 # 2.25.0
 
 Previous stable: <https://github.com/mienaiyami/yomikiru/releases/tag/v2.24.0>
