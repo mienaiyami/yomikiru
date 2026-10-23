@@ -1,5 +1,6 @@
 import { BUILTIN_EN_SOURCE_ID } from "@common/i18n";
 import { librarySettingsSchema } from "@common/library/folders";
+import { updatePromptSchema } from "@common/updatePrompt";
 import { z } from "zod";
 
 /**
@@ -26,6 +27,11 @@ export const mainSettingsSchema = z
         skipPatch: z.boolean().default(false),
         autoDownload: z.boolean().default(false),
         channel: z.enum(["stable", "beta"]).default("stable"),
+        /**
+         * Per-channel new-version prompt memory.
+         * Manual update checks ignore it. Shallow-merge replaces this whole object.
+         */
+        updatePrompt: updatePromptSchema,
 
         /**
          * Active language source id (`builtin:en` or `pack:<packId>`).

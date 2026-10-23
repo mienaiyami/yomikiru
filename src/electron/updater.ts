@@ -3,7 +3,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { HttpStatusError, http, isHttpUrlLineList, shouldReplaceTextSnapshot, splitTextLines } from "@common/http";
 import type { AppUpdateChannel } from "@common/types/ipc";
+import {
+    classifyUpdateOffer,
+    UPDATE_AVAILABLE_ACTIONS,
+    UPDATE_AVAILABLE_CANCEL_ID,
+    type UpdateAvailableAction,
+    type UpdatePromptChannel,
+    updateAvailableAction,
+    withRemindLater,
+    withSkippedVersion,
+} from "@common/updatePrompt";
 import { mainT } from "@electron/i18n/mainI18n";
+import { MainSettings } from "@electron/util/mainSettings";
 import { exec as execSudo } from "@vscode/sudo-prompt";
 import { app, BrowserWindow, dialog, shell } from "electron";
 import * as electronDl from "electron-dl";
@@ -26,6 +37,9 @@ const ANNOUNCEMENTS_DISCUSSION_URL = `https://github.com/${REPO}/discussions/cat
 const RELEASES_URL = argReleaseUrl || (`https://api.github.com/repos/${REPO}/releases` as const);
 const RELEASES_PAGE = argReleasePage || (`https://github.com/${REPO}/releases` as const);
 const DOWNLOAD_LINK = `${RELEASES_PAGE}/download` as const;
+
+/** True while the new-version dialog is waiting for a choice. Later checks leave it open. */
+let isUpdatePromptOpen = false;
 
 type ArtifactMetadata = {
     name: string;
@@ -170,11 +184,14 @@ type GithubRelease = {
 /**
  * Check for updates and handle version comparison properly using semver.
  * Non-ok GitHub responses throw before JSON is treated as a release list.
+ * Automatic checks honor per-channel skip and remind-later. A manual check ignores both.
+ * An open new-version prompt is left open; this returns without opening another.
+ *
  * @param windowId id of window in which message box should be shown
- * @param skipPatch skip patch updates for stable channel (e.g. 1.2.x to 1.2.y)
- * @param promptAfterCheck show message box if current version is same as latest version
- * @param autoDownload automatically download updates if available
  * @param channel update channel to check (stable or beta)
+ * @param skipPatch skip patch updates for the stable channel
+ * @param promptAfterCheck manual check: show the result even when already up to date, and ignore skip / remind-later
+ * @param autoDownload automatically download updates if available
  */
 const checkForUpdate = async (
     windowId: number,
@@ -183,6 +200,11 @@ const checkForUpdate = async (
     promptAfterCheck = false,
     autoDownload = false,
 ): Promise<void> => {
+    if (isUpdatePromptOpen) {
+        logger.log("Update prompt already open; skipping this check");
+        return;
+    }
+
     checkForAnnouncements();
 
     try {
@@ -243,10 +265,24 @@ const checkForUpdate = async (
         }
 
         if (isNewer) {
+            const offer = classifyUpdateOffer(
+                latestVersion,
+                MainSettings.settings.updatePrompt[channel],
+                Date.now(),
+                promptAfterCheck,
+            );
+            if (offer !== "show") {
+                logger.log("Update check: newer release withheld", { latestVersion, channel, offer });
+                return;
+            }
+            if (isUpdatePromptOpen) {
+                logger.log("Update prompt already open; leaving it up", { latestVersion });
+                return;
+            }
             if (autoDownload) {
                 downloadUpdates(latestVersion, windowId, true);
             } else {
-                showUpdateAvailableMessage(windowId, currentVersion, latestVersion, versionDiff);
+                showUpdateAvailableMessage(windowId, channel, currentVersion, latestVersion, versionDiff);
             }
             return;
         }
@@ -291,45 +327,107 @@ const showNoReleasesMessage = (windowId: number, channel: string) => {
     });
 };
 
+const promptButtonLabel = (action: UpdateAvailableAction): string => {
+    const t = mainT;
+    const labelKey = {
+        download: "updater.downloadNow",
+        "download-and-changelog": "updater.downloadAndChangelog",
+        changelog: "updater.showChangelog",
+        "remind-later": "updater.remindLater",
+        "skip-version": "updater.skipVersion",
+    } as const;
+    return t(labelKey[action], { ns: "electron" });
+};
+
+/**
+ * Records a remind-later or skip-version choice for one update channel.
+ * Sends the whole `updatePrompt` object because settings merge is shallow.
+ */
+const saveUpdatePromptChoice = async (
+    channel: AppUpdateChannel,
+    nextChannel: UpdatePromptChannel,
+): Promise<void> => {
+    const updatePrompt = MainSettings.settings.updatePrompt;
+    await MainSettings.updateSettings({
+        updatePrompt: {
+            ...updatePrompt,
+            [channel]: nextChannel,
+        },
+    });
+};
+
 const showUpdateAvailableMessage = (
     windowId: number,
+    channel: AppUpdateChannel,
     currentVersion: string,
     latestVersion: string,
     versionDiff: string | null,
 ) => {
-    const window = BrowserWindow.fromId(windowId ?? 1)!;
-    const t = mainT;
+    /* a check that overlapped this one already opened the prompt */
+    if (isUpdatePromptOpen) {
+        logger.log("Update prompt already open; leaving it up", { latestVersion });
+        return;
+    }
 
+    const parentWindow = BrowserWindow.fromId(windowId);
+    if (!parentWindow || parentWindow.isDestroyed()) {
+        logger.warn("Update prompt skipped; parent window is gone", { windowId });
+        return;
+    }
+
+    const t = mainT;
     const skipPatchHint = versionDiff === "patch" ? t("updater.skipPatchHint", { ns: "electron" }) : "";
 
-    dialog
-        .showMessageBox(window, {
-            type: "info",
-            title: t("updater.newVersionTitle", { ns: "electron" }),
-            message: t("updater.versionCompare", {
-                ns: "electron",
-                current: currentVersion,
-                latest: latestVersion,
-            }),
-            detail: skipPatchHint,
-            buttons: [
-                t("updater.downloadNow", { ns: "electron" }),
-                t("updater.downloadAndChangelog", { ns: "electron" }),
-                t("updater.showChangelog", { ns: "electron" }),
-                t("updater.downloadLater", { ns: "electron" }),
-            ],
-            cancelId: 3,
-        })
-        .then((response) => {
-            if (response.response === 0) downloadUpdates(latestVersion, windowId);
-            if (response.response === 1) {
-                downloadUpdates(latestVersion, windowId);
-                shell.openExternal(RELEASES_PAGE);
-            }
-            if (response.response === 2) {
-                shell.openExternal(RELEASES_PAGE);
-            }
-        });
+    /* claim the slot before showing so a nested or overlapping check cannot open a second prompt */
+    isUpdatePromptOpen = true;
+    const closePrompt = () => {
+        isUpdatePromptOpen = false;
+    };
+    try {
+        void dialog
+            .showMessageBox(parentWindow, {
+                type: "info",
+                title: t("updater.newVersionTitle", { ns: "electron" }),
+                message: t("updater.versionCompare", {
+                    ns: "electron",
+                    current: currentVersion,
+                    latest: latestVersion,
+                }),
+                detail: skipPatchHint,
+                buttons: UPDATE_AVAILABLE_ACTIONS.map(promptButtonLabel),
+                cancelId: UPDATE_AVAILABLE_CANCEL_ID,
+            })
+            .then(async (result) => {
+                const action = updateAvailableAction(result.response);
+                if (action === "download" || action === "download-and-changelog") {
+                    downloadUpdates(latestVersion, windowId);
+                }
+                if (action === "download-and-changelog" || action === "changelog") {
+                    void shell.openExternal(RELEASES_PAGE);
+                }
+                if (action === "remind-later") {
+                    await saveUpdatePromptChoice(
+                        channel,
+                        withRemindLater(MainSettings.settings.updatePrompt[channel], latestVersion, Date.now()),
+                    );
+                    logger.log("Update prompt postponed", { latestVersion, channel });
+                }
+                if (action === "skip-version") {
+                    await saveUpdatePromptChoice(
+                        channel,
+                        withSkippedVersion(MainSettings.settings.updatePrompt[channel], latestVersion),
+                    );
+                    logger.log("Update version skipped", { latestVersion, channel });
+                }
+            })
+            .catch((err: unknown) => {
+                logger.error("Update prompt failed", err);
+            })
+            .finally(closePrompt);
+    } catch (err) {
+        closePrompt();
+        logger.error("Update prompt failed", err);
+    }
 };
 
 /**

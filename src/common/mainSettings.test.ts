@@ -19,6 +19,16 @@ describe("parseMainSettings", () => {
         expect(parseMainSettings({ tempPath: "  " }, temp).tempPath).toBe(temp);
     });
 
+    it("fills update prompt memory when an older settings file has none", () => {
+        const parsed = parseMainSettings({}, path.join("os", "temp"));
+        expect(parsed.updatePrompt.stable).toEqual({
+            skippedVersion: "",
+            remindVersion: "",
+            remindAfter: 0,
+        });
+        expect(parsed.updatePrompt.beta.skippedVersion).toBe("");
+    });
+
     it("heals an empty library.folders list to one Default Location row", () => {
         const parsed = parseMainSettings({ library: { folders: [] } }, path.join("os", "temp"));
         expect(parsed.library.folders).toHaveLength(1);

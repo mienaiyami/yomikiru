@@ -1,6 +1,6 @@
 # Changelog archive
 
-Published notes, newest first, for versions already shipped. `changelog.md` is only the version about to be released (the GitHub release body is that file). When a minor or patch is published, prepend that version's `changelog.md` section here.
+Published notes that are no longer part of the GitHub release body, newest first. `changelog.md` keeps the in-progress release, the full notes for every stable patch of that same minor, and the previous minor as a tag link at the end. When a new minor starts, the minor you left is prepended here.
 
 Releases before 2.24.0 stay on the [releases page](https://github.com/mienaiyami/yomikiru/releases).
 

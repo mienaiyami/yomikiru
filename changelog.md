@@ -1,6 +1,10 @@
 > [!Note]
 > **Community Discord Server**: A Discord server for Yomikiru and Collection Extension is now open. Join for discussions, usage help, feedback, and updates. See [Discussion #495](https://github.com/mienaiyami/yomikiru/discussions/495).
 
+# unreleased
+
+- fix: The new-version prompt can **Remind Later** or **Skip This Version**, so it no longer comes back on every check until you update. Remind later postpones that release for a day. Skip this version waits for a newer one. **Check for Update Now** still offers a postponed or skipped release. If the prompt is already open, a later check leaves it open instead of opening another.
+
 # 2.25.1
 
 - fix: Mouse back and forward run their shortcut once per click. Releasing the button was running it again, so a page binding turned two pages and a scroll binding kept scrolling.
@@ -173,3 +177,7 @@ Toggle **Classic / Gallery** in the top bar.
 - Popovers trap Tab focus. Search Focus works when a button or select is focused.
 - AniList search rows use their full height again (covers and titles were clipped into the row above).
 - Closing gallery details no longer flashes a cover across the window. The cover grid stays laid out while details are open, and a hidden width of 0 is not treated as a one-column gallery.
+
+# 2.24.0
+
+<https://github.com/mienaiyami/yomikiru/releases/tag/v2.24.0>
