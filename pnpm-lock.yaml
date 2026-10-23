@@ -77,8 +77,8 @@ importers:
         specifier: ^3.13.23
         version: 3.13.23(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@vscode/sudo-prompt':
-        specifier: ^9.3.1
-        version: 9.3.1
+        specifier: 9.3.2
+        version: 9.3.2
       axios:
         specifier: 0.33.0
         version: 0.33.0
@@ -1630,8 +1630,8 @@ packages:
   '@vitest/utils@3.2.7':
     resolution: {integrity: sha512-x6BDOd7dyo3PFLY3I9/HJ25X/6OurhGXk2/B9gOZNPF7XDVjeBK4k01lQE5uvDpbuheErh91qYuE1E2OEjK3Rw==}
 
-  '@vscode/sudo-prompt@9.3.1':
-    resolution: {integrity: sha512-9ORTwwS74VaTn38tNbQhsA5U44zkJfcb0BdTSyyG6frP4e8KMtHuTXYmwefe5dpL8XB1aGSIVTaLjD3BbWb5iA==}
+  '@vscode/sudo-prompt@9.3.2':
+    resolution: {integrity: sha512-gcXoCN00METUNFeQOFJ+C9xUI0DKB+0EGMVg7wbVYRHBw2Eq3fKisDZOkRdOz3kqXRKOENMfShPOmypw1/8nOw==}
 
   '@webassemblyjs/ast@1.14.1':
     resolution: {integrity: sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==}
@@ -6015,7 +6015,7 @@ snapshots:
       '@electron/packager': 18.3.6
       '@electron/rebuild': 4.2.1
       '@malept/cross-spawn-promise': 2.0.0
-      '@vscode/sudo-prompt': 9.3.1
+      '@vscode/sudo-prompt': 9.3.2
       chalk: 4.1.2
       debug: 4.4.3
       eta: 3.5.0
@@ -7295,7 +7295,7 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 2.0.0
 
-  '@vscode/sudo-prompt@9.3.1': {}
+  '@vscode/sudo-prompt@9.3.2': {}
 
   '@webassemblyjs/ast@1.14.1':
     dependencies:

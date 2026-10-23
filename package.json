@@ -59,7 +59,7 @@
         "@fortawesome/react-fontawesome": "^0.2.0",
         "@reduxjs/toolkit": "^1.9.3",
         "@tanstack/react-virtual": "^3.13.23",
-        "@vscode/sudo-prompt": "^9.3.1",
+        "@vscode/sudo-prompt": "9.3.2",
         "axios": "0.33.0",
         "better-sqlite3": "^12.11.1",
         "chokidar": "^3.5.3",

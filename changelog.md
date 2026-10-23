@@ -3,6 +3,7 @@
 
 # unreleased
 
+- fix: Linux update install asks for a password again. It failed immediately with `Node.util.isObject is not a function`, so the prompt never appeared and pacman or dpkg never ran. The same elevated helper is used when adding or removing the Windows Explorer "Open in Yomikiru" entry.
 - fix: The new-version prompt can **Remind Later** or **Skip This Version**, so it no longer comes back on every check until you update. Remind later postpones that release for a day. Skip this version waits for a newer one. **Check for Update Now** still offers a postponed or skipped release. If the prompt is already open, a later check leaves it open instead of opening another.
 
 # 2.25.1
