@@ -88,6 +88,9 @@
         "downloadErrorPersist": "{{error}}\n\nPlease check the homepage if persist.",
         "updateFailedTitle": "Update Failed",
         "noArtifact": "Could not find update file for this platform. Please download manually from the releases page.",
+        "portableStageInvalid": "The downloaded update is not a valid portable build and was not installed.",
+        "portableExtractFailed": "The update could not be extracted and was not installed.\n\n{{error}}",
+        "portableSwapFailed": "The portable update could not be applied. The previous version was started again.\n\n{{detail}}\n\nLog:\n{{logPath}}",
         "openReleases": "Open Releases",
         "installFailedTitle": "Update Installation Failed",
         "installFailedMessage": "Failed to install the update."

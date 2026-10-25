@@ -1,4 +1,4 @@
-import checkForUpdate from "@electron/updater";
+import checkForUpdate, { reinstallCurrentVersion } from "@electron/updater";
 import { getWindowFromWebContents } from "@electron/util";
 import { MainSettings } from "@electron/util/mainSettings";
 import { WindowManager } from "../util/window";
@@ -20,5 +20,9 @@ export const registerUpdateHandlers = (): void => {
     ipc.on("update:check:manual", (e, { promptAfterCheck = true }) => {
         const windowId = getWindowFromWebContents(e.sender).id;
         checkForUpdate(windowId, MainSettings.settings.channel, false, promptAfterCheck, false);
+    });
+
+    ipc.on("update:reinstall", (e) => {
+        reinstallCurrentVersion(getWindowFromWebContents(e.sender).id);
     });
 };

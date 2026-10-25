@@ -208,6 +208,8 @@ export type UpdateChannels = {
         },
         void
     >;
+    /** Downloads the running version and offers the normal install prompt. */
+    "update:reinstall": ChannelDefinition<void, void>;
 };
 
 export type ExplorerMenuChannels = {

@@ -373,6 +373,16 @@ export const SETTINGS_TARGETS_STATIC: readonly SettingsTarget[] = [
     },
 
     { id: "about", tab: "about", selector: "#settings-about", labelKey: "tabs.about", labelNs: "settings" },
+    {
+        id: "about:reinstall",
+        tab: "about",
+        selector: "#settings-about-reinstall",
+        labelKey: "about.reinstall",
+        labelNs: "settings",
+        keywords: ["repair", "reinstall", "portable"],
+        contentPath: "about.reinstallHint",
+        groupLabelKey: "tabs.about",
+    },
 
     usage("usage:language", "#settings-usage-language", "language.title", { contentPath: "language" }),
     usage("usage:db-backup", "#settings-usage-dbBackup", "dbBackup.title", {

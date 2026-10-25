@@ -779,6 +779,31 @@ html{
                                     display: flex;
                                     color: var(--font-color);
                                     padding: 0.4em 1em;
+                                    /*
+                                     * #app button sets overflow:hidden, which clips [data-tooltip]::before.
+                                     * :not(#dummy#dummy) wins that rule. The hint sits to the right of the control.
+                                     */
+                                    [data-tooltip]:not(#dummy#dummy) {
+                                        overflow: visible;
+                                        &::before {
+                                            left: 100%;
+                                            top: 50%;
+                                            --translate: 0.5em, -50%;
+                                            white-space: normal;
+                                            max-width: min(22em, 40vw);
+                                            width: max-content;
+                                            padding: 0.4em 0.5em;
+                                        }
+                                    }
+                                    .aboutUpdateChannel {
+                                        flex: 0 0 auto;
+                                        white-space: nowrap;
+                                        width: fit-content;
+                                        padding: 10px 20px;
+                                        .optSelectBtn {
+                                            width: auto;
+                                        }
+                                    }
                                     /* Nested copy already sits in this padding (reader-preset layout). */
                                     .desc {
                                         padding-left: 0;

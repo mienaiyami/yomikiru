@@ -3,6 +3,8 @@
 
 # unreleased
 
+- feat: **Reinstall This Version** in About downloads the version you are running and installs it again. Use it when an update left the app mixed, or when you want that same version installed once more.
+- fix: Portable Windows updates replace the whole app folder in one step and restore the previous files if that step fails. A partial copy could leave the old version in place, or mix new and old files so some features stopped working. A terminal window shows the replacement while it runs, then closes when the app opens again. If an update still fails, the app opens the previous version and shows what went wrong. A portable install that will not open needs one manual download of the portable zip.
 - fix: Linux update install asks for a password again. It failed immediately with `Node.util.isObject is not a function`, so the prompt never appeared and pacman or dpkg never ran. The same elevated helper is used when adding or removing the Windows Explorer "Open in Yomikiru" entry.
 - fix: The new-version prompt can **Remind Later** or **Skip This Version**, so it no longer comes back on every check until you update. Remind later postpones that release for a day. Skip this version waits for a newer one. **Check for Update Now** still offers a postponed or skipped release. If the prompt is already open, a later check leaves it open instead of opening another.
 

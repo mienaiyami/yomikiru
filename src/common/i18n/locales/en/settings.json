@@ -355,6 +355,8 @@
         "autoDownload": "Auto download updates",
         "betaTitle": "Mostly just frequent updates rather than patch.",
         "checkNow": "Check for Update Now",
+        "reinstall": "Reinstall This Version",
+        "reinstallHint": "Downloads the installed version again and installs it. Use this when an update left the app mixed or some features stopped working.",
         "detailedInfo": "Detailed Info",
         "changelogs": "Changelogs",
         "joinDiscord": "Join Discord",

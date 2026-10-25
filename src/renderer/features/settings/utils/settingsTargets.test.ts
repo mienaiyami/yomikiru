@@ -120,6 +120,7 @@ describe("settingsTargets", () => {
         expect(getSettingsTarget("setting:remember-reader-preset-per-item")?.groupLabelKey).toBe(
             "readerPresets.title",
         );
+        expect(getSettingsTarget("about:reinstall")?.selector).toBe("#settings-about-reinstall");
         expect(getSettingsTarget("missing:id")).toBeUndefined();
         expect(getAllSettingsTargets().length).toBe(SETTINGS_TARGETS_STATIC.length + COMMAND_CATALOG.length);
     });

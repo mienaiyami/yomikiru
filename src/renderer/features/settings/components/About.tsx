@@ -97,7 +97,7 @@ const About: React.FC = () => {
                         paraAfter={t("about.autoDownload")}
                     />
                 </div>
-                <div className="main row">
+                <div className="main col">
                     <button
                         onClick={() => {
                             window.electron.send("update:check:manual", {
@@ -106,6 +106,15 @@ const About: React.FC = () => {
                         }}
                     >
                         {t("about.checkNow")}
+                    </button>
+                    <button
+                        id="settings-about-reinstall"
+                        data-tooltip={t("about.reinstallHint")}
+                        onClick={() => {
+                            window.electron.send("update:reinstall");
+                        }}
+                    >
+                        {t("about.reinstall")}
                     </button>
                     <button onClick={() => setShowDetailedInfo(true)}>{t("about.detailedInfo")}</button>
                     <button
@@ -123,6 +132,7 @@ const About: React.FC = () => {
                         onChange={(e) => handleChannelChange(e as AppUpdateChannel)}
                         value={mainSettings?.channel ?? "stable"}
                         labeled={true}
+                        className="aboutUpdateChannel"
                         labelBefore={t("about.updateChannel")}
                     />
                 </div>

@@ -22,6 +22,14 @@ import * as semver from "semver";
 import { IS_PORTABLE, isArchLinux, sleep } from "./util";
 import { archiveService } from "./util/archive";
 import { createMainLogger } from "./util/logger";
+import {
+    type PortableApplyRequest,
+    portableStageIssue,
+    portableStagingDir,
+    portableUpdateLogPath,
+    spawnPortableApply,
+    takePortableUpdateFailure,
+} from "./util/portableUpdate";
 
 const logger = createMainLogger("updater");
 
@@ -40,6 +48,95 @@ const DOWNLOAD_LINK = `${RELEASES_PAGE}/download` as const;
 
 /** True while the new-version dialog is waiting for a choice. Later checks leave it open. */
 let isUpdatePromptOpen = false;
+
+/*
+ * Portable apply is armed when the user picks install, then runs on quit so this process
+ * can release its files. Session end skips it: Windows would kill the script part way through
+ * the swap, and the next launch offers the update again.
+ */
+let portableSessionEnding = false;
+let portableApplyRequest: PortableApplyRequest | null = null;
+let portableQuitHooked = false;
+
+/**
+ * Shows the shared update-failed dialog. Escape dismisses; it does not open the releases page.
+ */
+const showUpdateFailedDialog = (parent: BrowserWindow | null, message: string): void => {
+    const t = mainT;
+    const options: Electron.MessageBoxOptions = {
+        type: "error",
+        title: t("updater.updateFailedTitle", { ns: "electron" }),
+        message,
+        buttons: [t("updater.openReleases", { ns: "electron" }), t("buttons.ok", { ns: "dialogs" })],
+        cancelId: 1,
+    };
+    const shown =
+        parent && !parent.isDestroyed() ? dialog.showMessageBox(parent, options) : dialog.showMessageBox(options);
+    void shown.then((result) => {
+        if (result.response === 0) void shell.openExternal(RELEASES_PAGE);
+    });
+};
+
+/** Drops a pending portable apply so a later failed download cannot be installed on quit. */
+const disarmPortableApply = (): void => {
+    portableApplyRequest = null;
+};
+
+/**
+ * Runs the portable swap on the next quit. A later download replaces the pending request.
+ * One quit listener is enough for the process. `session-end` is per window, so windows opened
+ * after arming are included too.
+ */
+const armPortableApplyOnQuit = (request: PortableApplyRequest): void => {
+    portableApplyRequest = request;
+    if (portableQuitHooked) return;
+    portableQuitHooked = true;
+    const markSessionEnding = (): void => {
+        portableSessionEnding = true;
+    };
+    for (const browserWindow of BrowserWindow.getAllWindows()) {
+        browserWindow.on("session-end", markSessionEnding);
+    }
+    app.on("browser-window-created", (_event, browserWindow) => {
+        browserWindow.on("session-end", markSessionEnding);
+    });
+    app.once("quit", () => {
+        const pending = portableApplyRequest;
+        if (!pending || portableSessionEnding) {
+            if (portableSessionEnding)
+                logger.log("Portable update: skipped because Windows is ending the session");
+            return;
+        }
+        try {
+            spawnPortableApply(pending);
+            logger.log("Portable update: apply script started", { installDir: pending.installDir });
+        } catch (error) {
+            logger.error("Portable update: failed to start apply script", error);
+        }
+    });
+};
+
+/**
+ * Shows a leftover portable apply failure. The note is removed as it is read.
+ * No-op for setup installs and for a launch that has nothing to report.
+ */
+export const reportPortableUpdateResultOnStartup = (): void => {
+    if (!IS_PORTABLE) return;
+    try {
+        const detail = takePortableUpdateFailure(path.dirname(app.getPath("exe")));
+        if (detail === null) return;
+        showUpdateFailedDialog(
+            null,
+            mainT("updater.portableSwapFailed", {
+                ns: "electron",
+                detail,
+                logPath: portableUpdateLogPath(app.getPath("userData")),
+            }),
+        );
+    } catch (error) {
+        logger.error("Portable update: startup result check failed", error);
+    }
+};
 
 type ArtifactMetadata = {
     name: string;
@@ -477,11 +574,14 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
     let setupInstallOnQuit: (() => void) | null = null;
     let performInstallNow: (() => void) | null = null;
 
+    const closeDownloadProgress = (): void => {
+        if (!(newWindow instanceof BrowserWindow) || newWindow.isDestroyed()) return;
+        isClosingDownloadWindowProgrammatically = true;
+        newWindow.close();
+    };
+
     const promptInstall = () => {
-        if (newWindow instanceof BrowserWindow) {
-            isClosingDownloadWindowProgrammatically = true;
-            newWindow.close();
-        }
+        closeDownloadProgress();
 
         const showMainPrompt = () => {
             const t = mainT;
@@ -618,45 +718,58 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
 
         if (process.platform === "win32") {
             if (IS_PORTABLE) {
-                const extractPath = path.join(tempPath, "updates");
-                if (!fs.existsSync(extractPath)) fs.mkdirSync(extractPath);
-
+                /*
+                 * Stage on the install volume so the apply script can rename rather than copy.
+                 * The configurable temp directory may be another drive, where a directory move fails.
+                 */
+                const installDir = path.dirname(app.getPath("exe"));
+                const stagingDir = portableStagingDir(installDir);
+                /* a new download replaces staging; do not apply the previous tree if this one is rejected */
+                disarmPortableApply();
                 downloadFile(dl, webContents, (file) => {
                     logger.log(`Update package saved: ${file.filename}`);
                     void archiveService
-                        .extractAll(file.path, extractPath)
+                        .extractAll(file.path, stagingDir)
                         .then(() => {
-                            logger.log(`Portable update: extracted to "${extractPath}"`);
-                            const appPath = path.join(app.getAppPath(), "../../");
-                            const appDirName = path.join(app.getPath("exe"), "../");
+                            const exePath = app.getPath("exe");
+                            const issue = portableStageIssue(stagingDir, path.basename(exePath), latestVersion);
+                            if (issue) {
+                                logger.error("Portable update: staged build rejected", { issue, stagingDir });
+                                closeDownloadProgress();
+                                showUpdateFailedDialog(
+                                    window,
+                                    mainT("updater.portableStageInvalid", { ns: "electron" }),
+                                );
+                                return;
+                            }
+                            logger.log("Portable update: staged build matches the offered version", {
+                                latestVersion,
+                                stagingDir,
+                            });
+                            const request: PortableApplyRequest = {
+                                installDir,
+                                exePath,
+                                logFilePath: portableUpdateLogPath(app.getPath("userData")),
+                            };
                             setupInstallOnQuit = () => {
-                                app.once("quit", () => {
-                                    logger.log("Portable update: copying files over install dir (on quit)");
-                                    logger.log(`Portable update: target base "${appPath}"`);
-                                    spawn(
-                                        `cmd.exe /c start powershell.exe " Write-Output 'Starting update...' ; Start-Sleep -Seconds 5.0 ;` +
-                                            ` $sourcePath = Join-Path '${extractPath}' '*' ; ` +
-                                            ` $destPath = '${appDirName}' ; ` +
-                                            ` Get-ChildItem -Path $destPath -Recurse -Force | Where-Object { $_.FullName -notmatch 'userdata'} | Remove-Item -Force -Recurse ; ` +
-                                            ` Write-Output 'Moving extracted files...' ; Start-Sleep -Seconds 1.9 ; ` +
-                                            ` Copy-Item -Path $sourcePath -Destination $destPath -Force -Recurse ; ` +
-                                            ` Write-Output 'Updated, launching app.' ; Start-Sleep -Seconds 2.0 ; ` +
-                                            ` & '${app.getPath("exe")}' ; "`,
-                                        { shell: true, cwd: appDirName },
-                                    ).on("exit", process.exit);
-                                    logger.log("Portable update: exiting so PowerShell can replace files");
-                                });
-                                logger.log("Portable update: will run file copy on next app quit");
+                                armPortableApplyOnQuit(request);
+                                logger.log("Portable update: will apply on quit");
                             };
                             performInstallNow = () => {
                                 setupInstallOnQuit?.();
-                                logger.log("Portable update: quitting now to start install");
+                                logger.log("Portable update: quitting now to apply");
                                 app.quit();
                             };
-                            logger.log("Portable update: package ready; waiting for user install choice");
                             promptInstall();
                         })
-                        .catch((err) => logger.error("Portable update: archive extract failed", err));
+                        .catch((err) => {
+                            logger.error("Portable update: archive extract failed", err);
+                            closeDownloadProgress();
+                            showUpdateFailedDialog(
+                                window,
+                                mainT("updater.portableExtractFailed", { ns: "electron", error: String(err) }),
+                            );
+                        });
                 });
             } else {
                 downloadFile(dl, webContents, (file) => {
@@ -721,10 +834,7 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
 
             const afterDownload = (file: { filename: string; path: string }) => {
                 logger.log(`Linux update: package saved (${file.filename})`);
-                if (newWindow instanceof BrowserWindow) {
-                    isClosingDownloadWindowProgrammatically = true;
-                    newWindow.close();
-                }
+                closeDownloadProgress();
 
                 const cmd = isArchLinux() ? `pacman -U --noconfirm "${file.path}"` : `dpkg -i "${file.path}"`;
                 setupInstallOnQuit = () => {
@@ -751,6 +861,16 @@ const downloadUpdates = (latestVersion: string, windowId: number, silent = false
             downloadFile(dl, webContents, afterDownload);
         }
     })();
+};
+
+/**
+ * Downloads the running release and shows the normal install prompt.
+ * About uses this to repair an install without waiting for a newer release.
+ */
+export const reinstallCurrentVersion = (windowId: number): void => {
+    const currentVersion = app.getVersion();
+    logger.log("Update reinstall: downloading the running version", { currentVersion, windowId });
+    downloadUpdates(currentVersion, windowId);
 };
 
 export default checkForUpdate;

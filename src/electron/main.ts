@@ -32,6 +32,7 @@ import { registerFSHandlers } from "./ipc/fs";
 import { nativeMenuAccelerator, registerKeymapHandlers, runNativeKeymapAction } from "./ipc/keymap";
 import { registerLibraryScanHandlers, stopLibraryScan } from "./ipc/libraryScan";
 import { registerUpdateHandlers } from "./ipc/update";
+import { reportPortableUpdateResultOnStartup } from "./updater";
 import {
     backupIfPendingMigrations,
     handleFailedSchemaMigrate,
@@ -178,6 +179,8 @@ app.on("ready", async () => {
     try {
         /* i18n before migration dialogs — checkForJSONMigration calls mainT() */
         await initMainI18n();
+        // portable apply runs after quit; surface a leftover failure once i18n can translate it
+        reportPortableUpdateResultOnStartup();
         setApplicationMenuRebuild(() => {
             rebuildApplicationMenu();
             WindowManager.setupWindowsTasks();
